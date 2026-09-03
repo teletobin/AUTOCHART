@@ -196,6 +196,10 @@ export default function Home() {
     setSelectedItems((prev) => prev.filter((i) => i.id !== id));
   }
 
+  function clearAllItems() {
+    setSelectedItems([]);
+  }
+
   function updateItemName(id: string, name: string) {
     setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, name } : i)));
   }
@@ -486,7 +490,16 @@ export default function Home() {
 
         {/* 우측: 선택 결과 + 계산 + 최종 텍스트 */}
         <section className="rounded-lg border border-gray-200 bg-white p-4 lg:col-span-3">
-          <h2 className="mb-3 text-sm font-medium text-gray-500">선택 결과</h2>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-medium text-gray-500">선택 결과</h2>
+            <button
+              onClick={clearAllItems}
+              disabled={selectedItems.length === 0}
+              className="text-xs font-medium text-gray-400 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              CLEAR
+            </button>
+          </div>
 
           <div className="flex flex-col gap-3">
             <textarea
