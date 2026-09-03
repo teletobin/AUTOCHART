@@ -375,7 +375,7 @@ export default function Home() {
                 setHighlightedIndex(0);
               }}
               onKeyDown={handleKeyDown}
-              placeholder="예: 써마지FLX 600샷 체험가"
+              placeholder="예: 써마지 600샷 체험가"
               className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
             />
 
@@ -403,7 +403,7 @@ export default function Home() {
           </div>
 
           <p className="mt-2 text-xs text-gray-400">
-            입력 후 방향키로 후보를 고르고 Enter로 바로 추가하세요. 횟수/용량은
+            입력 후 방향키로 후보를 고르고 Enter로 바로 추가하세요. 수량은
             아래 목록에서 조율할 수 있습니다.
           </p>
 
@@ -412,7 +412,7 @@ export default function Home() {
               type="text"
               value={manualName}
               onChange={(e) => setManualName(e.target.value)}
-              placeholder="DB에 없는 시술명 직접 입력"
+              placeholder="시술직접 입력"
               className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
             />
             <input
@@ -440,7 +440,7 @@ export default function Home() {
                   <span className="min-w-0 flex-1">시술명</span>
                   <div className="flex shrink-0 items-center gap-2">
                     <span className="w-14 text-right">가격</span>
-                    <span className="w-8 text-center">횟수</span>
+                    <span className="w-8 text-center">수량</span>
                     <span className="w-20 text-right">합계</span>
                     <span className="w-3" />
                   </div>
@@ -513,7 +513,7 @@ export default function Home() {
               disabled={selectedItems.length === 0}
               className="rounded-md bg-gray-800 px-3 py-2 text-sm font-medium text-white transition disabled:cursor-not-allowed disabled:bg-gray-300"
             >
-              {copied ? "복사됨!" : "최종 텍스트 복사"}
+              {copied ? "복사됨!" : "최종차트 복사"}
             </button>
 
             <div className="flex items-center gap-2">
