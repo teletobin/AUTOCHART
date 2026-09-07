@@ -1,11 +1,3 @@
-// app/api/scrape-velyb/route.js
-//
-// GET /api/scrape-velyb?etc5=홍대점&sField=1
-// GET /api/scrape-velyb?etc5=홍대점          ← sField 생략 시 1~7 전체
-//
-// GitHub Pages 등 외부 도메인의 HTML에서 이 API를 호출하므로
-// CORS 헤더(Access-Control-Allow-Origin)를 반드시 붙여야 한다.
-
 import * as cheerio from "cheerio";
 
 const BASE =
@@ -15,21 +7,18 @@ const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
-// ── CORS 헤더 ──
-// 특정 도메인만 허용하려면 "*" 대신
-// "https://username.github.io" 처럼 변경하세요.
-const CORS_HEADERS = {
+// ── CORS 헤더 (GitHub Pages 등 외부에서 호출 허용) ──
+const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
-// ── OPTIONS 프리플라이트 응답 ──
+// ── OPTIONS (브라우저 프리플라이트) ──
 export async function OPTIONS() {
-  return new Response(null, { status: 204, headers: CORS_HEADERS });
+  return new Response(null, { status: 204, headers: CORS });
 }
 
-// ── 이름 정리 (기존 scrape.js tidyPlusSegments 그대로) ──
 function tidyPlusSegments(name) {
   let r = name.replace(/\s*\+\s*/g, "+");
   const m = r.match(/^(.*?)(\d+)회\+(.*?)\2회(.*)$/);
@@ -43,7 +32,6 @@ function tidyPlusSegments(name) {
   return r.replace(/\s+/g, " ").trim();
 }
 
-// ── 한 페이지 스크래핑 ──
 async function scrapeOnePage(url) {
   const res = await fetch(url, {
     headers: { "User-Agent": UA },
@@ -72,11 +60,10 @@ async function scrapeOnePage(url) {
   return items;
 }
 
-// ── GET 핸들러 ──
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const etc5 = searchParams.get("etc5") || "홍대점";
-  const sField = searchParams.get("sField"); // null → 1~7 전체
+  const sField = searchParams.get("sField");
 
   try {
     const fields = sField ? [sField] : ["1", "2", "3", "4", "5", "6", "7"];
@@ -88,19 +75,18 @@ export async function GET(request) {
       all.push(...items);
     }
 
-    // 중복 제거 (이름 기준, 마지막 것 유지)
     const map = new Map();
     for (const t of all) map.set(t.name, t);
     const deduped = Array.from(map.values());
 
     return Response.json(
       { branch: etc5, count: deduped.length, treatments: deduped },
-      { headers: CORS_HEADERS }
+      { headers: CORS }
     );
   } catch (e) {
     return Response.json(
       { error: String(e) },
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: CORS }
     );
   }
 }
