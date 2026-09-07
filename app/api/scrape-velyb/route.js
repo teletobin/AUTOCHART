@@ -7,14 +7,12 @@ const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 " +
   "(KHTML, like Gecko) Chrome/124.0 Safari/537.36";
 
-// ── CORS 헤더 (GitHub Pages 등 외부에서 호출 허용) ──
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Methods": "GET, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type",
 };
 
-// ── OPTIONS (브라우저 프리플라이트) ──
 export async function OPTIONS() {
   return new Response(null, { status: 204, headers: CORS });
 }
@@ -33,31 +31,35 @@ function tidyPlusSegments(name) {
 }
 
 async function scrapeOnePage(url) {
-  const res = await fetch(url, {
-    headers: { "User-Agent": UA },
-    cache: "no-store",
-  });
-  if (!res.ok) return [];
+  try {
+    const res = await fetch(url, {
+      headers: { "User-Agent": UA },
+      cache: "no-store",
+    });
+    if (!res.ok) return [];
 
-  const html = await res.text();
-  const $ = cheerio.load(html);
-  const items = [];
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    const items = [];
 
-  $("ul.slist > li").each((_, el) => {
-    const rawName = $(el).find("strong").first().text().trim();
-    const priceText = $(el).find("span.o_price01").first().text().trim();
-    if (!rawName || !priceText) return;
+    $("ul.slist > li").each((_, el) => {
+      const rawName = $(el).find("strong").first().text().trim();
+      const priceText = $(el).find("span.o_price01").first().text().trim();
+      if (!rawName || !priceText) return;
 
-    const name = tidyPlusSegments(rawName);
-    const price = parseInt(priceText.replace(/[^0-9]/g, ""), 10);
+      const name = tidyPlusSegments(rawName);
+      const price = parseInt(priceText.replace(/[^0-9]/g, ""), 10);
 
-    if (name.length < 5 || !price || price <= 0) return;
-    if (!/[가-힣]/.test(name)) return;
+      if (name.length < 5 || !price || price <= 0) return;
+      if (!/[가-힣]/.test(name)) return;
 
-    items.push({ name, price: `${price.toLocaleString("ko-KR")}원` });
-  });
+      items.push({ name, price: `${price.toLocaleString("ko-KR")}원` });
+    });
 
-  return items;
+    return items;
+  } catch {
+    return [];
+  }
 }
 
 export async function GET(request) {
@@ -67,13 +69,16 @@ export async function GET(request) {
 
   try {
     const fields = sField ? [sField] : ["1", "2", "3", "4", "5", "6", "7"];
-    const all = [];
 
-    for (const f of fields) {
-      const url = `${BASE}&etc5=${encodeURIComponent(etc5)}&sField=${f}`;
-      const items = await scrapeOnePage(url);
-      all.push(...items);
-    }
+    // ★ 동시에 전부 가져오기 (순차 → 병렬, 시간 1/7로 단축)
+    const results = await Promise.all(
+      fields.map((f) => {
+        const url = `${BASE}&etc5=${encodeURIComponent(etc5)}&sField=${f}`;
+        return scrapeOnePage(url);
+      })
+    );
+
+    const all = results.flat();
 
     const map = new Map();
     for (const t of all) map.set(t.name, t);
