@@ -268,7 +268,7 @@ export default function Home() {
         creditLines = [`잔액: ${formatNumber(balance)}원`];
       }
     }
-    return [...(headerVisible ? [header] : []), ...itemLines, ...totalLine, ...transferLine, ...creditLines, ...unusedLines].join("\n");
+    return [...(headerVisible ? [header] : []), ...itemLines, ...unusedLines, ...totalLine, ...transferLine, ...creditLines].join("\n");
   }, [headerVisible, includeHeader, membershipType, staffName, paymentAmount, extraCredit, selectedItems, totalPrice, existingBalance, transferEnabled, transferAmount, transferName, balance]);
 
   const [editableText, setEditableText] = useState("");
