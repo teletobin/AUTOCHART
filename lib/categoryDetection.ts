@@ -36,7 +36,12 @@ export function detectTreatmentCategory(
   if (
     name.includes("리프팅") ||
     name.includes("스레드") ||
-    name.includes("고주파")
+    name.includes("고주파") ||
+    name.includes("프라임레이즈") ||
+    name.includes("써마지") ||
+    name.includes("슈링크") ||
+    name.includes("HIFU") ||
+    name.includes("더마펜")
   )
     return TreatmentCategory.리프팅;
 
