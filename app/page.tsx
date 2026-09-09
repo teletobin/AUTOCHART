@@ -235,7 +235,17 @@ export default function Home() {
       // 시술명 끝의 "N회"는 "N-1" 표기로 옮겨 붙인다 (없으면 "1-1").
       const { base, n } = splitCountSuffix(i.name);
       const dot = i.count !== 1 ? RED_DOT : "";
-      return `${base} ${n}-1 ${formatNumber(computeUnitPrice(i))}원${dot}`;
+      let displayName = base;
+      // "구독"이 포함되면 1년 뒤 만료 날짜와 "1차" 표기 추가
+      if (i.name.includes("구독")) {
+        const oneYearLater = new Date();
+        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+        const yy = String(oneYearLater.getFullYear()).slice(-2);
+        const mm = String(oneYearLater.getMonth() + 1).padStart(2, "0");
+        const dd = String(oneYearLater.getDate()).padStart(2, "0");
+        displayName = `${base}(~${yy}.${mm}.${dd}) 1차`;
+      }
+      return `${displayName} ${n}-1 ${formatNumber(computeUnitPrice(i))}원${dot}`;
     });
     // 미사용 체크된 시술은 원래 이름 그대로, 맨 마지막 구분선 아래에 표시한다.
     const unusedLines = unusedItems.length > 0
