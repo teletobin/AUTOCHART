@@ -3,6 +3,24 @@ import * as cheerio from "cheerio";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 import { applyCleanupRules, type CleanupRule } from "@/lib/cleanup";
 
+// 시술명에 슬래시가 있으면 각각을 분리된 시술명으로 확장한다
+// 예: "(여자) 종아리/허벅지 제모" -> ["(여자) 종아리 제모", "(여자) 허벅지 제모"]
+function expandSlashTreatments(name: string): string[] {
+  const tokens = name.split(/\s+/);
+  const slashTokenIdx = tokens.findIndex((t) => t.includes("/"));
+  if (slashTokenIdx === -1) return [name];
+
+  const slashToken = tokens[slashTokenIdx];
+  const parts = slashToken.split("/");
+  if (parts.length !== 2) return [name]; // 슬래시가 정확히 하나만 있는 경우만 처리
+
+  return parts.map((part) => {
+    const newTokens = [...tokens];
+    newTokens[slashTokenIdx] = part;
+    return newTokens.join(" ");
+  });
+}
+
 const BRANCH = "홍대점";
 const URLS = [1, 2, 3, 4, 5, 6, 7].map(
   (n) =>
@@ -45,13 +63,17 @@ async function scrapeOnePage(
     if (name.length < 5 || !price || price <= 0) return;
     if (!/[가-힣]/.test(name)) return;
 
-    treatments.push({
-      branch: BRANCH,
-      name,
-      price,
-      scraped_at: new Date().toISOString(),
-      is_manual: false,
-    });
+    // 슬래시가 있으면 각각으로 분리해서 추가
+    const expandedNames = expandSlashTreatments(name);
+    for (const expandedName of expandedNames) {
+      treatments.push({
+        branch: BRANCH,
+        name: expandedName,
+        price,
+        scraped_at: new Date().toISOString(),
+        is_manual: false,
+      });
+    }
   });
 
   return treatments;
