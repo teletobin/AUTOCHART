@@ -2,6 +2,8 @@ import axios from "axios";
 import * as cheerio from "cheerio";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 import { applyCleanupRules, type CleanupRule } from "@/lib/cleanup";
+import { detectTreatmentCategory } from "@/lib/categoryDetection";
+import { TreatmentCategory } from "@/lib/types";
 
 // 시술명에 슬래시가 있으면 각각을 분리된 시술명으로 확장한다
 // 예: "(여자) 종아리/허벅지 제모" -> ["(여자) 종아리 제모", "(여자) 허벅지 제모"]
@@ -31,6 +33,7 @@ type ScrapedTreatment = {
   branch: string;
   name: string;
   price: number;
+  category: TreatmentCategory;
   scraped_at: string;
   is_manual: boolean;
 };
@@ -70,6 +73,7 @@ async function scrapeOnePage(
         branch: BRANCH,
         name: expandedName,
         price,
+        category: detectTreatmentCategory(expandedName),
         scraped_at: new Date().toISOString(),
         is_manual: false,
       });

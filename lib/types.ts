@@ -1,7 +1,19 @@
+export enum TreatmentCategory {
+  피부관리 = "피부관리",
+  제모 = "제모",
+  리프팅 = "리프팅",
+  레이저 = "레이저",
+  부스터 = "부스터",
+  보톡스 = "보톡스",
+  필러주사 = "필러주사",
+  면역주사 = "면역주사",
+}
+
 export type Treatment = {
   id?: string;
   name: string;
   price: number;
+  category?: TreatmentCategory;
 };
 
 // alias(오타/줄임말) → keyword(실제로 검색할 문자열) 치환 사전.

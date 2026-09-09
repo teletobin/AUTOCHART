@@ -5,6 +5,8 @@ import Link from "next/link";
 import { buildMatcher } from "@/lib/match";
 import { formatNumber, todayYYMMDD } from "@/lib/format";
 import type { Alias, Treatment } from "@/lib/types";
+import { TreatmentCategory } from "@/lib/types";
+import { CATEGORY_ORDER } from "@/lib/categoryDetection";
 
 const VAT_RATE = 1.1;
 
@@ -14,6 +16,7 @@ type SelectedItem = {
   basePrice: number;
   count: number;
   unused: boolean;
+  category?: TreatmentCategory;
 };
 
 function computeUnitPrice(item: SelectedItem): number {
@@ -177,7 +180,7 @@ export default function Home() {
 
   function selectCandidate(candidate: Treatment) {
     const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    setSelectedItems((prev) => [...prev, { id, name: candidate.name, basePrice: candidate.price, count: 1, unused: false }]);
+    setSelectedItems((prev) => [...prev, { id, name: candidate.name, basePrice: candidate.price, count: 1, unused: false, category: candidate.category }]);
     setInputValue(""); setHighlightedIndex(0);
   }
   function removeItem(id: string) { setSelectedItems((prev) => prev.filter((i) => i.id !== id)); }
@@ -204,7 +207,7 @@ export default function Home() {
     const price = Number(manualPrice);
     if (!manualName.trim() || !price || price <= 0) return;
     const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    setSelectedItems((prev) => [...prev, { id, name: manualName.trim(), basePrice: price, count: 1, unused: false }]);
+    setSelectedItems((prev) => [...prev, { id, name: manualName.trim(), basePrice: price, count: 1, unused: false, category: TreatmentCategory.피부관리 }]);
     setManualName(""); setManualPrice("");
   }
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -231,7 +234,12 @@ export default function Home() {
     const header = `${membershipType}${paymentManwon}+${extraManwon}(${staffDisplay}/${todayYYMMDD()})`;
     const normalItems = selectedItems.filter((i) => !i.unused);
     const unusedItems = selectedItems.filter((i) => i.unused);
-    const itemLines = normalItems.map((i) => {
+    const sortedNormalItems = normalItems.sort((a, b) => {
+      const catA = a.category ?? TreatmentCategory.피부관리;
+      const catB = b.category ?? TreatmentCategory.피부관리;
+      return CATEGORY_ORDER.indexOf(catA) - CATEGORY_ORDER.indexOf(catB);
+    });
+    const itemLines = sortedNormalItems.map((i) => {
       // 시술명 끝의 "N회"는 "N-1" 표기로 옮겨 붙인다 (없으면 "1-1").
       const { base, n } = splitCountSuffix(i.name);
       const dot = i.count !== 1 ? RED_DOT : "";
