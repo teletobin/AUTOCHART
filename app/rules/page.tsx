@@ -73,6 +73,7 @@ export default function RulesPage() {
   const [manualError, setManualError] = useState<string | null>(null);
   const [newManualName, setNewManualName] = useState("");
   const [newManualPrice, setNewManualPrice] = useState("");
+  const [newManualCategory, setNewManualCategory] = useState<TreatmentCategory | null>(null);
 
   const [editingManualId, setEditingManualId] = useState<string | null>(null);
   const [editManualName, setEditManualName] = useState("");
@@ -80,8 +81,8 @@ export default function RulesPage() {
 
   const [unclassified, setUnclassified] = useState<UnclassifiedTreatment[]>([]);
   const [categoryError, setCategoryError] = useState<string | null>(null);
-  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<TreatmentCategory | null>(null);
+  const [selectedForBulk, setSelectedForBulk] = useState<Set<string>>(new Set());
+  const [bulkCategory, setBulkCategory] = useState<TreatmentCategory | null>(null);
 
   const [aliases, setAliases] = useState<Alias[]>([]);
   const [aliasError, setAliasError] = useState<string | null>(null);
@@ -228,7 +229,7 @@ export default function RulesPage() {
     const res = await fetch("/api/manual-treatments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newManualName, price: Number(newManualPrice) }),
+      body: JSON.stringify({ name: newManualName, price: Number(newManualPrice), category: newManualCategory }),
     });
     const data = await res.json();
     if (data.error) {
@@ -238,6 +239,7 @@ export default function RulesPage() {
     setManualTreatments((prev) => [...prev, data.treatment]);
     setNewManualName("");
     setNewManualPrice("");
+    setNewManualCategory(null);
   }
 
   function startEditManual(t: ManualTreatment) {
@@ -284,8 +286,16 @@ export default function RulesPage() {
       return;
     }
     setUnclassified((prev) => prev.filter((t) => t.id !== id));
-    setEditingCategoryId(null);
-    setSelectedCategory(null);
+  }
+
+  async function bulkUpdateCategory() {
+    if (selectedForBulk.size === 0 || !bulkCategory) return;
+
+    for (const id of selectedForBulk) {
+      await updateCategory(id, bulkCategory);
+    }
+    setSelectedForBulk(new Set());
+    setBulkCategory(null);
   }
 
   async function addAlias() {
@@ -699,6 +709,18 @@ export default function RulesPage() {
                 placeholder="가격(원)"
                 className="w-40 rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
               />
+              <select
+                value={newManualCategory ?? ""}
+                onChange={(e) => setNewManualCategory(e.target.value ? (e.target.value as TreatmentCategory) : null)}
+                className="w-40 rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+              >
+                <option value="">카테고리</option>
+                {CATEGORY_ORDER.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
               <button
                 onClick={addManualTreatment}
                 className="shrink-0 rounded-md bg-gray-800 px-3 py-2 text-sm text-white"
@@ -776,78 +798,64 @@ export default function RulesPage() {
               미분류 시술 카테고리 지정
             </h2>
             <p className="mb-3 text-xs text-gray-600">
-              아래 시술들에 카테고리를 지정해주세요. 지정하면 이 목록에서 사라집니다.
+              체크박스로 선택 후 카테고리를 지정하면 일괄 처리됩니다.
             </p>
 
             {categoryError && <p className="mb-2 text-sm text-red-500">에러: {categoryError}</p>}
+
+            {unclassified.length > 0 && (
+              <div className="mb-4 flex gap-2 rounded-md border border-gray-200 bg-gray-50 p-3">
+                <select
+                  value={bulkCategory ?? ""}
+                  onChange={(e) => setBulkCategory(e.target.value ? (e.target.value as TreatmentCategory) : null)}
+                  className="flex-1 rounded-md border border-gray-200 px-2 py-1 text-sm outline-none focus:border-gray-400"
+                >
+                  <option value="">카테고리 선택</option>
+                  {CATEGORY_ORDER.map((cat) => (
+                    <option key={cat} value={cat}>
+                      {cat}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={bulkUpdateCategory}
+                  disabled={selectedForBulk.size === 0 || !bulkCategory}
+                  className="rounded-md bg-blue-600 px-3 py-1 text-sm text-white disabled:bg-gray-300"
+                >
+                  {selectedForBulk.size}개 일괄 분류
+                </button>
+              </div>
+            )}
 
             <div className="flex max-h-[60vh] flex-col gap-1.5 overflow-y-auto">
               {unclassified.length === 0 && (
                 <p className="text-xs text-gray-600">모든 시술이 분류되었습니다!</p>
               )}
-              {unclassified.map((t) =>
-                editingCategoryId === t.id ? (
-                  <div key={t.id} className="rounded-md border border-gray-200 p-3">
-                    <div className="mb-2">
-                      <p className="text-sm font-medium text-gray-900">{t.name}</p>
-                      <p className="text-xs text-gray-700">{formatNumber(t.price)}원</p>
-                    </div>
-                    <select
-                      value={selectedCategory ?? ""}
-                      onChange={(e) => setSelectedCategory(e.target.value as TreatmentCategory)}
-                      className="mb-2 w-full rounded-md border border-gray-200 px-2 py-1 text-sm outline-none focus:border-gray-400"
-                    >
-                      <option value="">카테고리 선택</option>
-                      {CATEGORY_ORDER.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {cat}
-                        </option>
-                      ))}
-                    </select>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => {
-                          if (selectedCategory) {
-                            updateCategory(t.id, selectedCategory);
-                          }
-                        }}
-                        disabled={!selectedCategory}
-                        className="flex-1 rounded-md bg-gray-800 px-2 py-1 text-sm text-white disabled:bg-gray-300"
-                      >
-                        저장
-                      </button>
-                      <button
-                        onClick={() => {
-                          setEditingCategoryId(null);
-                          setSelectedCategory(null);
-                        }}
-                        className="flex-1 rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700"
-                      >
-                        취소
-                      </button>
-                    </div>
+              {unclassified.map((t) => (
+                <div
+                  key={t.id}
+                  className="flex items-center gap-2 rounded-md border border-gray-100 px-3 py-2 text-sm text-gray-700"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedForBulk.has(t.id)}
+                    onChange={(e) => {
+                      const newSet = new Set(selectedForBulk);
+                      if (e.target.checked) {
+                        newSet.add(t.id);
+                      } else {
+                        newSet.delete(t.id);
+                      }
+                      setSelectedForBulk(newSet);
+                    }}
+                    className="cursor-pointer"
+                  />
+                  <div className="flex-1">
+                    <p className="font-medium">{t.name}</p>
+                    <p className="text-xs text-gray-500">{formatNumber(t.price)}원</p>
                   </div>
-                ) : (
-                  <div
-                    key={t.id}
-                    className="flex items-center justify-between rounded-md border border-gray-100 px-3 py-2 text-sm text-gray-700"
-                  >
-                    <div>
-                      <p className="font-medium">{t.name}</p>
-                      <p className="text-xs text-gray-500">{formatNumber(t.price)}원</p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setEditingCategoryId(t.id);
-                        setSelectedCategory(null);
-                      }}
-                      className="shrink-0 rounded-md bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700"
-                    >
-                      분류하기
-                    </button>
-                  </div>
-                )
-              )}
+                </div>
+              ))}
             </div>
           </section>
         )}

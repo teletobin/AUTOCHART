@@ -25,6 +25,7 @@ export async function POST(request: Request) {
 
   const name = String(body.name ?? "").trim();
   const price = Number(body.price);
+  const category = body.category ?? null;
 
   if (!name || !price || price <= 0) {
     return NextResponse.json({ error: "시술명과 가격을 입력하세요." }, { status: 400 });
@@ -36,10 +37,11 @@ export async function POST(request: Request) {
       branch: BRANCH,
       name,
       price,
+      category,
       is_manual: true,
       scraped_at: new Date().toISOString(),
     })
-    .select("id, name, price")
+    .select("id, name, price, category")
     .single();
 
   if (error) {
