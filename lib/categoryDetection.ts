@@ -4,13 +4,7 @@ export function detectTreatmentCategory(
   name: string,
   mainCategory?: string
 ): TreatmentCategory | null {
-  // 섹션 기반 분류 (홈페이지의 주 카테고리)
-  if (mainCategory === "쁘띠성형") return TreatmentCategory.필러주사;
-  if (mainCategory === "리프팅") return TreatmentCategory.리프팅;
-  if (mainCategory === "부스터") return TreatmentCategory.부스터;
-  if (mainCategory === "제모") return TreatmentCategory.제모;
-
-  // 키워드 기반 분류 (기획전, 피부, 비만 섹션용)
+  // 키워드 기반 분류 먼저 (가장 정확함)
   // 면역주사: 항노화주사 키워드
   if (name.includes("항노화주사")) return TreatmentCategory.면역주사;
 
@@ -50,12 +44,17 @@ export function detectTreatmentCategory(
   if (
     name.includes("레이저") ||
     name.includes("점빼기") ||
-    name.includes("제모") ||
     name.includes("IPL")
   )
     return TreatmentCategory.레이저;
 
   if (name.includes("부스터")) return TreatmentCategory.부스터;
+
+  // 섹션 기반 분류 (키워드로 판단 못할 때만)
+  if (mainCategory === "쁘띠성형") return TreatmentCategory.필러주사;
+  if (mainCategory === "리프팅") return TreatmentCategory.리프팅;
+  if (mainCategory === "부스터") return TreatmentCategory.부스터;
+  if (mainCategory === "제모") return TreatmentCategory.제모;
 
   return null;
 }
