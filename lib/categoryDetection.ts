@@ -52,8 +52,8 @@ export function detectTreatmentCategory(name: string): TreatmentCategory | null 
 export const CATEGORY_ORDER = [
   TreatmentCategory.피부관리,
   TreatmentCategory.제모,
-  TreatmentCategory.리프팅,
   TreatmentCategory.레이저,
+  TreatmentCategory.리프팅,
   TreatmentCategory.부스터,
   TreatmentCategory.보톡스,
   TreatmentCategory.필러주사,
