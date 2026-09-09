@@ -13,20 +13,33 @@ type SelectedItem = {
   name: string;
   basePrice: number;
   count: number;
+  unused: boolean;
 };
 
 function computeUnitPrice(item: SelectedItem): number {
   return Math.round(item.basePrice * item.count * VAT_RATE);
 }
 
+// 시술명 끝에 붙은 "N회"를 분리한다. 없으면 1회로 취급.
+function splitCountSuffix(name: string): { base: string; n: string } {
+  const m = name.match(/(\d+)\s*회\s*$/);
+  if (!m) return { base: name.replace(/\s+/g, " ").trim(), n: "1" };
+  return {
+    base: name.slice(0, m.index).replace(/\s+/g, " ").trim(),
+    n: m[1],
+  };
+}
+
 function AutoGrowInput({
   value,
   onChange,
   className,
+  style,
 }: {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  style?: React.CSSProperties;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const resize = () => {
@@ -50,6 +63,7 @@ function AutoGrowInput({
       onChange={(e) => onChange(e.target.value)}
       rows={1}
       className={`resize-none overflow-hidden ${className ?? ""}`}
+      style={style}
     />
   );
 }
@@ -163,20 +177,34 @@ export default function Home() {
 
   function selectCandidate(candidate: Treatment) {
     const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    setSelectedItems((prev) => [...prev, { id, name: candidate.name, basePrice: candidate.price, count: 1 }]);
+    setSelectedItems((prev) => [...prev, { id, name: candidate.name, basePrice: candidate.price, count: 1, unused: false }]);
     setInputValue(""); setHighlightedIndex(0);
   }
   function removeItem(id: string) { setSelectedItems((prev) => prev.filter((i) => i.id !== id)); }
-  function clearAllItems() { setSelectedItems([]); }
+  // 실장 이름(staffName)은 새로고침 전까지 유지하는 값이라 여기서 건드리지 않는다.
+  function clearAllItems() {
+    setSelectedItems([]);
+    setCreditInput("");
+    setExtraCreditInput("");
+    setExistingBalanceInput("");
+    setTransferAmountInput("");
+    setTransferName("");
+    setTransferEnabled(false);
+    setIncludeHeader(false);
+    setMembershipType("VIP");
+  }
   function updateItemName(id: string, name: string) { setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, name } : i))); }
   function updateItemCount(id: string, count: number) {
     setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, count: Math.max(1, count || 1) } : i)));
+  }
+  function toggleItemUnused(id: string) {
+    setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, unused: !i.unused } : i)));
   }
   function addManualItem() {
     const price = Number(manualPrice);
     if (!manualName.trim() || !price || price <= 0) return;
     const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    setSelectedItems((prev) => [...prev, { id, name: manualName.trim(), basePrice: price, count: 1 }]);
+    setSelectedItems((prev) => [...prev, { id, name: manualName.trim(), basePrice: price, count: 1, unused: false }]);
     setManualName(""); setManualPrice("");
   }
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -201,11 +229,22 @@ export default function Home() {
     const paymentManwon = Math.round(paymentAmount / 10000);
     const extraManwon = Math.round(extraCredit / 10000);
     const header = `${membershipType}${paymentManwon}+${extraManwon}(${staffDisplay}/${todayYYMMDD()})`;
-    const itemLines = selectedItems.map((i) => {
-      const displayName = i.name.replace(/(?<!\d)1회(?!\d)/g, "").replace(/\s+/g, " ").trim();
+    const normalItems = selectedItems.filter((i) => !i.unused);
+    const unusedItems = selectedItems.filter((i) => i.unused);
+    const itemLines = normalItems.map((i) => {
+      // 시술명 끝의 "N회"는 "N-1" 표기로 옮겨 붙인다 (없으면 "1-1").
+      const { base, n } = splitCountSuffix(i.name);
       const dot = i.count !== 1 ? RED_DOT : "";
-      return `${displayName} 1-1 ${formatNumber(computeUnitPrice(i))}원${dot}`;
+      return `${base} ${n}-1 ${formatNumber(computeUnitPrice(i))}원${dot}`;
     });
+    // 미사용 체크된 시술은 원래 이름 그대로, 맨 마지막 구분선 아래에 표시한다.
+    const unusedLines = unusedItems.length > 0
+      ? ["=".repeat(20), ...unusedItems.map((i) => {
+          const displayName = i.name.replace(/\s+/g, " ").trim();
+          const dot = i.count !== 1 ? RED_DOT : "";
+          return `${displayName} ${formatNumber(computeUnitPrice(i))}원${dot} *미사용`;
+        })]
+      : [];
     const totalLine = selectedItems.length > 1 ? [`총 ${formatNumber(totalPrice)}원`] : [];
     const transferLine = includeHeader && transferEnabled && transferAmount > 0
       ? [`+${transferName.trim() || "___"}님께 ${formatNumber(transferAmount)}원 양도함`] : [];
@@ -218,7 +257,7 @@ export default function Home() {
         creditLines = [`잔액: ${formatNumber(balance)}원`];
       }
     }
-    return [...(headerVisible ? [header] : []), ...itemLines, ...totalLine, ...transferLine, ...creditLines].join("\n");
+    return [...(headerVisible ? [header] : []), ...itemLines, ...totalLine, ...transferLine, ...creditLines, ...unusedLines].join("\n");
   }, [headerVisible, includeHeader, membershipType, staffName, paymentAmount, extraCredit, selectedItems, totalPrice, existingBalance, transferEnabled, transferAmount, transferName, balance]);
 
   const [editableText, setEditableText] = useState("");
@@ -310,6 +349,7 @@ export default function Home() {
               ) : (
                 <>
                   <div style={styles.tableHead}>
+                    <span style={{ width: 40, textAlign: "center" }}>미사용</span>
                     <span style={{ flex: 1 }}>시술명</span>
                     <span style={{ width: 58, textAlign: "right" }}>단가</span>
                     <span style={{ width: 40, textAlign: "center" }}>수량</span>
@@ -318,6 +358,15 @@ export default function Home() {
                   </div>
                   {selectedItems.map((item) => (
                     <div key={item.id} style={styles.tableRow}>
+                      <span style={{ width: 40, display: "flex", justifyContent: "center" }}>
+                        <input
+                          type="checkbox"
+                          checked={item.unused}
+                          onChange={() => toggleItemUnused(item.id)}
+                          style={{ accentColor: C.primary }}
+                          aria-label="미사용"
+                        />
+                      </span>
                       <AutoGrowInput
                         value={item.name}
                         onChange={(v) => updateItemName(item.id, v)}
@@ -391,6 +440,19 @@ export default function Home() {
                       <input type="checkbox" checked={membershipType === t} onChange={() => setMembershipType(t)} style={{ accentColor: C.primary }} />
                       {t}
                     </label>
+                  ))}
+                </div>
+
+                {/* 회원권 종류별 결제금액 빠른 선택 */}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
+                  {(membershipType === "VIP" ? [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] : [20, 50]).map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => setCreditInput(String(v * 10000))}
+                      style={{ ...styles.btnGhost, padding: "4px 10px", fontSize: 11 }}
+                    >
+                      {v}
+                    </button>
                   ))}
                 </div>
 
