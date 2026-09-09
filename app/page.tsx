@@ -236,10 +236,11 @@ export default function Home() {
       const { base, n } = splitCountSuffix(i.name);
       const dot = i.count !== 1 ? RED_DOT : "";
       let displayName = base;
-      // "구독"이 포함되면 1년 뒤 만료 날짜와 "1차" 표기 추가
+      // "구독"이 포함되면 1년 뒤 전날(1년 동안 사용 가능)과 "1차" 표기 추가
       if (i.name.includes("구독")) {
         const oneYearLater = new Date();
         oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+        oneYearLater.setDate(oneYearLater.getDate() - 1);
         const yy = String(oneYearLater.getFullYear()).slice(-2);
         const mm = String(oneYearLater.getMonth() + 1).padStart(2, "0");
         const dd = String(oneYearLater.getDate()).padStart(2, "0");
