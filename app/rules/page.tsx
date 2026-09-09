@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatNumber } from "@/lib/format";
 import type { Alias } from "@/lib/types";
+import { TreatmentCategory } from "@/lib/types";
+import { CATEGORY_ORDER } from "@/lib/categoryDetection";
 
 type Rule = {
   id: string;
@@ -18,15 +20,22 @@ type ManualTreatment = {
   price: number;
 };
 
+type UnclassifiedTreatment = {
+  id: string;
+  name: string;
+  price: number;
+};
+
 type ApplyResult = {
   updated: number;
   skipped: { id: string; oldName: string; newName: string }[];
   errors: { id: string; message: string }[];
 };
 
-type Tab = "replace" | "exclude" | "alias" | "manual";
+type Tab = "replace" | "exclude" | "alias" | "manual" | "category";
 
 const TABS: { key: Tab; label: string }[] = [
+  { key: "category", label: "시술 카테고리 분류" },
   { key: "replace", label: "치환" },
   { key: "exclude", label: "삭제" },
   { key: "alias", label: "축약어 매칭단어" },
@@ -69,6 +78,11 @@ export default function RulesPage() {
   const [editManualName, setEditManualName] = useState("");
   const [editManualPrice, setEditManualPrice] = useState("");
 
+  const [unclassified, setUnclassified] = useState<UnclassifiedTreatment[]>([]);
+  const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<TreatmentCategory | null>(null);
+
   const [aliases, setAliases] = useState<Alias[]>([]);
   const [aliasError, setAliasError] = useState<string | null>(null);
   const [newAliasText, setNewAliasText] = useState("");
@@ -106,6 +120,19 @@ export default function RulesPage() {
       .catch((e) => setManualError(String(e)));
   }
 
+  function loadUnclassified() {
+    fetch("/api/treatments/unclassified")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.error) setCategoryError(data.error);
+        else {
+          setCategoryError(null);
+          setUnclassified(data.treatments ?? []);
+        }
+      })
+      .catch((e) => setCategoryError(String(e)));
+  }
+
   function loadAliases() {
     fetch("/api/aliases")
       .then((res) => res.json())
@@ -122,6 +149,7 @@ export default function RulesPage() {
   useEffect(() => {
     loadRules();
     loadManualTreatments();
+    loadUnclassified();
     loadAliases();
   }, []);
 
@@ -242,6 +270,22 @@ export default function RulesPage() {
   async function deleteManualTreatment(id: string) {
     await fetch(`/api/manual-treatments/${id}`, { method: "DELETE" });
     setManualTreatments((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  async function updateCategory(id: string, category: TreatmentCategory) {
+    const res = await fetch("/api/treatments", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, category }),
+    });
+    const data = await res.json();
+    if (data.error) {
+      setCategoryError(data.error);
+      return;
+    }
+    setUnclassified((prev) => prev.filter((t) => t.id !== id));
+    setEditingCategoryId(null);
+    setSelectedCategory(null);
   }
 
   async function addAlias() {
@@ -719,6 +763,88 @@ export default function RulesPage() {
                         삭제
                       </button>
                     </div>
+                  </div>
+                )
+              )}
+            </div>
+          </section>
+        )}
+
+        {tab === "category" && (
+          <section className="rounded-lg border border-gray-200 bg-white p-4">
+            <h2 className="mb-1 text-sm font-medium text-gray-500">
+              미분류 시술 카테고리 지정
+            </h2>
+            <p className="mb-3 text-xs text-gray-400">
+              아래 시술들에 카테고리를 지정해주세요. 지정하면 이 목록에서 사라집니다.
+            </p>
+
+            {categoryError && <p className="mb-2 text-sm text-red-500">에러: {categoryError}</p>}
+
+            <div className="flex max-h-[60vh] flex-col gap-1.5 overflow-y-auto">
+              {unclassified.length === 0 && (
+                <p className="text-xs text-gray-400">모든 시술이 분류되었습니다!</p>
+              )}
+              {unclassified.map((t) =>
+                editingCategoryId === t.id ? (
+                  <div key={t.id} className="rounded-md border border-gray-200 p-3">
+                    <div className="mb-2">
+                      <p className="text-sm font-medium text-gray-900">{t.name}</p>
+                      <p className="text-xs text-gray-500">{formatNumber(t.price)}원</p>
+                    </div>
+                    <select
+                      value={selectedCategory ?? ""}
+                      onChange={(e) => setSelectedCategory(e.target.value as TreatmentCategory)}
+                      className="mb-2 w-full rounded-md border border-gray-200 px-2 py-1 text-sm outline-none focus:border-gray-400"
+                    >
+                      <option value="">카테고리 선택</option>
+                      {CATEGORY_ORDER.map((cat) => (
+                        <option key={cat} value={cat}>
+                          {cat}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          if (selectedCategory) {
+                            updateCategory(t.id, selectedCategory);
+                          }
+                        }}
+                        disabled={!selectedCategory}
+                        className="flex-1 rounded-md bg-gray-800 px-2 py-1 text-sm text-white disabled:bg-gray-300"
+                      >
+                        저장
+                      </button>
+                      <button
+                        onClick={() => {
+                          setEditingCategoryId(null);
+                          setSelectedCategory(null);
+                        }}
+                        className="flex-1 rounded-md border border-gray-200 px-2 py-1 text-sm text-gray-700"
+                      >
+                        취소
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    key={t.id}
+                    className="flex items-center justify-between rounded-md border border-gray-100 px-3 py-2 text-sm text-gray-700"
+                  >
+                    <div>
+                      <p className="font-medium">{t.name}</p>
+                      <p className="text-xs text-gray-500">{formatNumber(t.price)}원</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setEditingCategoryId(t.id);
+                        setSelectedCategory(null);
+                      }}
+                      className="shrink-0 rounded-md bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-700"
+                    >
+                      분류하기
+                    </button>
                   </div>
                 )
               )}

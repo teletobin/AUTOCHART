@@ -207,7 +207,7 @@ export default function Home() {
     const price = Number(manualPrice);
     if (!manualName.trim() || !price || price <= 0) return;
     const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    setSelectedItems((prev) => [...prev, { id, name: manualName.trim(), basePrice: price, count: 1, unused: false, category: TreatmentCategory.피부관리 }]);
+    setSelectedItems((prev) => [...prev, { id, name: manualName.trim(), basePrice: price, count: 1, unused: false, category: undefined }]);
     setManualName(""); setManualPrice("");
   }
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -234,11 +234,11 @@ export default function Home() {
     const header = `${membershipType}${paymentManwon}+${extraManwon}(${staffDisplay}/${todayYYMMDD()})`;
     const normalItems = selectedItems.filter((i) => !i.unused);
     const unusedItems = selectedItems.filter((i) => i.unused);
-    const sortedNormalItems = normalItems.sort((a, b) => {
-      const catA = a.category ?? TreatmentCategory.피부관리;
-      const catB = b.category ?? TreatmentCategory.피부관리;
-      return CATEGORY_ORDER.indexOf(catA) - CATEGORY_ORDER.indexOf(catB);
-    });
+    const unclassified = normalItems.filter((i) => !i.category);
+    const classified = normalItems.filter((i) => i.category).sort((a, b) =>
+      CATEGORY_ORDER.indexOf(a.category!) - CATEGORY_ORDER.indexOf(b.category!)
+    );
+    const sortedNormalItems = [...unclassified, ...classified];
     const itemLines = sortedNormalItems.map((i) => {
       // 시술명 끝의 "N회"는 "N-1" 표기로 옮겨 붙인다 (없으면 "1-1").
       const { base, n } = splitCountSuffix(i.name);

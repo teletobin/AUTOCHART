@@ -1,6 +1,6 @@
 import { TreatmentCategory } from "@/lib/types";
 
-export function detectTreatmentCategory(name: string): TreatmentCategory {
+export function detectTreatmentCategory(name: string): TreatmentCategory | null {
   // 면역주사: 항노화주사 키워드
   if (name.includes("항노화주사")) return TreatmentCategory.면역주사;
 
@@ -46,8 +46,7 @@ export function detectTreatmentCategory(name: string): TreatmentCategory {
 
   if (name.includes("부스터")) return TreatmentCategory.부스터;
 
-  // 기본값: 피부관리
-  return TreatmentCategory.피부관리;
+  return null;
 }
 
 export const CATEGORY_ORDER = [

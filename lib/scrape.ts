@@ -33,7 +33,7 @@ type ScrapedTreatment = {
   branch: string;
   name: string;
   price: number;
-  category: TreatmentCategory;
+  category: TreatmentCategory | null;
   scraped_at: string;
   is_manual: boolean;
 };
@@ -109,6 +109,27 @@ export async function runScrapeAndSync() {
     dedupedMap.set(`${t.branch}|${t.name}`, t);
   }
   const deduped = Array.from(dedupedMap.values());
+
+  // 기존 카테고리 보존: 사용자가 수정한 카테고리가 스크래핑으로 덮어씌워지지 않도록
+  const { data: existingTreatments } = await supabase
+    .from("treatments")
+    .select("branch, name, category")
+    .eq("is_manual", false);
+
+  const categoryMap = new Map<string, string | null>();
+  for (const t of existingTreatments || []) {
+    if (t.category) {
+      categoryMap.set(`${t.branch}|${t.name}`, t.category);
+    }
+  }
+
+  for (const t of deduped) {
+    const key = `${t.branch}|${t.name}`;
+    const existing = categoryMap.get(key);
+    if (existing) {
+      t.category = existing as TreatmentCategory;
+    }
+  }
 
   // 홈페이지에 없어서 직접 추가한(is_manual=true) 시술은 스크래핑 동기화 때
   // 지워지지 않도록 남겨두고, 스크래핑으로 채워졌던 항목만 갈아엎는다.
