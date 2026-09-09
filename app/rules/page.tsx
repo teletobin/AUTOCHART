@@ -772,10 +772,10 @@ export default function RulesPage() {
 
         {tab === "category" && (
           <section className="rounded-lg border border-gray-200 bg-white p-4">
-            <h2 className="mb-1 text-sm font-medium text-gray-500">
+            <h2 className="mb-1 text-sm font-medium text-gray-800">
               미분류 시술 카테고리 지정
             </h2>
-            <p className="mb-3 text-xs text-gray-400">
+            <p className="mb-3 text-xs text-gray-600">
               아래 시술들에 카테고리를 지정해주세요. 지정하면 이 목록에서 사라집니다.
             </p>
 
@@ -783,14 +783,14 @@ export default function RulesPage() {
 
             <div className="flex max-h-[60vh] flex-col gap-1.5 overflow-y-auto">
               {unclassified.length === 0 && (
-                <p className="text-xs text-gray-400">모든 시술이 분류되었습니다!</p>
+                <p className="text-xs text-gray-600">모든 시술이 분류되었습니다!</p>
               )}
               {unclassified.map((t) =>
                 editingCategoryId === t.id ? (
                   <div key={t.id} className="rounded-md border border-gray-200 p-3">
                     <div className="mb-2">
                       <p className="text-sm font-medium text-gray-900">{t.name}</p>
-                      <p className="text-xs text-gray-500">{formatNumber(t.price)}원</p>
+                      <p className="text-xs text-gray-700">{formatNumber(t.price)}원</p>
                     </div>
                     <select
                       value={selectedCategory ?? ""}

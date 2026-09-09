@@ -1,6 +1,16 @@
 import { TreatmentCategory } from "@/lib/types";
 
-export function detectTreatmentCategory(name: string): TreatmentCategory | null {
+export function detectTreatmentCategory(
+  name: string,
+  mainCategory?: string
+): TreatmentCategory | null {
+  // 섹션 기반 분류 (홈페이지의 주 카테고리)
+  if (mainCategory === "쁘띠성형") return TreatmentCategory.필러주사;
+  if (mainCategory === "리프팅") return TreatmentCategory.리프팅;
+  if (mainCategory === "부스터") return TreatmentCategory.부스터;
+  if (mainCategory === "제모") return TreatmentCategory.제모;
+
+  // 키워드 기반 분류 (기획전, 피부, 비만 섹션용)
   // 면역주사: 항노화주사 키워드
   if (name.includes("항노화주사")) return TreatmentCategory.면역주사;
 
@@ -22,13 +32,13 @@ export function detectTreatmentCategory(name: string): TreatmentCategory | null 
     name.includes("플라필") ||
     name.includes("라라필") ||
     name.includes("셀바이브") ||
-    name.includes("엔바이론")
+    name.includes("엔바이론") ||
+    name.includes("레블라이트") ||
+    name.includes("토닝")
   )
     return TreatmentCategory.피부관리;
 
-  // 리프팅, 레이저, 부스터는 현재 키워드로는 판단 불가능
-  // (홈페이지 카테고리 정보 필요 - 추후 구현)
-  // 임시로 시술명에 직접 들어간 키워드로만 판단
+  // 리프팅
   if (
     name.includes("리프팅") ||
     name.includes("스레드") ||
@@ -36,6 +46,7 @@ export function detectTreatmentCategory(name: string): TreatmentCategory | null 
   )
     return TreatmentCategory.리프팅;
 
+  // 레이저
   if (
     name.includes("레이저") ||
     name.includes("점빼기") ||
