@@ -173,7 +173,7 @@ export default function Home() {
   }
 
   const matcher = useMemo(() => buildMatcher(treatments, aliases), [treatments, aliases]);
-  const candidates = useMemo(() => (inputValue.trim() ? matcher(inputValue, 5) : []), [inputValue, matcher]);
+  const candidates = useMemo(() => (inputValue.trim().length >= 2 ? matcher(inputValue, 12) : []), [inputValue, matcher]);
 
   function selectCandidate(candidate: Treatment) {
     const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
