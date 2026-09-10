@@ -122,9 +122,9 @@ const styles: Record<string, React.CSSProperties> = {
   tableRow:  { display: "flex", alignItems: "center", gap: 8, borderBottom: `1px solid ${C.borderSoft}`, padding: "8px 0", fontSize: 13 },
   totalRow:  { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, fontWeight: 700, fontSize: 14 },
   textarea:  { width: "100%", resize: "none" as const, border: `1px solid ${C.border}`, borderRadius: 10, background: C.bg, padding: "12px 14px", fontSize: 13, color: C.primary, outline: "none", lineHeight: 1.8, boxSizing: "border-box" as const },
-  subSection: { display: "flex", flexDirection: "column" as const, gap: 10, border: `1px solid ${C.primaryLt}`, borderRadius: 10, padding: "14px 16px", background: "#fdfcfb" },
+  subSection: { display: "flex", flexDirection: "column" as const, gap: 6, border: `1px solid ${C.primaryLt}`, borderRadius: 10, padding: "14px 16px", background: "#fdfcfb" },
   label:  { fontSize: 13, fontWeight: 600, color: C.primary, textAlign: "right" as const, minWidth: 88, flexShrink: 0 },
-  numInput: { width: 120, border: `1px solid ${C.border}`, borderRadius: 7, padding: "7px 10px", fontSize: 13, textAlign: "right" as const, outline: "none", background: "#fff", color: C.primary },
+  numInput: { width: 120, border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 10px", fontSize: 13, textAlign: "right" as const, outline: "none", background: "#fff", color: C.primary },
   divider: { borderTop: `1px dashed ${C.border}`, margin: "2px 0" },
   dividerSolid: { borderTop: `2px solid ${C.primaryLt}`, margin: "2px 0" },
   footer: { marginTop: "auto", borderTop: `1px solid ${C.border}`, background: C.surface, padding: "16px", textAlign: "center" as const, fontSize: 11, color: C.sub },
@@ -546,7 +546,7 @@ export default function Home() {
                   { label: "+ 추가적립금", val: extraCreditInput, set: setExtraCreditInput },
                   { label: "+ 기존적립금", val: existingBalanceInput, set: setExistingBalanceInput },
                 ].map(({ label, val, set }) => (
-                  <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+                  <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                     <span style={styles.label}>{label}</span>
                     <input type="number" value={val} onChange={(e) => set(e.target.value)} style={styles.numInput} />
                     <span style={{ fontSize: 11, color: C.sub, width: 14 }}>원</span>
@@ -554,7 +554,7 @@ export default function Home() {
                 ))}
 
                 <div style={styles.divider} />
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                   <span style={styles.label}>− 총 금액</span>
                   <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right" }}>{formatNumber(totalPrice)}원</span>
                   <span style={{ width: 14 }} />
@@ -564,7 +564,7 @@ export default function Home() {
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     <span style={{ ...styles.label, textAlign: "left" }}>양도금액</span>
                     {transferRecipients.map((recipient, idx) => (
-                      <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+                      <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                         <input type="text" value={recipient.name} onChange={(e) => {
                           const newRecipients = [...transferRecipients];
                           newRecipients[idx].name = e.target.value;
@@ -593,7 +593,7 @@ export default function Home() {
                 )}
 
                 <div style={styles.dividerSolid} />
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                   <span style={{ ...styles.label, fontWeight: 700 }}>잔액</span>
                   <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right" }}>{formatNumber(balance)}원</span>
                   <span style={{ width: 14 }} />
