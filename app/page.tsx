@@ -384,13 +384,13 @@ export default function Home() {
                           setSelectedItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, displayed: !i.displayed } : i)));
                         }}
                         style={{
-                          width: 20,
-                          height: 20,
+                          width: 16,
+                          height: 16,
                           borderRadius: "50%",
                           border: `1px solid ${C.primary}`,
                           background: item.displayed ? C.primary : "#fff",
                           color: item.displayed ? "#fff" : C.primary,
-                          fontSize: 14,
+                          fontSize: 11,
                           fontWeight: "bold",
                           cursor: "pointer",
                           display: "flex",
