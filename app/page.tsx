@@ -120,7 +120,7 @@ const styles: Record<string, React.CSSProperties> = {
   candidateBox: { position: "absolute" as const, zIndex: 20, marginTop: 4, width: "100%", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: "0 8px 24px rgba(111,104,100,0.10)", overflow: "hidden" },
   candidateRow: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 14px", fontSize: 13, cursor: "pointer", borderBottom: `1px solid ${C.borderSoft}` },
   tableHead: { display: "flex", alignItems: "center", gap: 8, borderBottom: `1px solid ${C.border}`, paddingBottom: 8, fontSize: 11, color: C.sub, marginBottom: 4 },
-  tableRow:  { display: "flex", alignItems: "center", gap: 8, borderBottom: `1px solid ${C.borderSoft}`, padding: "8px 0", fontSize: 13 },
+  tableRow:  { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.borderSoft}`, padding: "8px 0", fontSize: 13 },
   totalRow:  { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, fontWeight: 700, fontSize: 14 },
   textarea:  { width: "100%", resize: "none" as const, border: `1px solid ${C.border}`, borderRadius: 10, background: C.bg, padding: "12px 14px", fontSize: 13, color: C.primary, outline: "none", lineHeight: 1.8, boxSizing: "border-box" as const },
   subSection: { display: "flex", flexDirection: "column" as const, gap: 6, border: `1px solid ${C.primaryLt}`, borderRadius: 10, padding: "14px 16px", background: "#fdfcfb" },
@@ -379,17 +379,29 @@ export default function Home() {
                       <div style={{ width: 16, display: "flex", justifyContent: "center" }}>
                         <button onClick={() => removeItem(item.id)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
                       </div>
-                      <div style={{ width: 24, display: "flex", justifyContent: "center" }}>
-                        <input
-                          type="checkbox"
-                          checked={item.displayed}
-                          onChange={() => {
-                            setSelectedItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, displayed: !i.displayed } : i)));
-                          }}
-                          style={{ accentColor: C.primary, cursor: "pointer" }}
-                          aria-label="선택결과 표시"
-                        />
-                      </div>
+                      <button
+                        onClick={() => {
+                          setSelectedItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, displayed: !i.displayed } : i)));
+                        }}
+                        style={{
+                          width: 24,
+                          height: 24,
+                          borderRadius: "50%",
+                          border: `2px solid ${C.primary}`,
+                          background: item.displayed ? C.primary : "#fff",
+                          color: item.displayed ? "#fff" : C.primary,
+                          fontSize: 16,
+                          fontWeight: "bold",
+                          cursor: "pointer",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          padding: 0
+                        }}
+                        aria-label="선택결과 표시"
+                      >
+                        {item.displayed ? "+" : "−"}
+                      </button>
                       <AutoGrowInput
                         value={item.name}
                         onChange={(v) => updateItemName(item.id, v)}
