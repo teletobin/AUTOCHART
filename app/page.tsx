@@ -371,7 +371,8 @@ export default function Home() {
                     <span style={{ width: 58, textAlign: "center" }}>단가</span>
                     <span style={{ width: 40, textAlign: "center" }}>수량</span>
                     <span style={{ width: 76, textAlign: "center" }}>합계</span>
-                    <span style={{ width: 40 }} />
+                    <span style={{ width: 24, textAlign: "center" }}>미사용</span>
+                    <span style={{ width: 16, textAlign: "center" }}>삭제</span>
                   </div>
                   {selectedItems.map((item) => (
                     <div key={item.id} style={styles.tableRow}>
