@@ -74,6 +74,7 @@ function AutoGrowInput({
 function CountDial({ count, onChange }: { count: number; onChange: (count: number) => void }) {
   return (
     <div className="flex items-center gap-0.5">
+      <style>{`input[type="number"]::-webkit-outer-spin-button,input[type="number"]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}input[type="number"]{-moz-appearance:textfield}`}</style>
       <input
         type="number"
         min={1}
@@ -464,26 +465,52 @@ export default function Home() {
                 {membershipType === "VIP" ? (
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ display: "flex", gap: 4 }}>
-                      {[100, 200, 300, 400, 500].map((v) => (
-                        <button
-                          key={v}
-                          onClick={() => setCreditInput(String(v * 10000))}
-                          style={{ ...styles.btnGhost, padding: "4px 10px", fontSize: 11, flex: 1 }}
-                        >
-                          VIP{v}
-                        </button>
-                      ))}
+                      {[100, 200, 300, 400, 500].map((v) => {
+                        const isSelected = creditInput === String(v * 10000);
+                        return (
+                          <button
+                            key={v}
+                            onClick={() => setCreditInput(String(v * 10000))}
+                            style={{
+                              padding: "4px 10px",
+                              fontSize: 11,
+                              flex: 1,
+                              border: `1px solid ${isSelected ? C.primary : C.border}`,
+                              borderRadius: 8,
+                              background: isSelected ? C.primary : "#fff",
+                              color: isSelected ? "#fff" : C.primary,
+                              fontWeight: isSelected ? 700 : 600,
+                              cursor: "pointer"
+                            }}
+                          >
+                            VIP{v}
+                          </button>
+                        );
+                      })}
                     </div>
                     <div style={{ display: "flex", gap: 4 }}>
-                      {[600, 700, 800, 900, 1000].map((v) => (
-                        <button
-                          key={v}
-                          onClick={() => setCreditInput(String(v * 10000))}
-                          style={{ ...styles.btnGhost, padding: "4px 10px", fontSize: 11, flex: 1 }}
-                        >
-                          VIP{v}
-                        </button>
-                      ))}
+                      {[600, 700, 800, 900, 1000].map((v) => {
+                        const isSelected = creditInput === String(v * 10000);
+                        return (
+                          <button
+                            key={v}
+                            onClick={() => setCreditInput(String(v * 10000))}
+                            style={{
+                              padding: "4px 10px",
+                              fontSize: 11,
+                              flex: 1,
+                              border: `1px solid ${isSelected ? C.primary : C.border}`,
+                              borderRadius: 8,
+                              background: isSelected ? C.primary : "#fff",
+                              color: isSelected ? "#fff" : C.primary,
+                              fontWeight: isSelected ? 700 : 600,
+                              cursor: "pointer"
+                            }}
+                          >
+                            VIP{v}
+                          </button>
+                        );
+                      })}
                     </div>
                   </div>
                 ) : (
