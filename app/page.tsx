@@ -366,15 +366,19 @@ export default function Home() {
               ) : (
                 <>
                   <div style={styles.tableHead}>
+                    <span style={{ width: 16, textAlign: "center" }}>삭제</span>
                     <span style={{ width: 24, textAlign: "center" }} />
                     <span style={{ flex: 1, textAlign: "center" }}>시술명</span>
                     <span style={{ width: 58, textAlign: "center" }}>단가</span>
                     <span style={{ width: 40, textAlign: "center" }}>수량</span>
                     <span style={{ width: 76, textAlign: "center" }}>합계</span>
-                    <span style={{ width: 60, textAlign: "center", fontSize: 11 }}>미사용  삭제</span>
+                    <span style={{ width: 24, textAlign: "center" }}>미사용</span>
                   </div>
                   {selectedItems.map((item) => (
                     <div key={item.id} style={styles.tableRow}>
+                      <div style={{ width: 16, display: "flex", justifyContent: "center" }}>
+                        <button onClick={() => removeItem(item.id)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                      </div>
                       <div style={{ width: 24, display: "flex", justifyContent: "center" }}>
                         <input
                           type="checkbox"
@@ -397,7 +401,7 @@ export default function Home() {
                         <CountDial count={item.count} onChange={(count) => updateItemCount(item.id, count)} />
                       </div>
                       <span style={{ width: 76, textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 13 }}>{formatNumber(computeUnitPrice(item))}</span>
-                      <div style={{ width: 60, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
+                      <div style={{ width: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <input
                           type="checkbox"
                           checked={item.unused}
@@ -407,7 +411,6 @@ export default function Home() {
                           style={{ accentColor: C.primary, cursor: "pointer" }}
                           aria-label="미사용"
                         />
-                        <button onClick={() => removeItem(item.id)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
                       </div>
                     </div>
                   ))}
