@@ -110,7 +110,7 @@ const styles: Record<string, React.CSSProperties> = {
   logo:    { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 17, color: C.primary },
   btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
   btnGhost:   { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" },
-  main:    { maxWidth: 1100, margin: "0 auto", width: "100%", padding: "24px 20px", display: "grid", gridTemplateColumns: "1fr", gap: 16 },
+  main:    { maxWidth: 1100, margin: "0 auto", width: "100%", padding: "24px 20px", display: "grid", gridTemplateColumns: "1fr", gap: 16, overflowX: "auto" },
   card:    { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px" },
   cardTitle: { fontSize: 12, fontWeight: 700, color: C.sub, marginBottom: 14, letterSpacing: "0.04em" },
   input:   { width: "100%", border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
@@ -146,8 +146,7 @@ export default function Home() {
   const [includeHeader, setIncludeHeader] = useState(false);
   const [membershipType, setMembershipType] = useState<"VIP" | "쁘띠">("VIP");
   const [transferEnabled, setTransferEnabled] = useState(false);
-  const [transferName, setTransferName] = useState("");
-  const [transferAmountInput, setTransferAmountInput] = useState("");
+  const [transferRecipients, setTransferRecipients] = useState<Array<{ name: string; amount: string }>>([]);
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
@@ -190,8 +189,7 @@ export default function Home() {
     setCreditInput("");
     setExtraCreditInput("");
     setExistingBalanceInput("");
-    setTransferAmountInput("");
-    setTransferName("");
+    setTransferRecipients([]);
     setTransferEnabled(false);
     setIncludeHeader(false);
     setMembershipType("VIP");
@@ -220,7 +218,7 @@ export default function Home() {
   const paymentAmount = Number(creditInput) || 0;
   const extraCredit = Number(extraCreditInput) || 0;
   const existingBalance = Number(existingBalanceInput) || 0;
-  const transferAmount = transferEnabled ? Number(transferAmountInput) || 0 : 0;
+  const transferAmount = transferEnabled ? transferRecipients.reduce((sum, r) => sum + (Number(r.amount) || 0), 0) : 0;
   const totalPrice = selectedItems.reduce((sum, i) => sum + computeUnitPrice(i), 0);
   const totalCreditWon = paymentAmount + extraCredit + existingBalance;
   const balance = totalCreditWon - totalPrice - transferAmount;
@@ -254,7 +252,7 @@ export default function Home() {
         const dd = String(oneYearLater.getDate()).padStart(2, "0");
         displayName = `${base}(~${yy}.${mm}.${dd}) 1차`;
       }
-      return `${displayName} ${n}-1 ${formatNumber(computeUnitPrice(i))}원${dot}`;
+      return `${displayName} ${n}-1  ${formatNumber(computeUnitPrice(i))}원${dot}`;
     });
     // 미사용 체크된 시술은 원래 이름 그대로, 맨 마지막 구분선 아래에 표시한다.
     const unusedLines = unusedItems.length > 0
@@ -265,8 +263,9 @@ export default function Home() {
         })]
       : [];
     const totalLine = selectedItems.length > 1 ? [`총 ${formatNumber(totalPrice)}원`] : [];
-    const transferLine = includeHeader && transferEnabled && transferAmount > 0
-      ? [`+${transferName.trim() || "___"}님께 ${formatNumber(transferAmount)}원 양도함`] : [];
+    const transferLine = includeHeader && transferEnabled && transferRecipients.length > 0
+      ? transferRecipients.map(r => `+${r.name.trim() || "___"}님께 ${formatNumber(Number(r.amount) || 0)}원 양도함`)
+      : [];
     let creditLines: string[] = [];
     if (includeHeader) {
       if (balance < 0) {
@@ -277,7 +276,7 @@ export default function Home() {
       }
     }
     return [...(headerVisible ? [header] : []), ...itemLines, ...unusedLines, ...totalLine, ...transferLine, ...creditLines].join("\n");
-  }, [headerVisible, includeHeader, membershipType, staffName, paymentAmount, extraCredit, selectedItems, totalPrice, existingBalance, transferEnabled, transferAmount, transferName, balance]);
+  }, [headerVisible, includeHeader, membershipType, staffName, paymentAmount, extraCredit, selectedItems, totalPrice, existingBalance, transferEnabled, transferAmount, transferRecipients, balance]);
 
   const [editableText, setEditableText] = useState("");
   useEffect(() => { setEditableText(finalText); }, [finalText]);
@@ -294,8 +293,8 @@ export default function Home() {
       <header style={styles.header}>
         <div style={styles.headerInner}>
           <div style={styles.logo}>
-            <img src="/logo.png" alt="완전자동차팅" style={{ height: 36, width: "auto" }} />
-            완전자동차팅
+            <img src="/logo.png" alt="차팅서포트" style={{ height: 36, width: "auto" }} />
+            차팅서포트
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <button onClick={handleSync} disabled={syncing} style={{ ...styles.btnPrimary, opacity: syncing ? 0.6 : 1 }}>
@@ -311,7 +310,7 @@ export default function Home() {
 
       {/* 메인 그리드 */}
       <main style={styles.main}>
-        <div style={{ display: "grid", gridTemplateColumns: "minmax(0,1.3fr) minmax(0,1fr)", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1.4fr", gap: 16, minWidth: 1150 }}>
 
           {/* ── 좌: 시술 입력 ── */}
           <div style={styles.card}>
@@ -437,10 +436,9 @@ export default function Home() {
                 const checked = label === "회원권" ? includeHeader : transferEnabled;
                 const toggle = label === "회원권" ? () => setIncludeHeader((v) => !v) : () => setTransferEnabled((v) => !v);
                 return (
-                  <label key={label} onClick={toggle} style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, border: `1px solid ${checked ? C.primary : C.border}`, borderRadius: 8, padding: "8px 12px", cursor: "pointer", background: checked ? C.primaryLt : "#fff", fontSize: 13, fontWeight: 600, color: C.primary }}>
-                    <input type="checkbox" checked={checked} onChange={() => {}} style={{ accentColor: C.primary }} />
+                  <button key={label} onClick={toggle} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, border: `1px solid ${checked ? C.primary : C.border}`, borderRadius: 8, padding: "8px 12px", cursor: "pointer", background: checked ? C.primaryLt : "#fff", fontSize: 13, fontWeight: 600, color: C.primary }}>
                     {label}
-                  </label>
+                  </button>
                 );
               })}
             </div>
@@ -463,17 +461,44 @@ export default function Home() {
                 </div>
 
                 {/* 회원권 종류별 결제금액 빠른 선택 */}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 4 }}>
-                  {(membershipType === "VIP" ? [100, 200, 300, 400, 500, 600, 700, 800, 900, 1000] : [20, 50]).map((v) => (
-                    <button
-                      key={v}
-                      onClick={() => setCreditInput(String(v * 10000))}
-                      style={{ ...styles.btnGhost, padding: "4px 10px", fontSize: 11 }}
-                    >
-                      {v}
-                    </button>
-                  ))}
-                </div>
+                {membershipType === "VIP" ? (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {[100, 200, 300, 400, 500].map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => setCreditInput(String(v * 10000))}
+                          style={{ ...styles.btnGhost, padding: "4px 10px", fontSize: 11, flex: 1 }}
+                        >
+                          VIP{v}
+                        </button>
+                      ))}
+                    </div>
+                    <div style={{ display: "flex", gap: 4 }}>
+                      {[600, 700, 800, 900, 1000].map((v) => (
+                        <button
+                          key={v}
+                          onClick={() => setCreditInput(String(v * 10000))}
+                          style={{ ...styles.btnGhost, padding: "4px 10px", fontSize: 11, flex: 1 }}
+                        >
+                          VIP{v}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ display: "flex", gap: 4 }}>
+                    {[20, 50].map((v) => (
+                      <button
+                        key={v}
+                        onClick={() => setCreditInput(String(v * 10000))}
+                        style={{ ...styles.btnGhost, padding: "4px 10px", fontSize: 11, flex: 1 }}
+                      >
+                        쁘띠{v}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* 금액 입력 행들 */}
                 {[
@@ -496,12 +521,34 @@ export default function Home() {
                 </div>
 
                 {transferEnabled && (
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
-                    <span style={styles.label}>양도금액</span>
-                    <input type="text" value={transferName} onChange={(e) => setTransferName(e.target.value)} placeholder="이름" style={{ ...styles.numInput, width: 64, textAlign: "left" }} />
-                    <span style={{ fontSize: 12, color: C.sub }}>님께</span>
-                    <input type="number" value={transferAmountInput} onChange={(e) => setTransferAmountInput(e.target.value)} style={styles.numInput} />
-                    <span style={{ fontSize: 11, color: C.sub, width: 14 }}>원</span>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <span style={{ ...styles.label, textAlign: "left" }}>양도금액</span>
+                    {transferRecipients.map((recipient, idx) => (
+                      <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+                        <input type="text" value={recipient.name} onChange={(e) => {
+                          const newRecipients = [...transferRecipients];
+                          newRecipients[idx].name = e.target.value;
+                          setTransferRecipients(newRecipients);
+                        }} placeholder="이름" style={{ ...styles.numInput, width: 64, textAlign: "left" }} />
+                        <span style={{ fontSize: 12, color: C.sub }}>님께</span>
+                        <input type="number" value={recipient.amount} onChange={(e) => {
+                          const newRecipients = [...transferRecipients];
+                          newRecipients[idx].amount = e.target.value;
+                          setTransferRecipients(newRecipients);
+                        }} style={styles.numInput} />
+                        <span style={{ fontSize: 11, color: C.sub, width: 14 }}>원</span>
+                        <button onClick={() => {
+                          setTransferRecipients(transferRecipients.filter((_, i) => i !== idx));
+                        }} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 14 }}>×</button>
+                      </div>
+                    ))}
+                    {transferRecipients.length < 5 && (
+                      <button onClick={() => {
+                        setTransferRecipients([...transferRecipients, { name: "", amount: "" }]);
+                      }} style={{ alignSelf: "flex-end", width: 32, height: 32, borderRadius: "50%", border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", color: C.primary }}>
+                        ⊕
+                      </button>
+                    )}
                   </div>
                 )}
 
