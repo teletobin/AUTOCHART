@@ -110,7 +110,7 @@ const styles: Record<string, React.CSSProperties> = {
   logo:    { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 17, color: C.primary },
   btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
   btnGhost:   { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" },
-  main:    { maxWidth: 1100, margin: "0 auto", width: "100%", padding: "24px 20px", display: "grid", gridTemplateColumns: "1fr", gap: 16, overflowX: "auto" },
+  main:    { maxWidth: 1100, margin: "0 auto", width: "100%", padding: "24px 20px", display: "grid", gridTemplateColumns: "1fr", gap: 16 },
   card:    { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px" },
   cardTitle: { fontSize: 12, fontWeight: 700, color: C.sub, marginBottom: 14, letterSpacing: "0.04em" },
   input:   { width: "100%", border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
@@ -310,7 +310,7 @@ export default function Home() {
 
       {/* 메인 그리드 */}
       <main style={styles.main}>
-        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1.4fr", gap: 16, minWidth: 1150 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 16 }}>
 
           {/* ── 좌: 시술 입력 ── */}
           <div style={styles.card}>
