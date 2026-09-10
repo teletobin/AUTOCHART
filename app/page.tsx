@@ -515,15 +515,28 @@ export default function Home() {
                   </div>
                 ) : (
                   <div style={{ display: "flex", gap: 4 }}>
-                    {[20, 50].map((v) => (
-                      <button
-                        key={v}
-                        onClick={() => setCreditInput(String(v * 10000))}
-                        style={{ ...styles.btnGhost, padding: "4px 10px", fontSize: 11, flex: 1 }}
-                      >
-                        쁘띠{v}
-                      </button>
-                    ))}
+                    {[20, 50].map((v) => {
+                      const isSelected = creditInput === String(v * 10000);
+                      return (
+                        <button
+                          key={v}
+                          onClick={() => setCreditInput(String(v * 10000))}
+                          style={{
+                            padding: "4px 10px",
+                            fontSize: 11,
+                            flex: 1,
+                            border: `1px solid ${isSelected ? C.primary : C.border}`,
+                            borderRadius: 8,
+                            background: isSelected ? C.primary : "#fff",
+                            color: isSelected ? "#fff" : C.primary,
+                            fontWeight: isSelected ? 700 : 600,
+                            cursor: "pointer"
+                          }}
+                        >
+                          쁘띠{v}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
 
