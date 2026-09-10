@@ -123,7 +123,7 @@ const styles: Record<string, React.CSSProperties> = {
   totalRow:  { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, fontWeight: 700, fontSize: 14 },
   textarea:  { width: "100%", resize: "none" as const, border: `1px solid ${C.border}`, borderRadius: 10, background: C.bg, padding: "12px 14px", fontSize: 13, color: C.primary, outline: "none", lineHeight: 1.8, boxSizing: "border-box" as const },
   subSection: { display: "flex", flexDirection: "column" as const, gap: 10, border: `1px solid ${C.primaryLt}`, borderRadius: 10, padding: "14px 16px", background: "#fdfcfb" },
-  label:  { fontSize: 12, color: C.sub, textAlign: "right" as const, minWidth: 88, flexShrink: 0 },
+  label:  { fontSize: 13, fontWeight: 600, color: C.primary, textAlign: "right" as const, minWidth: 88, flexShrink: 0 },
   numInput: { width: 120, border: `1px solid ${C.border}`, borderRadius: 7, padding: "7px 10px", fontSize: 13, textAlign: "right" as const, outline: "none", background: "#fff", color: C.primary },
   divider: { borderTop: `1px dashed ${C.border}`, margin: "2px 0" },
   dividerSolid: { borderTop: `2px solid ${C.primaryLt}`, margin: "2px 0" },
@@ -554,7 +554,7 @@ export default function Home() {
                 ))}
 
                 <div style={styles.divider} />
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, fontSize: 13, color: C.primary }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
                   <span style={styles.label}>− 총 금액</span>
                   <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right" }}>{formatNumber(totalPrice)}원</span>
                   <span style={{ width: 14 }} />
@@ -593,8 +593,8 @@ export default function Home() {
                 )}
 
                 <div style={styles.dividerSolid} />
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8, fontWeight: 700, fontSize: 14 }}>
-                  <span style={styles.label}>잔액</span>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 8 }}>
+                  <span style={{ ...styles.label, fontWeight: 700 }}>잔액</span>
                   <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right" }}>{formatNumber(balance)}원</span>
                   <span style={{ width: 14 }} />
                 </div>
