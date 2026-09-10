@@ -310,7 +310,7 @@ export default function Home() {
 
       {/* 메인 그리드 */}
       <main style={styles.main}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr", gap: 16 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5}}>
 
           {/* ── 좌: 시술 입력 ── */}
           <div style={styles.card}>
