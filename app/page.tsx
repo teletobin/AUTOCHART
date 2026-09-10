@@ -583,8 +583,8 @@ export default function Home() {
 
                 <div style={styles.divider} />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
-                  <span style={styles.label}>− 총 금액</span>
-                  <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right" }}>{formatNumber(totalPrice)}원</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, textAlign: "right", minWidth: 88, flexShrink: 0 }}>TOTAL</span>
+                  <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(totalPrice)}원</span>
                   <span style={{ width: 14 }} />
                 </div>
 
