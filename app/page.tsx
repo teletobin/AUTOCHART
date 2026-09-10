@@ -309,7 +309,7 @@ export default function Home() {
 
       {/* 메인 그리드 */}
       <main style={styles.main}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5}}>
+        <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 5}}>
 
           {/* ── 좌: 시술 입력 ── */}
           <div style={styles.card}>
@@ -371,8 +371,7 @@ export default function Home() {
                     <span style={{ width: 58, textAlign: "center" }}>단가</span>
                     <span style={{ width: 40, textAlign: "center" }}>수량</span>
                     <span style={{ width: 76, textAlign: "center" }}>합계</span>
-                    <span style={{ width: 24, textAlign: "center" }}>미사용</span>
-                    <span style={{ width: 16, textAlign: "center" }}>삭제</span>
+                    <span style={{ width: 60, textAlign: "center", fontSize: 11 }}>미사용  삭제</span>
                   </div>
                   {selectedItems.map((item) => (
                     <div key={item.id} style={styles.tableRow}>
@@ -398,7 +397,7 @@ export default function Home() {
                         <CountDial count={item.count} onChange={(count) => updateItemCount(item.id, count)} />
                       </div>
                       <span style={{ width: 76, textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 13 }}>{formatNumber(computeUnitPrice(item))}</span>
-                      <div style={{ width: 40, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                      <div style={{ width: 60, display: "flex", alignItems: "center", justifyContent: "center", gap: 12 }}>
                         <input
                           type="checkbox"
                           checked={item.unused}
