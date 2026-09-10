@@ -16,6 +16,7 @@ type SelectedItem = {
   basePrice: number;
   count: number;
   unused: boolean;
+  displayed: boolean;
   category?: TreatmentCategory;
 };
 
@@ -80,11 +81,11 @@ function CountDial({ count, onChange }: { count: number; onChange: (count: numbe
         min={1}
         value={count}
         onChange={(e) => onChange(Math.max(1, Number(e.target.value) || 1))}
-        style={{ width: 24, border: "none", padding: 0, textAlign: "right", fontSize: 14, outline: "none", background: "transparent" }}
+        style={{ width: 24, border: "none", padding: 0, textAlign: "right", fontSize: 13, outline: "none", background: "transparent" }}
       />
-      <div className="flex flex-col leading-none">
-        <button onClick={() => onChange(count + 1)} style={{ fontSize: 9, color: "#a89f9a" }} aria-label="증가">▲</button>
-        <button onClick={() => onChange(Math.max(1, count - 1))} style={{ fontSize: 9, color: "#a89f9a" }} aria-label="감소">▼</button>
+      <div className="flex flex-col leading-none gap-0">
+        <button onClick={() => onChange(count + 1)} style={{ fontSize: 6, color: "#a89f9a", padding: "1px 0", lineHeight: 1 }} aria-label="증가">▲</button>
+        <button onClick={() => onChange(Math.max(1, count - 1))} style={{ fontSize: 6, color: "#a89f9a", padding: "1px 0", lineHeight: 1 }} aria-label="감소">▼</button>
       </div>
     </div>
   );
@@ -180,7 +181,7 @@ export default function Home() {
 
   function selectCandidate(candidate: Treatment) {
     const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    setSelectedItems((prev) => [...prev, { id, name: candidate.name, basePrice: candidate.price, count: 1, unused: false, category: candidate.category }]);
+    setSelectedItems((prev) => [...prev, { id, name: candidate.name, basePrice: candidate.price, count: 1, unused: false, displayed: true, category: candidate.category }]);
     setInputValue(""); setHighlightedIndex(0);
   }
   function removeItem(id: string) { setSelectedItems((prev) => prev.filter((i) => i.id !== id)); }
@@ -199,14 +200,11 @@ export default function Home() {
   function updateItemCount(id: string, count: number) {
     setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, count: Math.max(1, count || 1) } : i)));
   }
-  function toggleItemUnused(id: string) {
-    setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, unused: !i.unused } : i)));
-  }
   function addManualItem() {
     const price = Number(manualPrice);
     if (!manualName.trim() || !price || price <= 0) return;
     const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    setSelectedItems((prev) => [...prev, { id, name: manualName.trim(), basePrice: price, count: 1, unused: false, category: undefined }]);
+    setSelectedItems((prev) => [...prev, { id, name: manualName.trim(), basePrice: price, count: 1, unused: false, displayed: true, category: undefined }]);
     setManualName(""); setManualPrice("");
   }
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
@@ -220,7 +218,7 @@ export default function Home() {
   const extraCredit = Number(extraCreditInput) || 0;
   const existingBalance = Number(existingBalanceInput) || 0;
   const transferAmount = transferEnabled ? transferRecipients.reduce((sum, r) => sum + (Number(r.amount) || 0), 0) : 0;
-  const totalPrice = selectedItems.reduce((sum, i) => sum + computeUnitPrice(i), 0);
+  const totalPrice = selectedItems.filter((i) => i.displayed).reduce((sum, i) => sum + computeUnitPrice(i), 0);
   const totalCreditWon = paymentAmount + extraCredit + existingBalance;
   const balance = totalCreditWon - totalPrice - transferAmount;
   const RED_DOT = " 🔸";
@@ -231,8 +229,8 @@ export default function Home() {
     const paymentManwon = Math.round(paymentAmount / 10000);
     const extraManwon = Math.round(extraCredit / 10000);
     const header = `${membershipType}${paymentManwon}+${extraManwon}(${staffDisplay}/${todayYYMMDD()})`;
-    const normalItems = selectedItems.filter((i) => !i.unused);
-    const unusedItems = selectedItems.filter((i) => i.unused);
+    const normalItems = selectedItems.filter((i) => i.displayed && !i.unused);
+    const unusedItems = selectedItems.filter((i) => i.displayed && i.unused);
     const unclassified = normalItems.filter((i) => !i.category);
     const classified = normalItems.filter((i) => i.category).sort((a, b) =>
       CATEGORY_ORDER.indexOf(a.category!) - CATEGORY_ORDER.indexOf(b.category!)
@@ -368,34 +366,37 @@ export default function Home() {
               ) : (
                 <>
                   <div style={styles.tableHead}>
-                    <span style={{ width: 40, textAlign: "center" }}>미사용</span>
-                    <span style={{ flex: 1 }}>시술명</span>
-                    <span style={{ width: 58, textAlign: "right" }}>단가</span>
+                    <span style={{ flex: 1, textAlign: "center" }}>시술명</span>
+                    <span style={{ width: 58, textAlign: "center" }}>단가</span>
                     <span style={{ width: 40, textAlign: "center" }}>수량</span>
-                    <span style={{ width: 76, textAlign: "right" }}>합계</span>
-                    <span style={{ width: 16 }} />
+                    <span style={{ width: 76, textAlign: "center" }}>합계</span>
+                    <span style={{ width: 24 }} />
                   </div>
                   {selectedItems.map((item) => (
                     <div key={item.id} style={styles.tableRow}>
-                      <span style={{ width: 40, display: "flex", justifyContent: "center" }}>
-                        <input
-                          type="checkbox"
-                          checked={item.unused}
-                          onChange={() => toggleItemUnused(item.id)}
-                          style={{ accentColor: C.primary }}
-                          aria-label="미사용"
-                        />
-                      </span>
                       <AutoGrowInput
                         value={item.name}
                         onChange={(v) => updateItemName(item.id, v)}
                         className=""
                         style={{ flex: 1, minWidth: 120, border: `1px solid transparent`, borderRadius: 6, padding: "2px 4px", background: "transparent", fontSize: 13, color: C.primary, lineHeight: 1.5 } as React.CSSProperties}
                       />
-                      <span style={{ width: 58, textAlign: "right", fontVariantNumeric: "tabular-nums", color: C.sub, fontSize: 12 }}>{formatNumber(item.basePrice)}</span>
-                      <CountDial count={item.count} onChange={(count) => updateItemCount(item.id, count)} />
-                      <span style={{ width: 76, textAlign: "right", fontVariantNumeric: "tabular-nums" }}>{formatNumber(computeUnitPrice(item))}</span>
-                      <button onClick={() => removeItem(item.id)} style={{ width: 16, background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 16, lineHeight: 1 }}>×</button>
+                      <span style={{ width: 58, textAlign: "center", fontVariantNumeric: "tabular-nums", color: C.primary, fontSize: 13 }}>{formatNumber(item.basePrice)}</span>
+                      <div style={{ width: 40, display: "flex", justifyContent: "center" }}>
+                        <CountDial count={item.count} onChange={(count) => updateItemCount(item.id, count)} />
+                      </div>
+                      <span style={{ width: 76, textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 13 }}>{formatNumber(computeUnitPrice(item))}</span>
+                      <div style={{ width: 24, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
+                        <input
+                          type="checkbox"
+                          checked={item.displayed}
+                          onChange={() => {
+                            setSelectedItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, displayed: !i.displayed } : i)));
+                          }}
+                          style={{ accentColor: C.primary, cursor: "pointer" }}
+                          aria-label="선택결과 표시"
+                        />
+                        <button onClick={() => removeItem(item.id)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                      </div>
                     </div>
                   ))}
                 </>
@@ -403,8 +404,8 @@ export default function Home() {
             </div>
 
             {selectedItems.length > 0 && (
-              <div style={styles.totalRow}>
-                <span>총 금액</span>
+              <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, fontWeight: 700, fontSize: 14, gap: 4 }}>
+                <span>TOTAL</span>
                 <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatNumber(totalPrice)}원</span>
               </div>
             )}
