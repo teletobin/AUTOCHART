@@ -577,15 +577,15 @@ export default function Home() {
                   <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                     <span style={styles.label}>{label}</span>
                     <input type="number" value={val} onChange={(e) => set(e.target.value)} style={styles.numInput} />
-                    <span style={{ fontSize: 11, color: C.sub, width: 14 }}>원</span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
                   </div>
                 ))}
 
                 <div style={styles.divider} />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, textAlign: "right", minWidth: 88, flexShrink: 0 }}>TOTAL</span>
-                  <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(totalPrice)}원</span>
-                  <span style={{ width: 14 }} />
+                  <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(totalPrice)}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
                 </div>
 
                 {transferEnabled && (
@@ -622,9 +622,9 @@ export default function Home() {
 
                 <div style={styles.dividerSolid} />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
-                  <span style={{ ...styles.label, fontWeight: 700 }}>잔액</span>
-                  <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right" }}>{formatNumber(balance)}원</span>
-                  <span style={{ width: 14 }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, textAlign: "right", minWidth: 88, flexShrink: 0 }}>잔액</span>
+                  <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(balance)}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
                 </div>
               </div>
             )}
