@@ -431,9 +431,9 @@ export default function Home() {
             </div>
 
             {selectedItems.length > 0 && (
-              <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, fontWeight: 700, fontSize: 14, gap: 4 }}>
-                <span>TOTAL</span>
-                <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatNumber(totalPrice)}원</span>
+              <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, gap: 4 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>TOTAL</span>
+                <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(totalPrice)}원</span>
               </div>
             )}
           </div>
