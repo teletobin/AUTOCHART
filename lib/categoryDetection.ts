@@ -17,6 +17,18 @@ export function detectTreatmentCategory(
   name: string,
   mainCategory?: string
 ): TreatmentCategory | null {
+  const lowerName = name.toLowerCase();
+
+  // 최우선: "주사", "보톡스", "필러", "케뉼라" 키워드가 있으면 무조건 주사시술(6)으로 분류
+  if (
+    lowerName.includes("주사") ||
+    lowerName.includes("보톡스") ||
+    lowerName.includes("필러") ||
+    lowerName.includes("케뉼라")
+  ) {
+    return TreatmentCategory.주사기타;
+  }
+
   // 제모 탭: 이름에 "제모"가 포함된 시술만 제모로 분류한다.
   if (mainCategory === "제모") {
     return name.includes("제모") ? TreatmentCategory.제모 : null;
@@ -78,12 +90,11 @@ export function detectTreatmentCategory(
       return TreatmentCategory.리프팅;
     }
 
+    // 기획전 섹션에서도 주사 관련 키워드들 처리
+    // (최상단의 일반 규칙에서 이미 처리되었지만, 기획전 분기에서도 명시적으로 처리)
     if (
       clean.includes("블리비") ||
       clean.includes("카복시") ||
-      clean.includes("주사") ||
-      clean.includes("보톡스") ||
-      clean.includes("필러") ||
       clean.includes("리투오") ||
       clean.includes("지방분해") ||
       clean.includes("쥬베룩") ||

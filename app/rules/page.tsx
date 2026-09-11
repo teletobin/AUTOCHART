@@ -49,12 +49,12 @@ const SETUP_SQL = `create table cleanup_rules (
 const styles: Record<string, React.CSSProperties> = {
   wrap:      { minHeight: "100vh", background: C.bg, color: C.primary, fontFamily: "Pretendard, -apple-system, sans-serif" },
   header:    { borderBottom: `1px solid ${C.border}`, background: C.surface, padding: "14px 28px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
-  headerInner: { maxWidth: MAX_WIDTH, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" },
+  headerInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 28, paddingRight: 28, boxSizing: "border-box" },
   title:     { fontSize: 17, fontWeight: 700, color: C.primary },
   backLink:  { fontSize: 12, color: C.sub, textDecoration: "none" },
-  tabBar:    { borderBottom: `1px solid ${C.border}`, background: C.surface },
-  tabBarInner: { maxWidth: MAX_WIDTH, margin: "0 auto", display: "flex", gap: 4, padding: "0 20px", overflowX: "auto" as const },
-  main:      { maxWidth: MAX_WIDTH, margin: "0 auto", width: "100%", padding: "24px 20px" },
+  tabBar:    { borderBottom: `1px solid ${C.border}`, background: C.surface, width: "100%" },
+  tabBarInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", gap: 4, padding: "0 28px", overflowX: "auto" as const, boxSizing: "border-box" },
+  main:      { width: "100%", maxWidth: "none", margin: "0", padding: "24px 28px", boxSizing: "border-box" },
   card:      { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px" },
   cardTitle: { fontSize: 12, fontWeight: 700, color: C.sub, marginBottom: 6, letterSpacing: "0.04em" },
   cardHint:  { fontSize: 11, color: C.sub, marginBottom: 14 },
@@ -721,37 +721,35 @@ export default function RulesPage() {
               </button>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(130px, 1fr))", gap: 8, overflowX: "auto" }}>
-              {[...CATEGORY_ORDER, null].map((cat) => {
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, marginBottom: 16 }}>
+              {CATEGORY_ORDER.map((cat) => {
                 const q = categorySearch.trim().toLowerCase();
                 const items = categoryTreatments.filter((t) => {
-                  const inCat = cat === null ? !t.category : t.category === cat;
-                  if (!inCat) return false;
+                  if (t.category !== cat) return false;
                   return q === "" || t.name.toLowerCase().includes(q);
                 });
-                const isUnclassified = cat === null;
                 return (
                   <div
-                    key={cat ?? "미분류"}
+                    key={cat}
                     style={{
                       display: "flex",
                       flexDirection: "column",
                       minWidth: 0,
-                      border: `1px solid ${isUnclassified ? C.sub : C.borderSoft}`,
-                      borderStyle: isUnclassified ? "dashed" : "solid",
+                      border: `1px solid ${C.border}`,
                       borderRadius: 10,
-                      background: isUnclassified ? "#fdfcfb" : "#fff",
+                      background: C.surface,
+                      overflow: "hidden",
                     }}
                   >
-                    <div style={{ padding: "8px 8px", borderBottom: `1px solid ${C.borderSoft}`, fontSize: 12, fontWeight: 700, color: isUnclassified ? C.sub : C.primary }}>
-                      {cat ?? "미분류"} <span style={{ fontWeight: 400, color: C.sub }}>({items.length})</span>
+                    <div style={{ padding: "10px 12px", borderBottom: `1px solid ${C.border}`, fontSize: 12, fontWeight: 700, color: C.primary, whiteSpace: "nowrap" }}>
+                      {cat} <span style={{ fontWeight: 400, color: C.sub, fontSize: 11 }}>({items.length})</span>
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: 6, maxHeight: "65vh", overflowY: "auto" }}>
-                      {items.length === 0 && <p style={{ fontSize: 11, color: C.sub, padding: "4px 2px" }}>없음</p>}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: 8, maxHeight: "70vh", overflowY: "auto" }}>
+                      {items.length === 0 && <p style={{ fontSize: 11, color: C.sub, padding: "4px 0" }}>없음</p>}
                       {items.map((t) => (
                         <label
                           key={t.id}
-                          style={{ display: "flex", gap: 6, alignItems: "flex-start", border: `1px solid ${C.borderSoft}`, borderRadius: 6, padding: "5px 6px", fontSize: 11, lineHeight: 1.35, cursor: "pointer" }}
+                          style={{ display: "flex", gap: 6, alignItems: "flex-start", border: `1px solid ${C.borderSoft}`, borderRadius: 6, padding: "6px 8px", fontSize: 11, lineHeight: 1.3, cursor: "pointer", background: "#fafafa" }}
                         >
                           <input
                             type="checkbox"
@@ -764,9 +762,9 @@ export default function RulesPage() {
                             }}
                             style={{ marginTop: 2, cursor: "pointer", flexShrink: 0 }}
                           />
-                          <span style={{ flex: 1, wordBreak: "break-word" as const }}>
-                            {t.name}
-                            <span style={{ display: "block", color: C.sub, fontVariantNumeric: "tabular-nums" }}>{formatNumber(t.price)}원</span>
+                          <span style={{ flex: 1, wordBreak: "break-word" as const, minWidth: 0 }}>
+                            <span style={{ display: "block", color: C.primary }}>{t.name}</span>
+                            <span style={{ display: "block", color: C.sub, fontVariantNumeric: "tabular-nums", fontSize: 10 }}>{formatNumber(t.price)}원</span>
                           </span>
                         </label>
                       ))}
@@ -774,6 +772,46 @@ export default function RulesPage() {
                   </div>
                 );
               })}
+            </div>
+
+            <div style={{ borderTop: `2px solid ${C.border}`, paddingTop: 14 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: C.primary, marginBottom: 10 }}>
+                미분류 시술 ({categoryTreatments.filter(t => !t.category).length})
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: "50vh", overflowY: "auto" }}>
+                {categoryTreatments.filter(t => !t.category).length === 0 ? (
+                  <p style={{ fontSize: 11, color: C.sub }}>없음</p>
+                ) : (
+                  categoryTreatments
+                    .filter((t) => {
+                      if (t.category) return false;
+                      const q = categorySearch.trim().toLowerCase();
+                      return q === "" || t.name.toLowerCase().includes(q);
+                    })
+                    .map((t) => (
+                      <label
+                        key={t.id}
+                        style={{ display: "flex", gap: 6, alignItems: "flex-start", border: `1px dashed ${C.sub}`, borderRadius: 6, padding: "6px 8px", fontSize: 11, lineHeight: 1.3, cursor: "pointer", background: "#fdfcfb" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedForBulk.has(t.id!)}
+                          onChange={(e) => {
+                            const newSet = new Set(selectedForBulk);
+                            if (e.target.checked) newSet.add(t.id!);
+                            else newSet.delete(t.id!);
+                            setSelectedForBulk(newSet);
+                          }}
+                          style={{ marginTop: 2, cursor: "pointer", flexShrink: 0 }}
+                        />
+                        <span style={{ flex: 1, wordBreak: "break-word" as const, minWidth: 0 }}>
+                          <span style={{ display: "block", color: C.primary }}>{t.name}</span>
+                          <span style={{ display: "block", color: C.sub, fontVariantNumeric: "tabular-nums", fontSize: 10 }}>{formatNumber(t.price)}원</span>
+                        </span>
+                      </label>
+                    ))
+                )}
+              </div>
             </div>
           </section>
         )}
