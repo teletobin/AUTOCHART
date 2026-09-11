@@ -7,6 +7,7 @@ import { formatNumber, todayYYMMDD } from "@/lib/format";
 import type { Alias, Treatment } from "@/lib/types";
 import { TreatmentCategory } from "@/lib/types";
 import { CATEGORY_ORDER } from "@/lib/categoryDetection";
+import { C, MAX_WIDTH } from "@/lib/theme";
 
 const VAT_RATE = 1.1;
 
@@ -91,28 +92,14 @@ function CountDial({ count, onChange }: { count: number; onChange: (count: numbe
   );
 }
 
-/* ── 디자인 토큰 ── */
-const C = {
-  bg:         "#faf8f6",       // 전체 배경
-  surface:    "#ffffff",       // 카드 배경
-  border:     "#e3dfdc",       // 테두리
-  borderSoft: "rgba(227,223,220,0.6)",
-  primary:    "#6f6864",       // 주요 텍스트/버튼
-  primaryHov: "#5a5451",
-  primaryLt:  "#e9e5e2",       // 연한 강조
-  sub:        "#a89f9a",       // 보조 텍스트
-  accent:     "#FFE8F2",       // 핑크 포인트 (badge 등)
-  danger:     "#c0392b",
-};
-
 const styles: Record<string, React.CSSProperties> = {
   wrap:    { display: "flex", flexDirection: "column", minHeight: "100vh", background: C.bg, color: C.primary, fontFamily: "Pretendard, -apple-system, sans-serif" },
   header:  { borderBottom: `1px solid ${C.border}`, background: C.surface, padding: "14px 28px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
-  headerInner: { maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" },
+  headerInner: { maxWidth: MAX_WIDTH, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" },
   logo:    { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 17, color: C.primary },
   btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
   btnGhost:   { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" },
-  main:    { maxWidth: 1100, margin: "0 auto", width: "100%", padding: "24px 20px", display: "grid", gridTemplateColumns: "1fr", gap: 16 },
+  main:    { maxWidth: MAX_WIDTH, margin: "0 auto", width: "100%", padding: "24px 20px", display: "grid", gridTemplateColumns: "1fr", gap: 16 },
   card:    { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px" },
   cardTitle: { fontSize: 12, fontWeight: 700, color: C.sub, marginBottom: 14, letterSpacing: "0.04em" },
   input:   { width: "100%", border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
@@ -144,6 +131,7 @@ export default function Home() {
   const [existingBalanceInput, setExistingBalanceInput] = useState("");
   const [manualName, setManualName] = useState("");
   const [manualPrice, setManualPrice] = useState("");
+  const [manualCategory, setManualCategory] = useState<TreatmentCategory | null>(null);
   const [copied, setCopied] = useState(false);
   const [includeHeader, setIncludeHeader] = useState(false);
   const [membershipType, setMembershipType] = useState<"VIP" | "쁘띠">("VIP");
@@ -204,8 +192,8 @@ export default function Home() {
     const price = Number(manualPrice);
     if (!manualName.trim() || !price || price <= 0) return;
     const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    setSelectedItems((prev) => [...prev, { id, name: manualName.trim(), basePrice: price, count: 1, unused: false, displayed: true, category: undefined }]);
-    setManualName(""); setManualPrice("");
+    setSelectedItems((prev) => [...prev, { id, name: manualName.trim(), basePrice: price, count: 1, unused: false, displayed: true, category: manualCategory ?? undefined }]);
+    setManualName(""); setManualPrice(""); setManualCategory(null);
   }
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (candidates.length === 0) return;
@@ -299,13 +287,23 @@ export default function Home() {
             <button onClick={handleSync} disabled={syncing} style={{ ...styles.btnPrimary, opacity: syncing ? 0.6 : 1 }}>
               {syncing ? "동기화 중…" : "수가 동기화"}
             </button>
-            <Link href="/rules" style={{ fontSize: 12, color: C.sub, textDecoration: "none" }}>상세설정 →</Link>
+            <Link
+              href="/rules"
+              aria-label="상세설정"
+              title="상세설정"
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 8, color: C.sub, textDecoration: "none" }}
+            >
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
+            </Link>
           </div>
         </div>
       </header>
 
-      {syncMessage && <p style={{ maxWidth: 1100, margin: "8px auto 0", padding: "0 20px", fontSize: 12, color: C.primary }}>{syncMessage}</p>}
-      {loadError && <p style={{ maxWidth: 1100, margin: "8px auto 0", padding: "0 20px", fontSize: 12, color: C.danger }}>시술 데이터를 불러오지 못했습니다: {loadError}</p>}
+      {syncMessage && <p style={{ maxWidth: MAX_WIDTH, margin: "8px auto 0", padding: "0 20px", fontSize: 12, color: C.primary }}>{syncMessage}</p>}
+      {loadError && <p style={{ maxWidth: MAX_WIDTH, margin: "8px auto 0", padding: "0 20px", fontSize: 12, color: C.danger }}>시술 데이터를 불러오지 못했습니다: {loadError}</p>}
 
       {/* 메인 그리드 */}
       <main style={styles.main}>
@@ -353,6 +351,16 @@ export default function Home() {
             <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
               <input type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="시술 직접 입력" style={{ ...styles.input, flex: 1 }} />
               <input type="number" value={manualPrice} onChange={(e) => setManualPrice(e.target.value)} placeholder="세전 금액" style={{ ...styles.input, width: 110 }} />
+              <select
+                value={manualCategory ?? ""}
+                onChange={(e) => setManualCategory(e.target.value ? (e.target.value as TreatmentCategory) : null)}
+                style={{ ...styles.input, width: 100 }}
+              >
+                <option value="">분류</option>
+                {CATEGORY_ORDER.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
               <button onClick={addManualItem} disabled={!manualName.trim() || !manualPrice}
                 style={{ ...styles.btnPrimary, opacity: (!manualName.trim() || !manualPrice) ? 0.4 : 1, flexShrink: 0 }}>
                 직접추가
@@ -583,7 +591,7 @@ export default function Home() {
 
                 <div style={styles.divider} />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, textAlign: "right", minWidth: 88, flexShrink: 0 }}>TOTAL</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, textAlign: "right", minWidth: 88, flexShrink: 0 }}>− TOTAL</span>
                   <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(totalPrice)}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
                 </div>

@@ -16,9 +16,8 @@ function cleanForMatch(rawLine: string): string {
 
 // 숫자만으로 된 토큰(예: "2")은 부분일치를 허용하면 "200샷" 같은 토큰에
 // 잘못 매칭되므로, 숫자 토큰은 완전히 같을 때만 매칭으로 인정한다.
-// 마찬가지로 "모드"처럼 짧은(2자 이하) 토큰은 "인모드"의 일부라는 이유로
-// 아무 데나 붙는 부분일치를 허용하면 관련 없는 후보가 쏟아지므로, 짧은
-// 토큰은 완전히 같을 때만 매칭으로 인정한다.
+// 마찬가지로 한 글자짜리 토큰은 아무 데나 붙는 부분일치를 허용하면
+// 관련 없는 후보가 쏟아지므로, 완전히 같을 때만 매칭으로 인정한다.
 function tokensMatch(a: string, b: string): boolean {
   const aNum = /^\d+$/.test(a);
   const bNum = /^\d+$/.test(b);
@@ -26,7 +25,7 @@ function tokensMatch(a: string, b: string): boolean {
 
   const shorter = a.length <= b.length ? a : b;
   const longer = a.length <= b.length ? b : a;
-  if (shorter.length < 3) return a === b;
+  if (shorter.length < 2) return a === b;
   return longer.includes(shorter);
 }
 

@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatNumber } from "@/lib/format";
-import type { Alias } from "@/lib/types";
+import type { Alias, Treatment } from "@/lib/types";
 import { TreatmentCategory } from "@/lib/types";
 import { CATEGORY_ORDER } from "@/lib/categoryDetection";
+import { C, MAX_WIDTH } from "@/lib/theme";
 
 type Rule = {
   id: string;
@@ -15,12 +16,6 @@ type Rule = {
 };
 
 type ManualTreatment = {
-  id: string;
-  name: string;
-  price: number;
-};
-
-type UnclassifiedTreatment = {
   id: string;
   name: string;
   price: number;
@@ -49,6 +44,42 @@ const SETUP_SQL = `create table cleanup_rules (
   replacement text,
   created_at timestamptz not null default now()
 );`;
+
+/* ── 디자인 토큰 (메인 페이지와 공유) ── */
+const styles: Record<string, React.CSSProperties> = {
+  wrap:      { minHeight: "100vh", background: C.bg, color: C.primary, fontFamily: "Pretendard, -apple-system, sans-serif" },
+  header:    { borderBottom: `1px solid ${C.border}`, background: C.surface, padding: "14px 28px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
+  headerInner: { maxWidth: MAX_WIDTH, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" },
+  title:     { fontSize: 17, fontWeight: 700, color: C.primary },
+  backLink:  { fontSize: 12, color: C.sub, textDecoration: "none" },
+  tabBar:    { borderBottom: `1px solid ${C.border}`, background: C.surface },
+  tabBarInner: { maxWidth: MAX_WIDTH, margin: "0 auto", display: "flex", gap: 4, padding: "0 20px", overflowX: "auto" as const },
+  main:      { maxWidth: MAX_WIDTH, margin: "0 auto", width: "100%", padding: "24px 20px" },
+  card:      { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px" },
+  cardTitle: { fontSize: 12, fontWeight: 700, color: C.sub, marginBottom: 6, letterSpacing: "0.04em" },
+  cardHint:  { fontSize: 11, color: C.sub, marginBottom: 14 },
+  input:     { flex: 1, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
+  btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 },
+  row:       { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, border: `1px solid ${C.borderSoft}`, borderRadius: 8, padding: "9px 12px", fontSize: 13 },
+  rowEdit:   { display: "flex", alignItems: "center", gap: 8, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13 },
+  linkBtn:   { background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 12, padding: 0 },
+  list:      { display: "flex", flexDirection: "column" as const, gap: 6, maxHeight: "60vh", overflowY: "auto" as const },
+  empty:     { fontSize: 12, color: C.sub },
+};
+
+function tabButtonStyle(active: boolean): React.CSSProperties {
+  return {
+    padding: "10px 14px",
+    fontSize: 13,
+    fontWeight: 600,
+    color: active ? C.primary : C.sub,
+    background: "none",
+    border: "none",
+    borderBottom: active ? `2px solid ${C.primary}` : "2px solid transparent",
+    cursor: "pointer",
+    whiteSpace: "nowrap",
+  };
+}
 
 export default function RulesPage() {
   const [tab, setTab] = useState<Tab>("replace");
@@ -79,8 +110,9 @@ export default function RulesPage() {
   const [editManualName, setEditManualName] = useState("");
   const [editManualPrice, setEditManualPrice] = useState("");
 
-  const [unclassified, setUnclassified] = useState<UnclassifiedTreatment[]>([]);
+  const [categoryTreatments, setCategoryTreatments] = useState<Treatment[]>([]);
   const [categoryError, setCategoryError] = useState<string | null>(null);
+  const [categorySearch, setCategorySearch] = useState("");
   const [selectedForBulk, setSelectedForBulk] = useState<Set<string>>(new Set());
   const [bulkCategory, setBulkCategory] = useState<TreatmentCategory | null>(null);
 
@@ -121,14 +153,14 @@ export default function RulesPage() {
       .catch((e) => setManualError(String(e)));
   }
 
-  function loadUnclassified() {
-    fetch("/api/treatments/unclassified")
+  function loadCategoryTreatments() {
+    fetch("/api/treatments")
       .then((res) => res.json())
       .then((data) => {
         if (data.error) setCategoryError(data.error);
         else {
           setCategoryError(null);
-          setUnclassified(data.treatments ?? []);
+          setCategoryTreatments(data.treatments ?? []);
         }
       })
       .catch((e) => setCategoryError(String(e)));
@@ -150,7 +182,7 @@ export default function RulesPage() {
   useEffect(() => {
     loadRules();
     loadManualTreatments();
-    loadUnclassified();
+    loadCategoryTreatments();
     loadAliases();
   }, []);
 
@@ -283,12 +315,13 @@ export default function RulesPage() {
     const data = await res.json();
     if (data.error) {
       setCategoryError(data.error);
-      return;
+      return false;
     }
-    setUnclassified((prev) => prev.filter((t) => t.id !== id));
+    setCategoryTreatments((prev) => prev.map((t) => (t.id === id ? { ...t, category } : t)));
+    return true;
   }
 
-  async function bulkUpdateCategory() {
+  async function bulkMoveCategory() {
     if (selectedForBulk.size === 0 || !bulkCategory) return;
 
     for (const id of selectedForBulk) {
@@ -351,26 +384,24 @@ export default function RulesPage() {
   const replaceRules = rules.filter((r) => r.type === "replace");
 
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      <header className="border-b border-gray-200 bg-white px-6 py-4">
-        <div className="mx-auto flex max-w-3xl items-center justify-between">
-          <h1 className="text-lg font-semibold">상세설정</h1>
-          <Link href="/" className="text-sm text-gray-500 hover:text-gray-800">
-            ← 메인으로
-          </Link>
+    <div style={styles.wrap}>
+      <header style={styles.header}>
+        <div style={styles.headerInner}>
+          <h1 style={styles.title}>상세설정</h1>
+          <Link href="/" style={styles.backLink}>← 메인으로</Link>
         </div>
       </header>
 
       {loadError && (
-        <div className="mx-auto max-w-3xl px-6 pt-4">
-          <p className="text-sm text-red-500">에러: {loadError}</p>
+        <div style={{ maxWidth: MAX_WIDTH, margin: "0 auto", padding: "16px 20px 0" }}>
+          <p style={{ fontSize: 13, color: C.danger }}>에러: {loadError}</p>
           {tableMissing && (
-            <div className="mt-2 rounded-md border border-red-200 bg-red-50 p-3">
-              <p className="text-sm text-red-700">
+            <div style={{ marginTop: 8, borderRadius: 10, border: `1px solid ${C.danger}`, background: "#fdf1ef", padding: 12 }}>
+              <p style={{ fontSize: 13, color: C.danger }}>
                 cleanup_rules 테이블이 아직 없습니다. Supabase 대시보드 → SQL Editor에서
                 아래 SQL을 한 번 실행한 뒤 이 페이지를 새로고침하세요.
               </p>
-              <pre className="mt-2 overflow-x-auto rounded-md bg-white p-2 text-xs text-gray-700">
+              <pre style={{ marginTop: 8, overflowX: "auto", borderRadius: 8, background: "#fff", padding: 8, fontSize: 11, color: C.primary }}>
                 {SETUP_SQL}
               </pre>
             </div>
@@ -378,45 +409,35 @@ export default function RulesPage() {
         </div>
       )}
 
-      <div className="border-b border-gray-200 bg-white px-4">
-        <div className="mx-auto flex max-w-3xl gap-1">
+      <div style={styles.tabBar}>
+        <div style={styles.tabBarInner}>
           {TABS.map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setTab(t.key)}
-              className={`px-3 py-3 text-sm font-medium ${
-                tab === t.key
-                  ? "border-b-2 border-gray-800 text-gray-900"
-                  : "text-gray-500 hover:text-gray-800"
-              }`}
-            >
+            <button key={t.key} onClick={() => setTab(t.key)} style={tabButtonStyle(tab === t.key)}>
               {t.label}
             </button>
           ))}
         </div>
       </div>
 
-      <main className="mx-auto max-w-3xl p-4">
+      <main style={styles.main}>
         {tab === "replace" && (
-          <section className="rounded-lg border border-gray-200 bg-white p-4">
-            <h2 className="mb-3 text-sm font-medium text-gray-500">
-              치환 규칙 (찾을 문자열 → 바꿀 문자열)
-            </h2>
+          <section style={styles.card}>
+            <p style={styles.cardTitle}>치환 규칙 (찾을 문자열 → 바꿀 문자열)</p>
 
-            <div className="mb-3 flex gap-2">
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <input
                 type="text"
                 value={newFind}
                 onChange={(e) => setNewFind(e.target.value)}
                 placeholder="찾을 문자열"
-                className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                style={styles.input}
               />
               <input
                 type="text"
                 value={newReplacement}
                 onChange={(e) => setNewReplacement(e.target.value)}
                 placeholder="바꿀 문자열"
-                className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                style={styles.input}
               />
               <button
                 onClick={() => {
@@ -424,69 +445,40 @@ export default function RulesPage() {
                   setNewFind("");
                   setNewReplacement("");
                 }}
-                className="shrink-0 rounded-md bg-gray-800 px-3 py-2 text-sm text-white"
+                style={styles.btnPrimary}
               >
                 추가
               </button>
             </div>
 
-            <div className="flex max-h-[60vh] flex-col gap-1.5 overflow-y-auto">
-              {replaceRules.length === 0 && (
-                <p className="text-xs text-gray-400">등록된 치환 규칙이 없습니다.</p>
-              )}
+            <div style={styles.list}>
+              {replaceRules.length === 0 && <p style={styles.empty}>등록된 치환 규칙이 없습니다.</p>}
               {replaceRules.map((r) =>
                 editingRuleId === r.id ? (
-                  <div
-                    key={r.id}
-                    className="flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2 text-sm"
-                  >
+                  <div key={r.id} style={styles.rowEdit}>
                     <input
                       type="text"
                       value={editPattern}
                       onChange={(e) => setEditPattern(e.target.value)}
-                      className="flex-1 rounded-md border border-gray-200 px-2 py-1 outline-none focus:border-gray-400"
+                      style={styles.input}
                     />
                     <input
                       type="text"
                       value={editReplacement}
                       onChange={(e) => setEditReplacement(e.target.value)}
-                      className="flex-1 rounded-md border border-gray-200 px-2 py-1 outline-none focus:border-gray-400"
+                      style={styles.input}
                     />
-                    <button
-                      onClick={() => saveEditRule(r)}
-                      className="shrink-0 text-gray-700 hover:text-black"
-                    >
-                      저장
-                    </button>
-                    <button
-                      onClick={cancelEditRule}
-                      className="shrink-0 text-gray-400 hover:text-gray-700"
-                    >
-                      취소
-                    </button>
+                    <button onClick={() => saveEditRule(r)} style={{ ...styles.linkBtn, color: C.primary }}>저장</button>
+                    <button onClick={cancelEditRule} style={styles.linkBtn}>취소</button>
                   </div>
                 ) : (
-                  <div
-                    key={r.id}
-                    className="flex items-center justify-between rounded-md border border-gray-100 px-3 py-2 text-sm text-gray-700"
-                  >
-                    <span className="truncate">
+                  <div key={r.id} style={styles.row}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {r.pattern} → {r.replacement}
                     </span>
-                    <div className="ml-2 flex shrink-0 items-center gap-2">
-                      <button
-                        onClick={() => startEditRule(r)}
-                        className="text-gray-400 hover:text-gray-700"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => deleteRule(r.id)}
-                        className="text-gray-400 hover:text-gray-700"
-                        aria-label="삭제"
-                      >
-                        ×
-                      </button>
+                    <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
+                      <button onClick={() => startEditRule(r)} style={styles.linkBtn}>수정</button>
+                      <button onClick={() => deleteRule(r.id)} style={styles.linkBtn} aria-label="삭제">×</button>
                     </div>
                   </div>
                 )
@@ -496,12 +488,10 @@ export default function RulesPage() {
         )}
 
         {tab === "exclude" && (
-          <section className="rounded-lg border border-gray-200 bg-white p-4">
-            <h2 className="mb-3 text-sm font-medium text-gray-500">
-              제외 문구 (해당 문자열을 삭제)
-            </h2>
+          <section style={styles.card}>
+            <p style={styles.cardTitle}>제외 문구 (해당 문자열을 삭제)</p>
 
-            <div className="mb-3 flex gap-2">
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <input
                 type="text"
                 value={newExclude}
@@ -513,68 +503,39 @@ export default function RulesPage() {
                   }
                 }}
                 placeholder="예: (고농도 히알루론산)"
-                className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                style={styles.input}
               />
               <button
                 onClick={() => {
                   addRule("exclude", newExclude);
                   setNewExclude("");
                 }}
-                className="rounded-md bg-gray-800 px-3 py-2 text-sm text-white"
+                style={styles.btnPrimary}
               >
                 추가
               </button>
             </div>
 
-            <div className="flex max-h-[60vh] flex-col gap-1.5 overflow-y-auto">
-              {excludeRules.length === 0 && (
-                <p className="text-xs text-gray-400">등록된 제외 문구가 없습니다.</p>
-              )}
+            <div style={styles.list}>
+              {excludeRules.length === 0 && <p style={styles.empty}>등록된 제외 문구가 없습니다.</p>}
               {excludeRules.map((r) =>
                 editingRuleId === r.id ? (
-                  <div
-                    key={r.id}
-                    className="flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2 text-sm"
-                  >
+                  <div key={r.id} style={styles.rowEdit}>
                     <input
                       type="text"
                       value={editPattern}
                       onChange={(e) => setEditPattern(e.target.value)}
-                      className="flex-1 rounded-md border border-gray-200 px-2 py-1 outline-none focus:border-gray-400"
+                      style={styles.input}
                     />
-                    <button
-                      onClick={() => saveEditRule(r)}
-                      className="shrink-0 text-gray-700 hover:text-black"
-                    >
-                      저장
-                    </button>
-                    <button
-                      onClick={cancelEditRule}
-                      className="shrink-0 text-gray-400 hover:text-gray-700"
-                    >
-                      취소
-                    </button>
+                    <button onClick={() => saveEditRule(r)} style={{ ...styles.linkBtn, color: C.primary }}>저장</button>
+                    <button onClick={cancelEditRule} style={styles.linkBtn}>취소</button>
                   </div>
                 ) : (
-                  <div
-                    key={r.id}
-                    className="flex items-center justify-between rounded-md border border-gray-100 px-3 py-2 text-sm text-gray-700"
-                  >
-                    <span className="truncate">{r.pattern}</span>
-                    <div className="ml-2 flex shrink-0 items-center gap-2">
-                      <button
-                        onClick={() => startEditRule(r)}
-                        className="text-gray-400 hover:text-gray-700"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => deleteRule(r.id)}
-                        className="text-gray-400 hover:text-gray-700"
-                        aria-label="삭제"
-                      >
-                        ×
-                      </button>
+                  <div key={r.id} style={styles.row}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.pattern}</span>
+                    <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
+                      <button onClick={() => startEditRule(r)} style={styles.linkBtn}>수정</button>
+                      <button onClick={() => deleteRule(r.id)} style={styles.linkBtn} aria-label="삭제">×</button>
                     </div>
                   </div>
                 )
@@ -584,100 +545,69 @@ export default function RulesPage() {
         )}
 
         {tab === "alias" && (
-          <section className="rounded-lg border border-gray-200 bg-white p-4">
-            <h2 className="mb-1 text-sm font-medium text-gray-500">
-              축약어 매칭단어 (예: 포마 → FORMA)
-            </h2>
-            <p className="mb-3 text-xs text-gray-400">
+          <section style={styles.card}>
+            <p style={styles.cardTitle}>축약어 매칭단어 (예: 포마 → FORMA)</p>
+            <p style={styles.cardHint}>
               시술 입력창에 축약어를 타이핑하면 검색 키워드로 치환되어, 그 키워드가
               들어간 모든 시술이 후보로 뜹니다.
             </p>
 
-            {aliasError && <p className="mb-2 text-sm text-red-500">에러: {aliasError}</p>}
+            {aliasError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {aliasError}</p>}
 
-            <div className="mb-3 flex gap-2">
+            <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
               <input
                 type="text"
                 value={newAliasText}
                 onChange={(e) => setNewAliasText(e.target.value)}
                 placeholder="축약어/오타 (예: 포마)"
-                className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                style={styles.input}
               />
-              <span className="flex items-center text-gray-400">→</span>
+              <span style={{ color: C.sub }}>→</span>
               <input
                 type="text"
                 value={newAliasKeyword}
                 onChange={(e) => setNewAliasKeyword(e.target.value)}
                 placeholder="실제 검색 키워드 (예: FORMA)"
-                className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                style={styles.input}
               />
               <button
                 onClick={addAlias}
                 disabled={!newAliasText.trim() || !newAliasKeyword.trim()}
-                className="shrink-0 rounded-md bg-gray-800 px-3 py-2 text-sm text-white disabled:bg-gray-300"
+                style={{ ...styles.btnPrimary, opacity: !newAliasText.trim() || !newAliasKeyword.trim() ? 0.4 : 1 }}
               >
                 추가
               </button>
             </div>
 
-            <div className="flex max-h-[60vh] flex-col gap-1.5 overflow-y-auto">
-              {aliases.length === 0 && (
-                <p className="text-xs text-gray-400">등록된 축약어가 없습니다.</p>
-              )}
+            <div style={styles.list}>
+              {aliases.length === 0 && <p style={styles.empty}>등록된 축약어가 없습니다.</p>}
               {aliases.map((a) =>
                 editingAliasId === a.id ? (
-                  <div
-                    key={a.id}
-                    className="flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2 text-sm"
-                  >
+                  <div key={a.id} style={styles.rowEdit}>
                     <input
                       type="text"
                       value={editAliasText}
                       onChange={(e) => setEditAliasText(e.target.value)}
-                      className="flex-1 rounded-md border border-gray-200 px-2 py-1 outline-none focus:border-gray-400"
+                      style={styles.input}
                     />
-                    <span className="text-gray-400">→</span>
+                    <span style={{ color: C.sub }}>→</span>
                     <input
                       type="text"
                       value={editAliasKeyword}
                       onChange={(e) => setEditAliasKeyword(e.target.value)}
-                      className="flex-1 rounded-md border border-gray-200 px-2 py-1 outline-none focus:border-gray-400"
+                      style={styles.input}
                     />
-                    <button
-                      onClick={() => saveEditAlias(a.id)}
-                      className="shrink-0 text-gray-700 hover:text-black"
-                    >
-                      저장
-                    </button>
-                    <button
-                      onClick={cancelEditAlias}
-                      className="shrink-0 text-gray-400 hover:text-gray-700"
-                    >
-                      취소
-                    </button>
+                    <button onClick={() => saveEditAlias(a.id)} style={{ ...styles.linkBtn, color: C.primary }}>저장</button>
+                    <button onClick={cancelEditAlias} style={styles.linkBtn}>취소</button>
                   </div>
                 ) : (
-                  <div
-                    key={a.id}
-                    className="flex items-center justify-between rounded-md border border-gray-100 px-3 py-2 text-sm text-gray-700"
-                  >
-                    <span className="truncate">
+                  <div key={a.id} style={styles.row}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                       {a.alias} → {a.keyword}
                     </span>
-                    <div className="ml-2 flex shrink-0 items-center gap-2">
-                      <button
-                        onClick={() => startEditAlias(a)}
-                        className="text-gray-400 hover:text-gray-700"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => deleteAlias(a.id)}
-                        className="text-gray-400 hover:text-gray-700"
-                        aria-label="삭제"
-                      >
-                        ×
-                      </button>
+                    <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
+                      <button onClick={() => startEditAlias(a)} style={styles.linkBtn}>수정</button>
+                      <button onClick={() => deleteAlias(a.id)} style={styles.linkBtn} aria-label="삭제">×</button>
                     </div>
                   </div>
                 )
@@ -687,103 +617,66 @@ export default function RulesPage() {
         )}
 
         {tab === "manual" && (
-          <section className="rounded-lg border border-gray-200 bg-white p-4">
-            <h2 className="mb-3 text-sm font-medium text-gray-500">
-              홈페이지에 없는 시술 추가
-            </h2>
+          <section style={styles.card}>
+            <p style={styles.cardTitle}>홈페이지에 없는 시술 추가</p>
 
-            {manualError && <p className="mb-2 text-sm text-red-500">에러: {manualError}</p>}
+            {manualError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {manualError}</p>}
 
-            <div className="mb-3 flex gap-2">
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <input
                 type="text"
                 value={newManualName}
                 onChange={(e) => setNewManualName(e.target.value)}
                 placeholder="시술명"
-                className="flex-1 rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                style={styles.input}
               />
               <input
                 type="number"
                 value={newManualPrice}
                 onChange={(e) => setNewManualPrice(e.target.value)}
                 placeholder="가격(원)"
-                className="w-40 rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                style={{ ...styles.input, flex: "0 0 130px" }}
               />
               <select
                 value={newManualCategory ?? ""}
                 onChange={(e) => setNewManualCategory(e.target.value ? (e.target.value as TreatmentCategory) : null)}
-                className="w-40 rounded-md border border-gray-200 px-3 py-2 text-sm outline-none focus:border-gray-400"
+                style={{ ...styles.input, flex: "0 0 140px" }}
               >
                 <option value="">카테고리</option>
                 {CATEGORY_ORDER.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {cat}
-                  </option>
+                  <option key={cat} value={cat}>{cat}</option>
                 ))}
               </select>
-              <button
-                onClick={addManualTreatment}
-                className="shrink-0 rounded-md bg-gray-800 px-3 py-2 text-sm text-white"
-              >
-                추가
-              </button>
+              <button onClick={addManualTreatment} style={styles.btnPrimary}>추가</button>
             </div>
 
-            <div className="flex max-h-[60vh] flex-col gap-1.5 overflow-y-auto">
-              {manualTreatments.length === 0 && (
-                <p className="text-xs text-gray-400">직접 추가한 시술이 없습니다.</p>
-              )}
+            <div style={styles.list}>
+              {manualTreatments.length === 0 && <p style={styles.empty}>직접 추가한 시술이 없습니다.</p>}
               {manualTreatments.map((t) =>
                 editingManualId === t.id ? (
-                  <div
-                    key={t.id}
-                    className="flex items-center gap-2 rounded-md border border-gray-200 px-3 py-2 text-sm"
-                  >
+                  <div key={t.id} style={styles.rowEdit}>
                     <input
                       type="text"
                       value={editManualName}
                       onChange={(e) => setEditManualName(e.target.value)}
-                      className="flex-1 rounded-md border border-gray-200 px-2 py-1 outline-none focus:border-gray-400"
+                      style={styles.input}
                     />
                     <input
                       type="number"
                       value={editManualPrice}
                       onChange={(e) => setEditManualPrice(e.target.value)}
-                      className="w-32 rounded-md border border-gray-200 px-2 py-1 outline-none focus:border-gray-400"
+                      style={{ ...styles.input, flex: "0 0 120px" }}
                     />
-                    <button
-                      onClick={() => saveEditManual(t.id)}
-                      className="shrink-0 text-gray-700 hover:text-black"
-                    >
-                      저장
-                    </button>
-                    <button
-                      onClick={cancelEditManual}
-                      className="shrink-0 text-gray-400 hover:text-gray-700"
-                    >
-                      취소
-                    </button>
+                    <button onClick={() => saveEditManual(t.id)} style={{ ...styles.linkBtn, color: C.primary }}>저장</button>
+                    <button onClick={cancelEditManual} style={styles.linkBtn}>취소</button>
                   </div>
                 ) : (
-                  <div
-                    key={t.id}
-                    className="flex items-center justify-between rounded-md border border-gray-100 px-3 py-2 text-sm text-gray-700"
-                  >
-                    <span className="truncate">{t.name}</span>
-                    <div className="ml-2 flex shrink-0 items-center gap-3">
-                      <span className="tabular-nums">{formatNumber(t.price)}원</span>
-                      <button
-                        onClick={() => startEditManual(t)}
-                        className="text-gray-400 hover:text-gray-700"
-                      >
-                        수정
-                      </button>
-                      <button
-                        onClick={() => deleteManualTreatment(t.id)}
-                        className="text-gray-400 hover:text-gray-700"
-                      >
-                        삭제
-                      </button>
+                  <div key={t.id} style={styles.row}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</span>
+                    <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
+                      <span style={{ fontVariantNumeric: "tabular-nums", color: C.primary }}>{formatNumber(t.price)}원</span>
+                      <button onClick={() => startEditManual(t)} style={styles.linkBtn}>수정</button>
+                      <button onClick={() => deleteManualTreatment(t.id)} style={styles.linkBtn}>삭제</button>
                     </div>
                   </div>
                 )
@@ -793,104 +686,125 @@ export default function RulesPage() {
         )}
 
         {tab === "category" && (
-          <section className="rounded-lg border border-gray-200 bg-white p-4">
-            <h2 className="mb-1 text-sm font-medium text-gray-800">
-              미분류 시술 카테고리 지정
-            </h2>
-            <p className="mb-3 text-xs text-gray-600">
-              체크박스로 선택 후 카테고리를 지정하면 일괄 처리됩니다.
+          <section style={styles.card}>
+            <p style={styles.cardTitle}>시술 카테고리 분류</p>
+            <p style={styles.cardHint}>
+              분류별로 속한 시술 목록입니다. 체크박스로 여러 개 선택한 뒤 원하는 분류로 한번에 이동할 수 있습니다.
             </p>
 
-            {categoryError && <p className="mb-2 text-sm text-red-500">에러: {categoryError}</p>}
+            {categoryError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {categoryError}</p>}
 
-            {unclassified.length > 0 && (
-              <div className="mb-4 flex gap-2 rounded-md border border-gray-200 bg-gray-50 p-3">
-                <select
-                  value={bulkCategory ?? ""}
-                  onChange={(e) => setBulkCategory(e.target.value ? (e.target.value as TreatmentCategory) : null)}
-                  className="flex-1 rounded-md border border-gray-200 px-2 py-1 text-sm outline-none focus:border-gray-400"
-                >
-                  <option value="">카테고리 선택</option>
-                  {CATEGORY_ORDER.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  onClick={bulkUpdateCategory}
-                  disabled={selectedForBulk.size === 0 || !bulkCategory}
-                  className="rounded-md bg-blue-600 px-3 py-1 text-sm text-white disabled:bg-gray-300"
-                >
-                  {selectedForBulk.size}개 일괄 분류
-                </button>
-              </div>
-            )}
+            <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
+              <input
+                type="text"
+                value={categorySearch}
+                onChange={(e) => setCategorySearch(e.target.value)}
+                placeholder="시술명 검색"
+                style={styles.input}
+              />
+              <select
+                value={bulkCategory ?? ""}
+                onChange={(e) => setBulkCategory(e.target.value ? (e.target.value as TreatmentCategory) : null)}
+                style={{ ...styles.input, flex: "0 0 170px" }}
+              >
+                <option value="">이동할 분류 선택</option>
+                {CATEGORY_ORDER.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <button
+                onClick={bulkMoveCategory}
+                disabled={selectedForBulk.size === 0 || !bulkCategory}
+                style={{ ...styles.btnPrimary, opacity: selectedForBulk.size === 0 || !bulkCategory ? 0.4 : 1 }}
+              >
+                {selectedForBulk.size}개 이동
+              </button>
+            </div>
 
-            <div className="flex max-h-[60vh] flex-col gap-1.5 overflow-y-auto">
-              {unclassified.length === 0 && (
-                <p className="text-xs text-gray-600">모든 시술이 분류되었습니다!</p>
-              )}
-              {unclassified.map((t) => (
-                <div
-                  key={t.id}
-                  className="flex items-center gap-2 rounded-md border border-gray-100 px-3 py-2 text-sm text-gray-700"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedForBulk.has(t.id)}
-                    onChange={(e) => {
-                      const newSet = new Set(selectedForBulk);
-                      if (e.target.checked) {
-                        newSet.add(t.id);
-                      } else {
-                        newSet.delete(t.id);
-                      }
-                      setSelectedForBulk(newSet);
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(7, minmax(130px, 1fr))", gap: 8, overflowX: "auto" }}>
+              {[...CATEGORY_ORDER, null].map((cat) => {
+                const q = categorySearch.trim().toLowerCase();
+                const items = categoryTreatments.filter((t) => {
+                  const inCat = cat === null ? !t.category : t.category === cat;
+                  if (!inCat) return false;
+                  return q === "" || t.name.toLowerCase().includes(q);
+                });
+                const isUnclassified = cat === null;
+                return (
+                  <div
+                    key={cat ?? "미분류"}
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      minWidth: 0,
+                      border: `1px solid ${isUnclassified ? C.sub : C.borderSoft}`,
+                      borderStyle: isUnclassified ? "dashed" : "solid",
+                      borderRadius: 10,
+                      background: isUnclassified ? "#fdfcfb" : "#fff",
                     }}
-                    className="cursor-pointer"
-                  />
-                  <div className="flex-1">
-                    <p className="font-medium">{t.name}</p>
-                    <p className="text-xs text-gray-500">{formatNumber(t.price)}원</p>
+                  >
+                    <div style={{ padding: "8px 8px", borderBottom: `1px solid ${C.borderSoft}`, fontSize: 12, fontWeight: 700, color: isUnclassified ? C.sub : C.primary }}>
+                      {cat ?? "미분류"} <span style={{ fontWeight: 400, color: C.sub }}>({items.length})</span>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: 6, maxHeight: "65vh", overflowY: "auto" }}>
+                      {items.length === 0 && <p style={{ fontSize: 11, color: C.sub, padding: "4px 2px" }}>없음</p>}
+                      {items.map((t) => (
+                        <label
+                          key={t.id}
+                          style={{ display: "flex", gap: 6, alignItems: "flex-start", border: `1px solid ${C.borderSoft}`, borderRadius: 6, padding: "5px 6px", fontSize: 11, lineHeight: 1.35, cursor: "pointer" }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={selectedForBulk.has(t.id!)}
+                            onChange={(e) => {
+                              const newSet = new Set(selectedForBulk);
+                              if (e.target.checked) newSet.add(t.id!);
+                              else newSet.delete(t.id!);
+                              setSelectedForBulk(newSet);
+                            }}
+                            style={{ marginTop: 2, cursor: "pointer", flexShrink: 0 }}
+                          />
+                          <span style={{ flex: 1, wordBreak: "break-word" as const }}>
+                            {t.name}
+                            <span style={{ display: "block", color: C.sub, fontVariantNumeric: "tabular-nums" }}>{formatNumber(t.price)}원</span>
+                          </span>
+                        </label>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </section>
         )}
 
         {(tab === "replace" || tab === "exclude") && (
-          <div className="mt-4 rounded-lg border border-gray-200 bg-white p-4">
+          <div style={{ ...styles.card, marginTop: 16 }}>
             <button
               onClick={handleApply}
               disabled={applying}
-              className="rounded-md bg-gray-800 px-4 py-2 text-sm font-medium text-white disabled:bg-gray-300"
+              style={{ ...styles.btnPrimary, opacity: applying ? 0.6 : 1 }}
             >
               {applying ? "적용 중..." : "지금 기존 데이터에 적용"}
             </button>
 
-            {applyError && <p className="mt-3 text-sm text-red-500">에러: {applyError}</p>}
+            {applyError && <p style={{ marginTop: 10, fontSize: 13, color: C.danger }}>에러: {applyError}</p>}
 
             {applyResult && (
-              <div className="mt-3 text-sm text-gray-700">
+              <div style={{ marginTop: 10, fontSize: 13, color: C.primary }}>
                 <p>업데이트: {applyResult.updated}건</p>
                 {applyResult.skipped.length > 0 && (
-                  <div className="mt-1">
-                    <p className="text-amber-600">
-                      중복으로 건너뜀: {applyResult.skipped.length}건
-                    </p>
-                    <ul className="mt-1 list-disc pl-5 text-xs text-gray-500">
+                  <div style={{ marginTop: 4 }}>
+                    <p style={{ color: "#b8860b" }}>중복으로 건너뜀: {applyResult.skipped.length}건</p>
+                    <ul style={{ marginTop: 4, paddingLeft: 18, fontSize: 11, color: C.sub, listStyle: "disc" }}>
                       {applyResult.skipped.map((s) => (
-                        <li key={s.id}>
-                          {s.oldName} → {s.newName}
-                        </li>
+                        <li key={s.id}>{s.oldName} → {s.newName}</li>
                       ))}
                     </ul>
                   </div>
                 )}
                 {applyResult.errors.length > 0 && (
-                  <p className="mt-1 text-red-500">에러: {applyResult.errors.length}건</p>
+                  <p style={{ marginTop: 4, color: C.danger }}>에러: {applyResult.errors.length}건</p>
                 )}
               </div>
             )}
