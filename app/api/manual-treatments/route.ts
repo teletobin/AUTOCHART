@@ -1,14 +1,19 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 
-const BRANCH = "홍대점";
+export async function GET(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const branch = searchParams.get("branch");
+  if (!branch) {
+    return NextResponse.json({ error: "branch는 필수입니다." }, { status: 400 });
+  }
 
-export async function GET() {
   const supabase = getSupabaseServerClient();
 
   const { data, error } = await supabase
     .from("treatments")
-    .select("id, name, price")
+    .select("id, name, price, category")
+    .eq("branch", branch)
     .eq("is_manual", true)
     .order("name", { ascending: true });
 
@@ -26,7 +31,11 @@ export async function POST(request: Request) {
   const name = String(body.name ?? "").trim();
   const price = Number(body.price);
   const category = body.category ?? null;
+  const branch = String(body.branch ?? "").trim();
 
+  if (!branch) {
+    return NextResponse.json({ error: "branch는 필수입니다." }, { status: 400 });
+  }
   if (!name || !price || price <= 0) {
     return NextResponse.json({ error: "시술명과 가격을 입력하세요." }, { status: 400 });
   }
@@ -34,7 +43,7 @@ export async function POST(request: Request) {
   const { data, error } = await supabase
     .from("treatments")
     .insert({
-      branch: BRANCH,
+      branch,
       name,
       price,
       category,

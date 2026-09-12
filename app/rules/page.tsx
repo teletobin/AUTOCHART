@@ -7,6 +7,9 @@ import type { Alias, Treatment } from "@/lib/types";
 import { TreatmentCategory } from "@/lib/types";
 import { CATEGORY_ORDER } from "@/lib/categoryDetection";
 import { C, MAX_WIDTH } from "@/lib/theme";
+import { BRANCH_STORAGE_KEY } from "@/lib/branches";
+import BranchPicker from "@/components/BranchPicker";
+import Dropdown from "@/components/Dropdown";
 
 type Rule = {
   id: string;
@@ -19,6 +22,7 @@ type ManualTreatment = {
   id: string;
   name: string;
   price: number;
+  category: TreatmentCategory | null;
 };
 
 type ApplyResult = {
@@ -33,8 +37,8 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "category", label: "시술 카테고리 분류" },
   { key: "replace", label: "치환" },
   { key: "exclude", label: "삭제" },
-  { key: "alias", label: "축약어 매칭단어" },
-  { key: "manual", label: "홈페이지 미등재시술 추가" },
+  { key: "alias", label: "매칭" },
+  { key: "manual", label: "홈페이지에 없는 시술" },
 ];
 
 const SETUP_SQL = `create table cleanup_rules (
@@ -51,6 +55,7 @@ const styles: Record<string, React.CSSProperties> = {
   header:    { borderBottom: `1px solid ${C.border}`, background: C.surface, padding: "14px 28px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
   headerInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 28, paddingRight: 28, boxSizing: "border-box" },
   title:     { fontSize: 17, fontWeight: 700, color: C.primary },
+  logo:      { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 17, color: C.primary },
   backLink:  { fontSize: 12, color: C.sub, textDecoration: "none" },
   tabBar:    { borderBottom: `1px solid ${C.border}`, background: C.surface, width: "100%" },
   tabBarInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", gap: 4, padding: "0 28px", overflowX: "auto" as const, boxSizing: "border-box" },
@@ -60,6 +65,7 @@ const styles: Record<string, React.CSSProperties> = {
   cardHint:  { fontSize: 11, color: C.sub, marginBottom: 14 },
   input:     { flex: 1, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
   btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 },
+  btnGhost: { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" },
   row:       { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, border: `1px solid ${C.borderSoft}`, borderRadius: 8, padding: "9px 12px", fontSize: 13 },
   rowEdit:   { display: "flex", alignItems: "center", gap: 8, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13 },
   linkBtn:   { background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 12, padding: 0 },
@@ -83,11 +89,19 @@ function tabButtonStyle(active: boolean): React.CSSProperties {
 
 export default function RulesPage() {
   const [tab, setTab] = useState<Tab>("replace");
+  const [branch, setBranch] = useState("");
 
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get("tab") as Tab | null;
     if (t && TABS.some((tb) => tb.key === t)) setTab(t);
+    const saved = localStorage.getItem(BRANCH_STORAGE_KEY);
+    if (saved) setBranch(saved);
   }, []);
+
+  function handleBranchChange(next: string) {
+    setBranch(next);
+    localStorage.setItem(BRANCH_STORAGE_KEY, next);
+  }
 
   const [rules, setRules] = useState<Rule[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -131,6 +145,9 @@ export default function RulesPage() {
   const [reclassifying, setReclassifying] = useState(false);
   const [reclassifyError, setReclassifyError] = useState<string | null>(null);
 
+  const [reclassifyingLdm, setReclassifyingLdm] = useState(false);
+  const [reclassifyLdmError, setReclassifyLdmError] = useState<string | null>(null);
+
   const [aliases, setAliases] = useState<Alias[]>([]);
   const [aliasError, setAliasError] = useState<string | null>(null);
   const [newAliasText, setNewAliasText] = useState("");
@@ -155,8 +172,9 @@ export default function RulesPage() {
       .catch((e) => setLoadError(String(e)));
   }
 
-  function loadManualTreatments() {
-    fetch("/api/manual-treatments")
+  function loadManualTreatments(forBranch: string) {
+    if (!forBranch) { setManualTreatments([]); return; }
+    fetch(`/api/manual-treatments?branch=${encodeURIComponent(forBranch)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.error) setManualError(data.error);
@@ -168,8 +186,9 @@ export default function RulesPage() {
       .catch((e) => setManualError(String(e)));
   }
 
-  function loadCategoryTreatments() {
-    fetch("/api/treatments")
+  function loadCategoryTreatments(forBranch: string) {
+    if (!forBranch) { setCategoryTreatments([]); return; }
+    fetch(`/api/treatments?branch=${encodeURIComponent(forBranch)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.error) setCategoryError(data.error);
@@ -196,10 +215,17 @@ export default function RulesPage() {
 
   useEffect(() => {
     loadRules();
-    loadManualTreatments();
-    loadCategoryTreatments();
     loadAliases();
   }, []);
+
+  useEffect(() => {
+    loadManualTreatments(branch);
+    loadCategoryTreatments(branch);
+  }, [branch]);
+
+  useEffect(() => {
+    if (tab === "category" && branch) loadCategoryTreatments(branch);
+  }, [tab, branch]);
 
   async function addRule(type: "exclude" | "replace", pattern: string, replacement?: string) {
     if (!pattern.trim()) return;
@@ -263,6 +289,7 @@ export default function RulesPage() {
         setApplyError(data.error);
       } else {
         setApplyResult(data);
+        if (branch) loadCategoryTreatments(branch);
       }
     } catch (e) {
       setApplyError(String(e));
@@ -272,11 +299,11 @@ export default function RulesPage() {
   }
 
   async function addManualTreatment() {
-    if (!newManualName.trim() || !newManualPrice) return;
+    if (!branch || !newManualName.trim() || !newManualPrice) return;
     const res = await fetch("/api/manual-treatments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: newManualName, price: Number(newManualPrice), category: newManualCategory }),
+      body: JSON.stringify({ branch, name: newManualName, price: Number(newManualPrice), category: newManualCategory }),
     });
     const data = await res.json();
     if (data.error) {
@@ -322,17 +349,22 @@ export default function RulesPage() {
   }
 
   async function handleSync() {
+    if (!branch) return;
     setSyncing(true);
     setSyncError(null);
     setSyncResult(null);
     try {
-      const res = await fetch("/api/scrape", { method: "POST" });
+      const res = await fetch("/api/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ branch }),
+      });
       const data = await res.json();
       if (data.error) {
         setSyncError(data.error);
       } else {
         setSyncResult(data);
-        loadCategoryTreatments();
+        loadCategoryTreatments(branch);
       }
     } catch (e) {
       setSyncError(String(e));
@@ -342,16 +374,17 @@ export default function RulesPage() {
   }
 
   async function handleReset() {
+    if (!branch) return;
     if (!confirm("홈페이지에서 불러온 시술을 모두 삭제합니다 (미등재 시술은 유지됩니다). 계속할까요?")) return;
     setResetting(true);
     setResetError(null);
     try {
-      const res = await fetch("/api/treatments", { method: "DELETE" });
+      const res = await fetch(`/api/treatments?branch=${encodeURIComponent(branch)}`, { method: "DELETE" });
       const data = await res.json();
       if (data.error) {
         setResetError(data.error);
       } else {
-        loadCategoryTreatments();
+        loadCategoryTreatments(branch);
       }
     } catch (e) {
       setResetError(String(e));
@@ -361,20 +394,48 @@ export default function RulesPage() {
   }
 
   async function handleReclassifyLaser() {
+    if (!branch) return;
     setReclassifying(true);
     setReclassifyError(null);
     try {
-      const res = await fetch("/api/treatments/reclassify-laser", { method: "POST" });
+      const res = await fetch("/api/treatments/reclassify-laser", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ branch }),
+      });
       const data = await res.json();
       if (data.error) {
         setReclassifyError(data.error);
       } else {
-        loadCategoryTreatments();
+        loadCategoryTreatments(branch);
       }
     } catch (e) {
       setReclassifyError(String(e));
     } finally {
       setReclassifying(false);
+    }
+  }
+
+  async function handleReclassifyLdm() {
+    if (!branch) return;
+    setReclassifyingLdm(true);
+    setReclassifyLdmError(null);
+    try {
+      const res = await fetch("/api/treatments/reclassify-ldm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ branch }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setReclassifyLdmError(data.error);
+      } else {
+        loadCategoryTreatments(branch);
+      }
+    } catch (e) {
+      setReclassifyLdmError(String(e));
+    } finally {
+      setReclassifyingLdm(false);
     }
   }
 
@@ -455,12 +516,58 @@ export default function RulesPage() {
   const excludeRules = rules.filter((r) => r.type === "exclude");
   const replaceRules = rules.filter((r) => r.type === "replace");
 
+  const applySection = (
+    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: `1px solid ${C.border}` }}>
+      <button
+        onClick={handleApply}
+        disabled={applying}
+        style={{ ...styles.btnPrimary, opacity: applying ? 0.6 : 1 }}
+      >
+        {applying ? "적용 중..." : "연동된 데이터에 적용"}
+      </button>
+
+      {applyError && <p style={{ marginTop: 10, fontSize: 13, color: C.danger }}>에러: {applyError}</p>}
+
+      {applyResult && (
+        <div style={{ marginTop: 10, fontSize: 13, color: C.primary }}>
+          <p>업데이트: {applyResult.updated}건</p>
+          {applyResult.skipped.length > 0 && (
+            <div style={{ marginTop: 4 }}>
+              <p style={{ color: "#b8860b" }}>중복으로 건너뜀: {applyResult.skipped.length}건</p>
+              <ul style={{ marginTop: 4, paddingLeft: 18, fontSize: 11, color: C.sub, listStyle: "disc" }}>
+                {applyResult.skipped.map((s) => (
+                  <li key={s.id}>{s.oldName} → {s.newName}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {applyResult.errors.length > 0 && (
+            <p style={{ marginTop: 4, color: C.danger }}>에러: {applyResult.errors.length}건</p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div style={styles.wrap}>
       <header style={styles.header}>
         <div style={styles.headerInner}>
-          <h1 style={styles.title}>상세설정</h1>
-          <Link href="/" style={styles.backLink}>← 메인으로</Link>
+          <div style={styles.logo}>
+            <img src="/logo.png" alt="차팅서포트" style={{ height: 36, width: "auto" }} />
+            <span style={{ fontWeight: 700 }}>차팅서포트</span>
+            <span style={{ color: C.sub, fontWeight: 400, fontSize: 16.5 }}>&gt;</span>
+            <span style={{ fontWeight: 500, color: C.sub, fontSize: 16.5 }}>상세설정</span>
+          </div>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <BranchPicker value={branch} onChange={handleBranchChange} />
+            <Link
+              href="/"
+              style={{ ...styles.btnGhost, fontSize: 11, padding: "6px 10px", textDecoration: "none", display: "inline-block" }}
+            >
+              메인으로
+            </Link>
+          </div>
         </div>
       </header>
 
@@ -491,10 +598,18 @@ export default function RulesPage() {
         </div>
       </div>
 
-      <main style={styles.main}>
+      <main
+        style={
+          tab === "category"
+            ? styles.main
+            : { ...styles.main, maxWidth: tab === "manual" ? 760 : 640, margin: "0" }
+        }
+      >
         {tab === "replace" && (
           <section style={styles.card}>
             <p style={styles.cardTitle}>치환 규칙 (찾을 문자열 → 바꿀 문자열)</p>
+
+            {applySection}
 
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <input
@@ -563,6 +678,8 @@ export default function RulesPage() {
           <section style={styles.card}>
             <p style={styles.cardTitle}>제외 문구 (해당 문자열을 삭제)</p>
 
+            {applySection}
+
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <input
                 type="text"
@@ -618,7 +735,7 @@ export default function RulesPage() {
 
         {tab === "alias" && (
           <section style={styles.card}>
-            <p style={styles.cardTitle}>축약어 매칭단어 (예: 포마 → FORMA)</p>
+            <p style={styles.cardTitle}>매칭 (예: 포마 → FORMA)</p>
             <p style={styles.cardHint}>
               시술 입력창에 축약어를 타이핑하면 검색 키워드로 치환되어, 그 키워드가
               들어간 모든 시술이 후보로 뜹니다.
@@ -690,8 +807,9 @@ export default function RulesPage() {
 
         {tab === "manual" && (
           <section style={styles.card}>
-            <p style={styles.cardTitle}>홈페이지에 없는 시술 추가</p>
+            <p style={styles.cardTitle}>홈페이지에 없는 시술</p>
 
+            {!branch && <p style={{ marginBottom: 8, fontSize: 13, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
             {manualError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {manualError}</p>}
 
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
@@ -700,26 +818,29 @@ export default function RulesPage() {
                 value={newManualName}
                 onChange={(e) => setNewManualName(e.target.value)}
                 placeholder="시술명"
-                style={styles.input}
+                style={{ ...styles.input, flex: 1, minWidth: 0 }}
               />
               <input
                 type="number"
                 value={newManualPrice}
                 onChange={(e) => setNewManualPrice(e.target.value)}
                 placeholder="가격(원)"
-                style={{ ...styles.input, flex: "0 0 130px" }}
+                style={{ ...styles.input, flex: "0 0 90px", minWidth: 0 }}
               />
-              <select
+              <Dropdown
                 value={newManualCategory ?? ""}
-                onChange={(e) => setNewManualCategory(e.target.value ? (e.target.value as TreatmentCategory) : null)}
-                style={{ ...styles.input, flex: "0 0 140px" }}
+                onChange={(v) => setNewManualCategory(v ? (v as TreatmentCategory) : null)}
+                placeholder="카테고리"
+                options={CATEGORY_ORDER.map((cat) => ({ value: cat, label: cat }))}
+                style={{ flex: "0 0 110px" }}
+              />
+              <button
+                onClick={addManualTreatment}
+                disabled={!branch}
+                style={{ ...styles.btnPrimary, opacity: !branch ? 0.4 : 1, flexShrink: 0 }}
               >
-                <option value="">카테고리</option>
-                {CATEGORY_ORDER.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-              <button onClick={addManualTreatment} style={styles.btnPrimary}>추가</button>
+                추가
+              </button>
             </div>
 
             <div style={styles.list}>
@@ -746,6 +867,9 @@ export default function RulesPage() {
                   <div key={t.id} style={styles.row}>
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</span>
                     <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
+                      {t.category && (
+                        <span style={{ fontSize: 11, fontWeight: 600, color: C.sub, background: C.primaryLt, borderRadius: 6, padding: "2px 8px", whiteSpace: "nowrap" }}>{t.category}</span>
+                      )}
                       <span style={{ fontVariantNumeric: "tabular-nums", color: C.primary }}>{formatNumber(t.price)}원</span>
                       <button onClick={() => startEditManual(t)} style={styles.linkBtn}>수정</button>
                       <button onClick={() => deleteManualTreatment(t.id)} style={styles.linkBtn}>삭제</button>
@@ -767,23 +891,26 @@ export default function RulesPage() {
                 </p>
               </div>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                <button onClick={handleSync} disabled={syncing} style={{ ...styles.btnPrimary, opacity: syncing ? 0.6 : 1 }}>
+                <button onClick={handleSync} disabled={syncing || !branch} style={{ ...styles.btnPrimary, opacity: syncing || !branch ? 0.6 : 1 }}>
                   {syncing ? "연동 중..." : "시술연동"}
                 </button>
                 <button
                   onClick={handleReset}
-                  disabled={resetting}
-                  style={{ ...styles.btnPrimary, background: C.danger, opacity: resetting ? 0.6 : 1 }}
+                  disabled={resetting || !branch}
+                  style={{ ...styles.btnPrimary, background: C.danger, opacity: resetting || !branch ? 0.6 : 1 }}
                 >
                   {resetting ? "삭제 중..." : "데이터리셋"}
                 </button>
               </div>
             </div>
 
+            {!branch && <p style={{ marginTop: 8, fontSize: 13, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
+
             {syncError && <p style={{ marginTop: 8, fontSize: 13, color: C.danger }}>연동 에러: {syncError}</p>}
             {syncResult && <p style={{ marginTop: 8, fontSize: 12, color: C.sub }}>연동 완료: {syncResult.scraped}건 수집, {syncResult.saved}건 저장</p>}
             {resetError && <p style={{ marginTop: 8, fontSize: 13, color: C.danger }}>리셋 에러: {resetError}</p>}
             {reclassifyError && <p style={{ marginTop: 8, fontSize: 13, color: C.danger }}>재분류 에러: {reclassifyError}</p>}
+            {reclassifyLdmError && <p style={{ marginTop: 8, fontSize: 13, color: C.danger }}>재분류 에러: {reclassifyLdmError}</p>}
 
             {categoryError && <p style={{ marginTop: 8, marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {categoryError}</p>}
 
@@ -795,16 +922,13 @@ export default function RulesPage() {
                 placeholder="시술명 검색"
                 style={styles.input}
               />
-              <select
+              <Dropdown
                 value={bulkCategory ?? ""}
-                onChange={(e) => setBulkCategory(e.target.value ? (e.target.value as TreatmentCategory) : null)}
-                style={{ ...styles.input, flex: "0 0 170px" }}
-              >
-                <option value="">이동할 분류 선택</option>
-                {CATEGORY_ORDER.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+                onChange={(v) => setBulkCategory(v ? (v as TreatmentCategory) : null)}
+                placeholder="이동할 분류 선택"
+                options={CATEGORY_ORDER.map((cat) => ({ value: cat, label: cat }))}
+                style={{ flex: "0 0 170px" }}
+              />
               <button
                 onClick={bulkMoveCategory}
                 disabled={selectedForBulk.size === 0 || !bulkCategory}
@@ -844,6 +968,16 @@ export default function RulesPage() {
                           style={{ fontSize: 10, fontWeight: 600, color: C.sub, background: "none", border: `1px solid ${C.border}`, borderRadius: 6, padding: "2px 6px", cursor: "pointer", opacity: reclassifying ? 0.6 : 1, flexShrink: 0 }}
                         >
                           {reclassifying ? "재분류 중..." : "재분류"}
+                        </button>
+                      )}
+                      {cat === TreatmentCategory.리프팅 && (
+                        <button
+                          onClick={handleReclassifyLdm}
+                          disabled={reclassifyingLdm}
+                          title="시술명에 LDM이 포함된 항목을 피부관리로 다시 분류합니다"
+                          style={{ fontSize: 10, fontWeight: 600, color: C.sub, background: "none", border: `1px solid ${C.border}`, borderRadius: 6, padding: "2px 6px", cursor: "pointer", opacity: reclassifyingLdm ? 0.6 : 1, flexShrink: 0 }}
+                        >
+                          {reclassifyingLdm ? "재분류 중..." : "재분류"}
                         </button>
                       )}
                     </div>
@@ -919,38 +1053,6 @@ export default function RulesPage() {
           </section>
         )}
 
-        {(tab === "replace" || tab === "exclude") && (
-          <div style={{ ...styles.card, marginTop: 16 }}>
-            <button
-              onClick={handleApply}
-              disabled={applying}
-              style={{ ...styles.btnPrimary, opacity: applying ? 0.6 : 1 }}
-            >
-              {applying ? "적용 중..." : "지금 기존 데이터에 적용"}
-            </button>
-
-            {applyError && <p style={{ marginTop: 10, fontSize: 13, color: C.danger }}>에러: {applyError}</p>}
-
-            {applyResult && (
-              <div style={{ marginTop: 10, fontSize: 13, color: C.primary }}>
-                <p>업데이트: {applyResult.updated}건</p>
-                {applyResult.skipped.length > 0 && (
-                  <div style={{ marginTop: 4 }}>
-                    <p style={{ color: "#b8860b" }}>중복으로 건너뜀: {applyResult.skipped.length}건</p>
-                    <ul style={{ marginTop: 4, paddingLeft: 18, fontSize: 11, color: C.sub, listStyle: "disc" }}>
-                      {applyResult.skipped.map((s) => (
-                        <li key={s.id}>{s.oldName} → {s.newName}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {applyResult.errors.length > 0 && (
-                  <p style={{ marginTop: 4, color: C.danger }}>에러: {applyResult.errors.length}건</p>
-                )}
-              </div>
-            )}
-          </div>
-        )}
       </main>
     </div>
   );

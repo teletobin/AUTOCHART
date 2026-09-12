@@ -8,6 +8,9 @@ import type { Alias, Treatment } from "@/lib/types";
 import { TreatmentCategory } from "@/lib/types";
 import { CATEGORY_ORDER } from "@/lib/categoryDetection";
 import { C, MAX_WIDTH } from "@/lib/theme";
+import { BRANCH_STORAGE_KEY } from "@/lib/branches";
+import BranchPicker from "@/components/BranchPicker";
+import Dropdown from "@/components/Dropdown";
 
 const VAT_RATE = 1.1;
 
@@ -94,14 +97,15 @@ function CountDial({ count, onChange }: { count: number; onChange: (count: numbe
 
 const styles: Record<string, React.CSSProperties> = {
   wrap:    { display: "flex", flexDirection: "column", minHeight: "100vh", background: C.bg, color: C.primary, fontFamily: "Pretendard, -apple-system, sans-serif" },
-  header:  { borderBottom: `1px solid ${C.border}`, background: C.surface, padding: "14px 28px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
-  headerInner: { maxWidth: MAX_WIDTH, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" },
+  header:  { borderBottom: `1px solid ${C.border}`, background: C.surface, padding: "14px 0", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
+  headerInner: { maxWidth: MAX_WIDTH, margin: "0 auto", padding: "0 20px", boxSizing: "border-box" as const, display: "flex", alignItems: "center", justifyContent: "space-between" },
   logo:    { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 17, color: C.primary },
   btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
   btnGhost:   { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" },
   main:    { maxWidth: MAX_WIDTH, margin: "0 auto", width: "100%", padding: "24px 20px", display: "grid", gridTemplateColumns: "1fr", gap: 16 },
   card:    { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px" },
   cardTitle: { fontSize: 12, fontWeight: 700, color: C.sub, marginBottom: 14, letterSpacing: "0.04em" },
+  titleRow: { display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 34, marginBottom: 14 },
   input:   { width: "100%", border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
   hint:    { fontSize: 11, color: C.sub, marginTop: 6 },
   candidateBox: { position: "absolute" as const, zIndex: 20, marginTop: 4, width: "100%", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: "0 8px 24px rgba(111,104,100,0.10)", overflow: "hidden" },
@@ -115,10 +119,11 @@ const styles: Record<string, React.CSSProperties> = {
   numInput: { width: 120, border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 10px", fontSize: 13, textAlign: "right" as const, outline: "none", background: "#fff", color: C.primary },
   divider: { borderTop: `1px dashed ${C.border}`, margin: "2px 0" },
   dividerSolid: { borderTop: `2px solid ${C.primaryLt}`, margin: "2px 0" },
-  footer: { marginTop: "auto", borderTop: `1px solid ${C.border}`, background: C.surface, padding: "16px", textAlign: "center" as const, fontSize: 11, color: C.sub },
 };
 
 export default function Home() {
+  const [branch, setBranch] = useState("");
+  const [syncing, setSyncing] = useState(false);
   const [treatments, setTreatments] = useState<Treatment[]>([]);
   const [aliases, setAliases] = useState<Alias[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -138,8 +143,8 @@ export default function Home() {
   const [transferEnabled, setTransferEnabled] = useState(false);
   const [transferRecipients, setTransferRecipients] = useState<Array<{ name: string; amount: string }>>([]);
 
-  function loadTreatments() {
-    return fetch("/api/treatments").then((res) => res.json()).then((data) => {
+  function loadTreatments(forBranch: string) {
+    return fetch(`/api/treatments?branch=${encodeURIComponent(forBranch)}`).then((res) => res.json()).then((data) => {
       if (data.error) setLoadError(data.error);
       else { setLoadError(null); setTreatments(data.treatments ?? []); }
     }).catch((e) => setLoadError(String(e)));
@@ -149,7 +154,38 @@ export default function Home() {
       if (!data.error) setAliases(data.aliases ?? []);
     }).catch(() => {});
   }
-  useEffect(() => { loadTreatments(); loadAliases(); }, []);
+  useEffect(() => {
+    loadAliases();
+    const saved = localStorage.getItem(BRANCH_STORAGE_KEY);
+    if (saved) setBranch(saved);
+  }, []);
+  useEffect(() => {
+    if (branch) loadTreatments(branch);
+  }, [branch]);
+
+  function handleBranchChange(next: string) {
+    setBranch(next);
+    localStorage.setItem(BRANCH_STORAGE_KEY, next);
+  }
+
+  async function handleSyncBranch() {
+    if (!branch) return;
+    setSyncing(true);
+    try {
+      const res = await fetch("/api/scrape", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ branch }),
+      });
+      const data = await res.json();
+      if (data.error) setLoadError(data.error);
+      else await loadTreatments(branch);
+    } catch (e) {
+      setLoadError(String(e));
+    } finally {
+      setSyncing(false);
+    }
+  }
 
   const matcher = useMemo(() => buildMatcher(treatments, aliases), [treatments, aliases]);
   const candidates = useMemo(() => (inputValue.trim().length >= 2 ? matcher(inputValue, 12) : []), [inputValue, matcher]);
@@ -271,6 +307,17 @@ export default function Home() {
             차팅서포트
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <BranchPicker value={branch} onChange={handleBranchChange} />
+            {branch && (
+              <button
+                onClick={handleSyncBranch}
+                disabled={syncing}
+                title="홈페이지 수가가 변경되었다면 눌러주세요"
+                style={{ ...styles.btnGhost, fontSize: 11, padding: "6px 10px", opacity: syncing ? 0.6 : 1 }}
+              >
+                {syncing ? "연동 중..." : "업데이트"}
+              </button>
+            )}
             <Link
               href="/rules?tab=category"
               aria-label="상세설정"
@@ -286,6 +333,7 @@ export default function Home() {
         </div>
       </header>
 
+      {!branch && <p style={{ maxWidth: MAX_WIDTH, margin: "8px auto 0", padding: "0 20px", fontSize: 12, color: C.sub }}>상단에서 지점을 선택하세요.</p>}
       {loadError && <p style={{ maxWidth: MAX_WIDTH, margin: "8px auto 0", padding: "0 20px", fontSize: 12, color: C.danger }}>시술 데이터를 불러오지 못했습니다: {loadError}</p>}
 
       {/* 메인 그리드 */}
@@ -294,7 +342,9 @@ export default function Home() {
 
           {/* ── 좌: 시술 입력 ── */}
           <div style={styles.card}>
-            <p style={styles.cardTitle}>시술 입력</p>
+            <div style={styles.titleRow}>
+              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>시술 입력</p>
+            </div>
 
             <div style={{ position: "relative" }}>
               <input
@@ -332,21 +382,18 @@ export default function Home() {
 
             {/* 직접 입력 */}
             <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-              <input type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="시술 직접 입력" style={{ ...styles.input, flex: 1 }} />
-              <input type="number" value={manualPrice} onChange={(e) => setManualPrice(e.target.value)} placeholder="세전 금액" style={{ ...styles.input, width: 110 }} />
-              <select
+              <input type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="시술 직접 입력" style={{ ...styles.input, flex: 2, minWidth: 0, height: 36, boxSizing: "border-box" }} />
+              <input type="number" value={manualPrice} onChange={(e) => setManualPrice(e.target.value)} placeholder="세전 금액" style={{ ...styles.input, flex: "0 0 96px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
+              <Dropdown
                 value={manualCategory ?? ""}
-                onChange={(e) => setManualCategory(e.target.value ? (e.target.value as TreatmentCategory) : null)}
-                style={{ ...styles.input, width: 100 }}
-              >
-                <option value="">분류</option>
-                {CATEGORY_ORDER.map((cat) => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
+                onChange={(v) => setManualCategory(v ? (v as TreatmentCategory) : null)}
+                placeholder="분류"
+                options={CATEGORY_ORDER.map((cat) => ({ value: cat, label: cat }))}
+                style={{ flex: "0 0 140px", height: 36 }}
+              />
               <button onClick={addManualItem} disabled={!manualName.trim() || !manualPrice}
-                style={{ ...styles.btnPrimary, opacity: (!manualName.trim() || !manualPrice) ? 0.4 : 1, flexShrink: 0 }}>
-                직접추가
+                style={{ ...styles.btnPrimary, height: 36, boxSizing: "border-box", padding: "0 14px", fontSize: 13, opacity: (!manualName.trim() || !manualPrice) ? 0.4 : 1, flexShrink: 0 }}>
+                추가
               </button>
             </div>
 
@@ -431,7 +478,7 @@ export default function Home() {
 
           {/* ── 우: 선택 결과 ── */}
           <div style={styles.card}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+            <div style={styles.titleRow}>
               <p style={{ ...styles.cardTitle, marginBottom: 0 }}>선택 결과</p>
               <button onClick={clearAllItems} disabled={selectedItems.length === 0}
                 style={{ ...styles.btnGhost, fontSize: 11, opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
@@ -502,7 +549,7 @@ export default function Home() {
                               cursor: "pointer"
                             }}
                           >
-                            VIP{v}
+                            VIP {v}
                           </button>
                         );
                       })}
@@ -526,7 +573,7 @@ export default function Home() {
                               cursor: "pointer"
                             }}
                           >
-                            VIP{v}
+                            VIP {v}
                           </button>
                         );
                       })}
@@ -604,8 +651,8 @@ export default function Home() {
                     {transferRecipients.length < 5 && (
                       <button onClick={() => {
                         setTransferRecipients([...transferRecipients, { name: "", amount: "" }]);
-                      }} style={{ alignSelf: "flex-end", width: 32, height: 32, borderRadius: "50%", border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", fontSize: 16, display: "flex", alignItems: "center", justifyContent: "center", color: C.primary }}>
-                        ⊕
+                      }} style={{ alignSelf: "flex-end", width: 32, height: 32, borderRadius: "50%", border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", fontSize: 18, fontWeight: 700, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, padding: 0 }}>
+                        +
                       </button>
                     )}
                   </div>
@@ -622,8 +669,6 @@ export default function Home() {
           </div>
         </div>
       </main>
-
-      <footer style={styles.footer}>© 2026. Designed & Developed by EUNBIN GA</footer>
     </div>
   );
 }

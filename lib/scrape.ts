@@ -23,20 +23,22 @@ function expandSlashTreatments(name: string): string[] {
   });
 }
 
-const BRANCH = "홍대점";
+const CATEGORY_FIELDS = [
+  { sField: 1, mainCategory: "기획전" },
+  { sField: 2, mainCategory: "쁘띠성형" },
+  { sField: 3, mainCategory: "피부" },
+  { sField: 4, mainCategory: "리프팅" },
+  { sField: 5, mainCategory: "부스터" },
+  { sField: 6, mainCategory: "제모" },
+  { sField: 7, mainCategory: "비만" },
+];
 
-const URLS = [
-  { sField: 1, mainCategory: "기획전", name: "기획전" },
-  { sField: 2, mainCategory: "쁘띠성형", name: "쁘띠성형" },
-  { sField: 3, mainCategory: "피부", name: "피부" },
-  { sField: 4, mainCategory: "리프팅", name: "리프팅" },
-  { sField: 5, mainCategory: "부스터", name: "부스터" },
-  { sField: 6, mainCategory: "제모", name: "제모" },
-  { sField: 7, mainCategory: "비만", name: "비만" },
-].map((item) => ({
-  ...item,
-  url: `https://www.velyb.kr/community/community01.php?tb=event_multi&etc5=%ED%99%8D%EB%8C%80%EC%A0%90&sField=${item.sField}`,
-}));
+function buildUrls(branch: string) {
+  return CATEGORY_FIELDS.map((item) => ({
+    ...item,
+    url: `https://www.velyb.kr/community/community01.php?tb=event_multi&etc5=${encodeURIComponent(branch)}&sField=${item.sField}`,
+  }));
+}
 
 type ScrapedTreatment = {
   branch: string;
@@ -52,6 +54,7 @@ type ScrapedTreatment = {
 async function scrapeOnePage(
   url: string,
   cleanupRules: CleanupRule[],
+  branch: string,
   mainCategory?: string
 ): Promise<ScrapedTreatment[]> {
   const { data: html } = await axios.get(url, {
@@ -99,7 +102,7 @@ async function scrapeOnePage(
           console.log(`[SECTION] 시술: ${expandedName}, 섹션: ${currentSection}`);
         }
         treatments.push({
-          branch: BRANCH,
+          branch,
           name: expandedName,
           price,
           category: detectTreatmentCategory(expandedName, mainCategory, currentSection),
@@ -115,7 +118,7 @@ async function scrapeOnePage(
   return treatments;
 }
 
-export async function runScrapeAndSync() {
+export async function runScrapeAndSync(branch: string) {
   const supabase = getSupabaseServerClient();
 
   const { data: rules, error: rulesError } = await supabase
@@ -129,8 +132,8 @@ export async function runScrapeAndSync() {
   const cleanupRules = (rules ?? []) as CleanupRule[];
 
   const treatments: ScrapedTreatment[] = [];
-  for (const item of URLS) {
-    const pageTreatments = await scrapeOnePage(item.url, cleanupRules, item.mainCategory);
+  for (const item of buildUrls(branch)) {
+    const pageTreatments = await scrapeOnePage(item.url, cleanupRules, branch, item.mainCategory);
     treatments.push(...pageTreatments);
   }
 
@@ -148,6 +151,7 @@ export async function runScrapeAndSync() {
   const { data: existingTreatments } = await supabase
     .from("treatments")
     .select("branch, name, category, category_manual")
+    .eq("branch", branch)
     .eq("is_manual", false)
     .eq("category_manual", true);
 
@@ -172,6 +176,7 @@ export async function runScrapeAndSync() {
   const { error: deleteError } = await supabase
     .from("treatments")
     .delete()
+    .eq("branch", branch)
     .eq("is_manual", false);
 
   if (deleteError) {

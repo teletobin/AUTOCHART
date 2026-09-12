@@ -6,17 +6,30 @@ import { applyCleanupRules, type CleanupRule } from "@/lib/cleanup";
 export async function POST() {
   const supabase = getSupabaseServerClient();
 
-  const [{ data: rules, error: rulesError }, { data: treatments, error: treatmentsError }] =
-    await Promise.all([
-      supabase.from("cleanup_rules").select("id, type, pattern, replacement"),
-      supabase.from("treatments").select("id, branch, name"),
-    ]);
+  const { data: rules, error: rulesError } = await supabase
+    .from("cleanup_rules")
+    .select("id, type, pattern, replacement");
 
   if (rulesError) {
     return NextResponse.json({ error: rulesError.message }, { status: 500 });
   }
-  if (treatmentsError) {
-    return NextResponse.json({ error: treatmentsError.message }, { status: 500 });
+
+  // Supabase/PostgREST는 한 번의 select에 최대 1000행까지만 응답하므로,
+  // 지점이 많아 전체 시술 수가 1000건을 넘으면 range()로 나눠서 전부 가져와야
+  // 특정 지점의 데이터만 누락되는 일이 없다.
+  const treatments: { id: string; branch: string; name: string }[] = [];
+  const PAGE_SIZE = 1000;
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data: page, error: treatmentsError } = await supabase
+      .from("treatments")
+      .select("id, branch, name")
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (treatmentsError) {
+      return NextResponse.json({ error: treatmentsError.message }, { status: 500 });
+    }
+    treatments.push(...(page ?? []));
+    if (!page || page.length < PAGE_SIZE) break;
   }
 
   const cleanupRules = (rules ?? []) as CleanupRule[];

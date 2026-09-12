@@ -6,12 +6,19 @@ import { TreatmentCategory } from "@/lib/types";
 // "레이저" 카테고리로 분류된 시술 중, 섹션 타이틀이 피부관리/주사 계열
 // 키워드를 포함하는 것들을 재계산해서 옮긴다. 재스크래핑 없이 기존 DB
 // 데이터(section)만 보고 즉시 재분류할 때 사용한다.
-export async function POST() {
+export async function POST(request: Request) {
+  const body = await request.json().catch(() => ({}));
+  const branch = String(body.branch ?? "").trim();
+  if (!branch) {
+    return NextResponse.json({ error: "branch는 필수입니다." }, { status: 400 });
+  }
+
   const supabase = getSupabaseServerClient();
 
   const { data, error } = await supabase
     .from("treatments")
     .select("id, section")
+    .eq("branch", branch)
     .eq("category", TreatmentCategory.레이저)
     .eq("is_manual", false)
     .eq("category_manual", false);
