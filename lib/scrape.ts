@@ -63,50 +63,31 @@ async function scrapeOnePage(
   const $ = cheerio.load(html);
   const treatments: ScrapedTreatment[] = [];
 
-  // 페이지를 위에서 아래로 순회하면서 섹션명 추적
-  let currentSection = "";
-  $("h2, h3, h4, h5, h6, ul.slist > li").each((_, el) => {
-    const $el = $(el);
-    const tag = $el.prop("tagName")?.toLowerCase();
+  // 시술 목록은 ul.slist > li 구조이며, 각 li는 strong(시술명)과
+  // p.price01 > span.o_price01(이벤트가) / span.s_price01(정가)로 구성됨
+  $("ul.slist > li").each((_, el) => {
+    const rawName = $(el).find("strong").first().text().trim();
+    const priceText = $(el).find("span.o_price01").first().text().trim();
 
-    // 제목을 만나면 현재 섹션 업데이트
-    if (["h2", "h3", "h4", "h5", "h6"].includes(tag || "")) {
-      const text = $el.text().trim();
-      if (text && text.length > 0 && text.length < 100) {
-        currentSection = text;
-      }
-      return;
-    }
+    if (!rawName || !priceText) return;
 
-    // li 처리
-    if (tag === "li") {
-      const $li = $el;
-      const rawName = $li.find("strong").first().text().trim();
-      const priceText = $li.find("span.o_price01").first().text().trim();
+    const name = applyCleanupRules(rawName, cleanupRules);
+    const price = parseInt(priceText.replace(/[^0-9]/g, ""), 10);
 
-      if (!rawName || !priceText) return;
+    if (name.length < 5 || !price || price <= 0) return;
+    if (!/[가-힣]/.test(name)) return;
 
-      const name = applyCleanupRules(rawName, cleanupRules);
-      const price = parseInt(priceText.replace(/[^0-9]/g, ""), 10);
-
-      if (name.length < 5 || !price || price <= 0) return;
-      if (!/[가-힣]/.test(name)) return;
-
-      const section = currentSection;
-
-      // 슬래시가 있으면 각각으로 분리해서 추가
-      const expandedNames = expandSlashTreatments(name);
-      for (const expandedName of expandedNames) {
-        treatments.push({
-          branch: BRANCH,
-          name: expandedName,
-          price,
-          category: detectTreatmentCategory(expandedName, mainCategory, section),
-          scraped_at: new Date().toISOString(),
-          is_manual: false,
-          section: section || undefined,
-        });
-      }
+    // 슬래시가 있으면 각각으로 분리해서 추가
+    const expandedNames = expandSlashTreatments(name);
+    for (const expandedName of expandedNames) {
+      treatments.push({
+        branch: BRANCH,
+        name: expandedName,
+        price,
+        category: detectTreatmentCategory(expandedName, mainCategory),
+        scraped_at: new Date().toISOString(),
+        is_manual: false,
+      });
     }
   });
 
@@ -172,7 +153,6 @@ export async function runScrapeAndSync() {
     throw new Error(`삭제 실패: ${deleteError.message}`);
   }
 
-  // DB에 section 저장
   const { error: upsertError } = await supabase
     .from("treatments")
     .upsert(deduped, { onConflict: "branch,name" });
