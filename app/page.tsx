@@ -315,7 +315,7 @@ export default function Home() {
                 title="홈페이지 수가가 변경되었다면 눌러주세요"
                 style={{ ...styles.btnGhost, fontSize: 11, padding: "6px 10px", opacity: syncing ? 0.6 : 1 }}
               >
-                {syncing ? "연동 중..." : "업데이트"}
+                {syncing ? "연동 중..." : "홈페이지 연동"}
               </button>
             )}
             <Link
@@ -333,7 +333,11 @@ export default function Home() {
         </div>
       </header>
 
-      {!branch && <p style={{ maxWidth: MAX_WIDTH, margin: "8px auto 0", padding: "0 20px", fontSize: 12, color: C.sub }}>상단에서 지점을 선택하세요.</p>}
+      {!branch && (
+        <p style={{ maxWidth: MAX_WIDTH, margin: "12px auto 0", padding: "0 20px", fontSize: 13, fontWeight: 700, color: C.primary }}>
+          상단에서 지점을 선택한 후 홈페이지 연동 버튼을 눌러주세요.
+        </p>
+      )}
       {loadError && <p style={{ maxWidth: MAX_WIDTH, margin: "8px auto 0", padding: "0 20px", fontSize: 12, color: C.danger }}>시술 데이터를 불러오지 못했습니다: {loadError}</p>}
 
       {/* 메인 그리드 */}
