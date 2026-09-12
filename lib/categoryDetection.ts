@@ -15,11 +15,35 @@ function extractCleanName(name: string): string {
 // 함께 묶어두고 나중에 키워드 규칙이 정해지면 그중 일부를 분리할 예정이다.
 export function detectTreatmentCategory(
   name: string,
-  mainCategory?: string
+  mainCategory?: string,
+  section?: string
 ): TreatmentCategory | null {
   const lowerName = name.toLowerCase();
+  const lowerSection = section?.toLowerCase() ?? "";
 
-  // 최우선: "주사", "보톡스", "필러", "케뉼라" 키워드가 있으면 무조건 주사시술(6)으로 분류
+  // 최우선: 섹션명 기반 분류 (피부 탭)
+  if (mainCategory === "피부" && lowerSection) {
+    const sectionNoSpace = lowerSection.replace(/\s+/g, "");
+    if (
+      sectionNoSpace.includes("항노화주사") ||
+      sectionNoSpace.includes("면역주사") ||
+      sectionNoSpace.includes("수액주사")
+    ) {
+      return TreatmentCategory.주사기타;
+    }
+    if (
+      sectionNoSpace.includes("여드름") ||
+      sectionNoSpace.includes("내맘대로") ||
+      sectionNoSpace.includes("피부관리") ||
+      sectionNoSpace.includes("pdt") ||
+      sectionNoSpace.includes("플라필") ||
+      sectionNoSpace.includes("라라필")
+    ) {
+      return TreatmentCategory.피부관리;
+    }
+  }
+
+  // 차우선: "주사", "보톡스", "필러", "케뉼라" 키워드가 있으면 무조건 주사시술(6)으로 분류
   if (
     lowerName.includes("주사") ||
     lowerName.includes("보톡스") ||
