@@ -284,11 +284,8 @@ export default function Home() {
             차팅서포트
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button onClick={handleSync} disabled={syncing} style={{ ...styles.btnPrimary, opacity: syncing ? 0.6 : 1 }}>
-              {syncing ? "동기화 중…" : "수가 동기화"}
-            </button>
             <Link
-              href="/rules"
+              href="/rules?tab=category"
               aria-label="상세설정"
               title="상세설정"
               style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 8, color: C.sub, textDecoration: "none" }}

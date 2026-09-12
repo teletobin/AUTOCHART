@@ -45,6 +45,7 @@ type ScrapedTreatment = {
   category: TreatmentCategory | null;
   scraped_at: string;
   is_manual: boolean;
+  section?: string;
 };
 
 async function scrapeOnePage(
@@ -62,11 +63,24 @@ async function scrapeOnePage(
   const $ = cheerio.load(html);
   const treatments: ScrapedTreatment[] = [];
 
-  // 시술 목록은 ul.slist > li 구조이며, 각 li는 strong(시술명)과
-  // p.price01 > span.o_price01(이벤트가) / span.s_price01(정가)로 구성됨
+  // 페이지의 모든 h2/h3/h4/h5 제목 수집
+  const headingsByOffset: Array<{ text: string; offset: number }> = [];
+  let offset = 0;
+  const root = $.root();
+
+  root.find("h2, h3, h4, h5, h6").each((_, el) => {
+    const text = $(el).text().trim();
+    if (text && text.length > 0 && text.length < 100) {
+      headingsByOffset.push({ text, offset: offset++ });
+    }
+  });
+
+  // li 처리
+  let liOffset = 0;
   $("ul.slist > li").each((_, el) => {
-    const rawName = $(el).find("strong").first().text().trim();
-    const priceText = $(el).find("span.o_price01").first().text().trim();
+    const $li = $(el);
+    const rawName = $li.find("strong").first().text().trim();
+    const priceText = $li.find("span.o_price01").first().text().trim();
 
     if (!rawName || !priceText) return;
 
@@ -76,6 +90,16 @@ async function scrapeOnePage(
     if (name.length < 5 || !price || price <= 0) return;
     if (!/[가-힣]/.test(name)) return;
 
+    // 현재 li 위의 가장 가까운 제목 찾기 (아래 li들이 나오기 전까지 같은 섹션)
+    let section = "";
+    for (let i = headingsByOffset.length - 1; i >= 0; i--) {
+      if (headingsByOffset[i].offset <= liOffset) {
+        section = headingsByOffset[i].text;
+        break;
+      }
+    }
+    liOffset++;
+
     // 슬래시가 있으면 각각으로 분리해서 추가
     const expandedNames = expandSlashTreatments(name);
     for (const expandedName of expandedNames) {
@@ -83,9 +107,10 @@ async function scrapeOnePage(
         branch: BRANCH,
         name: expandedName,
         price,
-        category: detectTreatmentCategory(expandedName, mainCategory),
+        category: detectTreatmentCategory(expandedName, mainCategory, section),
         scraped_at: new Date().toISOString(),
         is_manual: false,
+        section: section || undefined,
       });
     }
   });
@@ -152,6 +177,7 @@ export async function runScrapeAndSync() {
     throw new Error(`삭제 실패: ${deleteError.message}`);
   }
 
+  // DB에 section 저장
   const { error: upsertError } = await supabase
     .from("treatments")
     .upsert(deduped, { onConflict: "branch,name" });

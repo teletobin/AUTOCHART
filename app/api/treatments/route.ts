@@ -6,7 +6,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("treatments")
-    .select("id, name, price, category")
+    .select("id, name, price, category, section")
     .order("name", { ascending: true });
 
   if (error) {
@@ -37,4 +37,19 @@ export async function PATCH(req: Request) {
   }
 
   return NextResponse.json({ success: true });
+}
+
+export async function DELETE() {
+  const supabase = getSupabaseServerClient();
+
+  const { error } = await supabase
+    .from("treatments")
+    .delete()
+    .eq("is_manual", false);
+
+  if (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({ deleted: true });
 }

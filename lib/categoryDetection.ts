@@ -15,11 +15,39 @@ function extractCleanName(name: string): string {
 // 함께 묶어두고 나중에 키워드 규칙이 정해지면 그중 일부를 분리할 예정이다.
 export function detectTreatmentCategory(
   name: string,
-  mainCategory?: string
+  mainCategory?: string,
+  section?: string
 ): TreatmentCategory | null {
   const lowerName = name.toLowerCase();
+  const lowerSection = section?.toLowerCase() ?? "";
 
-  // 최우선: "주사", "보톡스", "필러", "케뉼라" 키워드가 있으면 무조건 주사시술(6)으로 분류
+  // 최우선: 섹션명 기반 분류 (피부 탭의 섹션 제목이 이미 분류를 결정함)
+  if (mainCategory === "피부" && lowerSection) {
+    const sectionNoSpace = lowerSection.replace(/\s+/g, "");
+
+    // 주사 관련 섹션
+    if (
+      sectionNoSpace.includes("항노화주사") ||
+      sectionNoSpace.includes("면역주사") ||
+      sectionNoSpace.includes("수액주사")
+    ) {
+      return TreatmentCategory.주사기타;
+    }
+
+    // 피부관리 관련 섹션
+    if (
+      sectionNoSpace.includes("여드름") ||
+      sectionNoSpace.includes("내맘대로") ||
+      sectionNoSpace.includes("피부관리") ||
+      sectionNoSpace.includes("pdt") ||
+      sectionNoSpace.includes("플라필") ||
+      sectionNoSpace.includes("라라필")
+    ) {
+      return TreatmentCategory.피부관리;
+    }
+  }
+
+  // 차우선: "주사", "보톡스", "필러", "케뉼라" 키워드가 있으면 무조건 주사시술(6)으로 분류
   if (
     lowerName.includes("주사") ||
     lowerName.includes("보톡스") ||
@@ -34,8 +62,31 @@ export function detectTreatmentCategory(
     return name.includes("제모") ? TreatmentCategory.제모 : null;
   }
 
-  // 피부 탭 전체 → 레이저 (피부관리는 추후 키워드로 분리 예정)
-  if (mainCategory === "피부") return TreatmentCategory.레이저;
+  // 피부 탭: 키워드별로 피부관리/주사/레이저로 구분
+  if (mainCategory === "피부") {
+    // 주사 관련 → 6번(주사시술 및 기타)
+    if (
+      lowerName.includes("항노화주사") ||
+      lowerName.includes("영양주사") ||
+      lowerName.includes("면역주사") ||
+      lowerName.includes("수액주사")
+    ) {
+      return TreatmentCategory.주사기타;
+    }
+
+    if (
+      lowerName.includes("여드름") ||
+      lowerName.includes("피부관리") ||
+      lowerName.includes("플라필") ||
+      lowerName.includes("라라필") ||
+      lowerName.includes("pdt") ||
+      lowerName.includes("ldm") ||
+      lowerName.includes("셀바이브")
+    ) {
+      return TreatmentCategory.피부관리;
+    }
+    return TreatmentCategory.레이저;
+  }
 
   // 리프팅 탭 전체 → 리프팅
   if (mainCategory === "리프팅") return TreatmentCategory.리프팅;
@@ -93,6 +144,10 @@ export function detectTreatmentCategory(
     // 기획전 섹션에서도 주사 관련 키워드들 처리
     // (최상단의 일반 규칙에서 이미 처리되었지만, 기획전 분기에서도 명시적으로 처리)
     if (
+      clean.includes("항노화주사") ||
+      clean.includes("영양주사") ||
+      clean.includes("면역주사") ||
+      clean.includes("수액주사") ||
       clean.includes("블리비") ||
       clean.includes("카복시") ||
       clean.includes("리투오") ||
@@ -110,6 +165,13 @@ export function detectTreatmentCategory(
     }
 
     if (
+      clean.includes("여드름") ||
+      clean.includes("피부관리") ||
+      clean.includes("플라필") ||
+      clean.includes("라라필") ||
+      clean.includes("pdt") ||
+      clean.includes("ldm") ||
+      clean.includes("셀바이브") ||
       clean.includes("아쿠아필") ||
       clean.includes("엔바이론") ||
       clean.includes("이온자임") ||
