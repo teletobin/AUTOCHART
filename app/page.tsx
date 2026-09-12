@@ -272,7 +272,7 @@ export default function Home() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <Link
-              href="/rules"
+              href="/rules?tab=category"
               aria-label="상세설정"
               title="상세설정"
               style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 34, height: 34, borderRadius: 8, color: C.sub, textDecoration: "none" }}
