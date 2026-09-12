@@ -91,6 +91,9 @@ async function scrapeOnePage(
       // 슬래시가 있으면 각각으로 분리해서 추가
       const expandedNames = expandSlashTreatments(name);
       for (const expandedName of expandedNames) {
+        if (currentSection) {
+          console.log(`[SECTION] 시술: ${expandedName}, 섹션: ${currentSection}`);
+        }
         treatments.push({
           branch: BRANCH,
           name: expandedName,
