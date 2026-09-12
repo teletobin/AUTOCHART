@@ -137,8 +137,6 @@ export default function Home() {
   const [membershipType, setMembershipType] = useState<"VIP" | "쁘띠">("VIP");
   const [transferEnabled, setTransferEnabled] = useState(false);
   const [transferRecipients, setTransferRecipients] = useState<Array<{ name: string; amount: string }>>([]);
-  const [syncing, setSyncing] = useState(false);
-  const [syncMessage, setSyncMessage] = useState<string | null>(null);
 
   function loadTreatments() {
     return fetch("/api/treatments").then((res) => res.json()).then((data) => {
@@ -152,17 +150,6 @@ export default function Home() {
     }).catch(() => {});
   }
   useEffect(() => { loadTreatments(); loadAliases(); }, []);
-
-  async function handleSync() {
-    setSyncing(true); setSyncMessage(null);
-    try {
-      const res = await fetch("/api/scrape", { method: "POST" });
-      const data = await res.json();
-      if (data.error) setSyncMessage(`동기화 실패: ${data.error}`);
-      else { setSyncMessage(`동기화 완료 (${data.saved}건 저장)`); await loadTreatments(); }
-    } catch (e) { setSyncMessage(`동기화 실패: ${String(e)}`); }
-    finally { setSyncing(false); }
-  }
 
   const matcher = useMemo(() => buildMatcher(treatments, aliases), [treatments, aliases]);
   const candidates = useMemo(() => (inputValue.trim().length >= 2 ? matcher(inputValue, 12) : []), [inputValue, matcher]);
@@ -284,9 +271,6 @@ export default function Home() {
             차팅서포트
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <button onClick={handleSync} disabled={syncing} style={{ ...styles.btnPrimary, opacity: syncing ? 0.6 : 1 }}>
-              {syncing ? "동기화 중…" : "수가 동기화"}
-            </button>
             <Link
               href="/rules"
               aria-label="상세설정"
@@ -302,7 +286,6 @@ export default function Home() {
         </div>
       </header>
 
-      {syncMessage && <p style={{ maxWidth: MAX_WIDTH, margin: "8px auto 0", padding: "0 20px", fontSize: 12, color: C.primary }}>{syncMessage}</p>}
       {loadError && <p style={{ maxWidth: MAX_WIDTH, margin: "8px auto 0", padding: "0 20px", fontSize: 12, color: C.danger }}>시술 데이터를 불러오지 못했습니다: {loadError}</p>}
 
       {/* 메인 그리드 */}
