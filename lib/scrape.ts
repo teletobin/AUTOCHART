@@ -66,9 +66,8 @@ async function scrapeOnePage(
   // 페이지의 모든 h2/h3/h4/h5 제목 수집
   const headingsByOffset: Array<{ text: string; offset: number }> = [];
   let offset = 0;
-  const root = $.root();
 
-  root.find("h2, h3, h4, h5, h6").each((_, el) => {
+  $("h2, h3, h4, h5, h6").each((_, el) => {
     const text = $(el).text().trim();
     if (text && text.length > 0 && text.length < 100) {
       headingsByOffset.push({ text, offset: offset++ });
