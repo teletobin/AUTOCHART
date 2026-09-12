@@ -29,7 +29,7 @@ export async function PATCH(req: Request) {
 
   const { error } = await supabase
     .from("treatments")
-    .update({ category })
+    .update({ category, category_manual: true })
     .eq("id", id);
 
   if (error) {

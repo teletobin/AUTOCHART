@@ -43,6 +43,7 @@ type ScrapedTreatment = {
   name: string;
   price: number;
   category: TreatmentCategory | null;
+  category_manual: boolean;
   scraped_at: string;
   is_manual: boolean;
   section?: string;
@@ -64,11 +65,14 @@ async function scrapeOnePage(
   const treatments: ScrapedTreatment[] = [];
 
   // 페이지를 순회하면서 섹션명 추적
+  // 실제 사이트는 섹션 제목을 h2~h6가 아니라 <div class="title"><p class="t01">...</p></div>
+  // 형태로 렌더링하므로 p.t01도 함께 섹션 타이틀 후보로 추적한다.
   let currentSection = "";
-  $("h2, h3, h4, h5, h6, ul.slist > li").each((_, el) => {
+  $("h2, h3, h4, h5, h6, p.t01, ul.slist > li").each((_, el) => {
     const tag = $(el).prop("tagName")?.toLowerCase();
+    const isSectionTitle = ["h2", "h3", "h4", "h5", "h6"].includes(tag || "") || (tag === "p" && $(el).hasClass("t01"));
 
-    if (["h2", "h3", "h4", "h5", "h6"].includes(tag || "")) {
+    if (isSectionTitle) {
       const text = $(el).text().trim();
       if (text && text.length > 0 && text.length < 100) {
         currentSection = text;
@@ -99,6 +103,7 @@ async function scrapeOnePage(
           name: expandedName,
           price,
           category: detectTreatmentCategory(expandedName, mainCategory, currentSection),
+          category_manual: false,
           scraped_at: new Date().toISOString(),
           is_manual: false,
           section: currentSection || undefined,
@@ -137,24 +142,28 @@ export async function runScrapeAndSync() {
   }
   const deduped = Array.from(dedupedMap.values());
 
-  // 기존 카테고리 보존: 사용자가 수정한 카테고리가 스크래핑으로 덮어씌워지지 않도록
+  // 기존 카테고리 보존: 상세설정 화면에서 사용자가 "수동으로" 옮긴 카테고리만
+  // 재스크래핑 때 덮어씌워지지 않도록 하고, 자동 분류였던 항목은 매번
+  // detectTreatmentCategory()의 최신 로직으로 다시 계산한다.
   const { data: existingTreatments } = await supabase
     .from("treatments")
-    .select("branch, name, category")
-    .eq("is_manual", false);
+    .select("branch, name, category, category_manual")
+    .eq("is_manual", false)
+    .eq("category_manual", true);
 
-  const categoryMap = new Map<string, string | null>();
+  const manualCategoryMap = new Map<string, string | null>();
   for (const t of existingTreatments || []) {
     if (t.category) {
-      categoryMap.set(`${t.branch}|${t.name}`, t.category);
+      manualCategoryMap.set(`${t.branch}|${t.name}`, t.category);
     }
   }
 
   for (const t of deduped) {
     const key = `${t.branch}|${t.name}`;
-    const existing = categoryMap.get(key);
-    if (existing) {
-      t.category = existing as TreatmentCategory;
+    const manual = manualCategoryMap.get(key);
+    if (manual) {
+      t.category = manual as TreatmentCategory;
+      t.category_manual = true;
     }
   }
 

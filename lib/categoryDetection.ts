@@ -13,34 +13,43 @@ function extractCleanName(name: string): string {
 // 기획전(sField=1)은 프로모션 태그를 제거한 실제 시술명으로 분류한다.
 // 카테고리1(피부관리)은 아직 규칙이 정해지지 않아, 일단 레이저(피부 탭)에
 // 함께 묶어두고 나중에 키워드 규칙이 정해지면 그중 일부를 분리할 예정이다.
+// 피부 탭 섹션 타이틀만 보고 판단하는 규칙. scrape.ts의 최초 분류와
+// 상세설정 화면의 "재분류" 버튼(기존 데이터 재계산)에서 함께 사용한다.
+export function detectCategoryBySkinSection(section?: string | null): TreatmentCategory | null {
+  const sectionNoSpace = (section ?? "").toLowerCase().replace(/\s+/g, "");
+  if (!sectionNoSpace) return null;
+
+  if (
+    sectionNoSpace.includes("항노화주사") ||
+    sectionNoSpace.includes("면역주사") ||
+    sectionNoSpace.includes("수액주사")
+  ) {
+    return TreatmentCategory.주사기타;
+  }
+  if (
+    sectionNoSpace.includes("여드름") ||
+    sectionNoSpace.includes("내맘대로") ||
+    sectionNoSpace.includes("피부관리") ||
+    sectionNoSpace.includes("pdt") ||
+    sectionNoSpace.includes("플라필") ||
+    sectionNoSpace.includes("라라필")
+  ) {
+    return TreatmentCategory.피부관리;
+  }
+  return null;
+}
+
 export function detectTreatmentCategory(
   name: string,
   mainCategory?: string,
   section?: string
 ): TreatmentCategory | null {
   const lowerName = name.toLowerCase();
-  const lowerSection = section?.toLowerCase() ?? "";
 
   // 최우선: 섹션명 기반 분류 (피부 탭)
-  if (mainCategory === "피부" && lowerSection) {
-    const sectionNoSpace = lowerSection.replace(/\s+/g, "");
-    if (
-      sectionNoSpace.includes("항노화주사") ||
-      sectionNoSpace.includes("면역주사") ||
-      sectionNoSpace.includes("수액주사")
-    ) {
-      return TreatmentCategory.주사기타;
-    }
-    if (
-      sectionNoSpace.includes("여드름") ||
-      sectionNoSpace.includes("내맘대로") ||
-      sectionNoSpace.includes("피부관리") ||
-      sectionNoSpace.includes("pdt") ||
-      sectionNoSpace.includes("플라필") ||
-      sectionNoSpace.includes("라라필")
-    ) {
-      return TreatmentCategory.피부관리;
-    }
+  if (mainCategory === "피부") {
+    const bySection = detectCategoryBySkinSection(section);
+    if (bySection) return bySection;
   }
 
   // 차우선: "주사", "보톡스", "필러", "케뉼라" 키워드가 있으면 무조건 주사시술(6)으로 분류

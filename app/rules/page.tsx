@@ -84,6 +84,11 @@ function tabButtonStyle(active: boolean): React.CSSProperties {
 export default function RulesPage() {
   const [tab, setTab] = useState<Tab>("replace");
 
+  useEffect(() => {
+    const t = new URLSearchParams(window.location.search).get("tab") as Tab | null;
+    if (t && TABS.some((tb) => tb.key === t)) setTab(t);
+  }, []);
+
   const [rules, setRules] = useState<Rule[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [tableMissing, setTableMissing] = useState(false);
@@ -115,6 +120,16 @@ export default function RulesPage() {
   const [categorySearch, setCategorySearch] = useState("");
   const [selectedForBulk, setSelectedForBulk] = useState<Set<string>>(new Set());
   const [bulkCategory, setBulkCategory] = useState<TreatmentCategory | null>(null);
+
+  const [syncing, setSyncing] = useState(false);
+  const [syncError, setSyncError] = useState<string | null>(null);
+  const [syncResult, setSyncResult] = useState<{ scraped: number; saved: number } | null>(null);
+
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+
+  const [reclassifying, setReclassifying] = useState(false);
+  const [reclassifyError, setReclassifyError] = useState<string | null>(null);
 
   const [aliases, setAliases] = useState<Alias[]>([]);
   const [aliasError, setAliasError] = useState<string | null>(null);
@@ -304,6 +319,63 @@ export default function RulesPage() {
   async function deleteManualTreatment(id: string) {
     await fetch(`/api/manual-treatments/${id}`, { method: "DELETE" });
     setManualTreatments((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  async function handleSync() {
+    setSyncing(true);
+    setSyncError(null);
+    setSyncResult(null);
+    try {
+      const res = await fetch("/api/scrape", { method: "POST" });
+      const data = await res.json();
+      if (data.error) {
+        setSyncError(data.error);
+      } else {
+        setSyncResult(data);
+        loadCategoryTreatments();
+      }
+    } catch (e) {
+      setSyncError(String(e));
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  async function handleReset() {
+    if (!confirm("홈페이지에서 불러온 시술을 모두 삭제합니다 (미등재 시술은 유지됩니다). 계속할까요?")) return;
+    setResetting(true);
+    setResetError(null);
+    try {
+      const res = await fetch("/api/treatments", { method: "DELETE" });
+      const data = await res.json();
+      if (data.error) {
+        setResetError(data.error);
+      } else {
+        loadCategoryTreatments();
+      }
+    } catch (e) {
+      setResetError(String(e));
+    } finally {
+      setResetting(false);
+    }
+  }
+
+  async function handleReclassifyLaser() {
+    setReclassifying(true);
+    setReclassifyError(null);
+    try {
+      const res = await fetch("/api/treatments/reclassify-laser", { method: "POST" });
+      const data = await res.json();
+      if (data.error) {
+        setReclassifyError(data.error);
+      } else {
+        loadCategoryTreatments();
+      }
+    } catch (e) {
+      setReclassifyError(String(e));
+    } finally {
+      setReclassifying(false);
+    }
   }
 
   async function updateCategory(id: string, category: TreatmentCategory) {
@@ -687,12 +759,33 @@ export default function RulesPage() {
 
         {tab === "category" && (
           <section style={styles.card}>
-            <p style={styles.cardTitle}>시술 카테고리 분류</p>
-            <p style={styles.cardHint}>
-              분류별로 속한 시술 목록입니다. 체크박스로 여러 개 선택한 뒤 원하는 분류로 한번에 이동할 수 있습니다.
-            </p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
+              <div>
+                <p style={styles.cardTitle}>시술 카테고리 분류</p>
+                <p style={styles.cardHint}>
+                  분류별로 속한 시술 목록입니다. 체크박스로 여러 개 선택한 뒤 원하는 분류로 한번에 이동할 수 있습니다.
+                </p>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                <button onClick={handleSync} disabled={syncing} style={{ ...styles.btnPrimary, opacity: syncing ? 0.6 : 1 }}>
+                  {syncing ? "연동 중..." : "시술연동"}
+                </button>
+                <button
+                  onClick={handleReset}
+                  disabled={resetting}
+                  style={{ ...styles.btnPrimary, background: C.danger, opacity: resetting ? 0.6 : 1 }}
+                >
+                  {resetting ? "삭제 중..." : "데이터리셋"}
+                </button>
+              </div>
+            </div>
 
-            {categoryError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {categoryError}</p>}
+            {syncError && <p style={{ marginTop: 8, fontSize: 13, color: C.danger }}>연동 에러: {syncError}</p>}
+            {syncResult && <p style={{ marginTop: 8, fontSize: 12, color: C.sub }}>연동 완료: {syncResult.scraped}건 수집, {syncResult.saved}건 저장</p>}
+            {resetError && <p style={{ marginTop: 8, fontSize: 13, color: C.danger }}>리셋 에러: {resetError}</p>}
+            {reclassifyError && <p style={{ marginTop: 8, fontSize: 13, color: C.danger }}>재분류 에러: {reclassifyError}</p>}
+
+            {categoryError && <p style={{ marginTop: 8, marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {categoryError}</p>}
 
             <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
               <input
@@ -741,8 +834,18 @@ export default function RulesPage() {
                       overflow: "hidden",
                     }}
                   >
-                    <div style={{ padding: "10px 12px", borderBottom: `1px solid ${C.border}`, fontSize: 12, fontWeight: 700, color: C.primary, whiteSpace: "nowrap" }}>
-                      {cat} <span style={{ fontWeight: 400, color: C.sub, fontSize: 11 }}>({items.length})</span>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, padding: "10px 12px", borderBottom: `1px solid ${C.border}`, fontSize: 12, fontWeight: 700, color: C.primary, whiteSpace: "nowrap" }}>
+                      <span>{cat} <span style={{ fontWeight: 400, color: C.sub, fontSize: 11 }}>({items.length})</span></span>
+                      {cat === TreatmentCategory.레이저 && (
+                        <button
+                          onClick={handleReclassifyLaser}
+                          disabled={reclassifying}
+                          title="섹션 타이틀 기준으로 피부관리/주사시술을 다시 분류합니다"
+                          style={{ fontSize: 10, fontWeight: 600, color: C.sub, background: "none", border: `1px solid ${C.border}`, borderRadius: 6, padding: "2px 6px", cursor: "pointer", opacity: reclassifying ? 0.6 : 1, flexShrink: 0 }}
+                        >
+                          {reclassifying ? "재분류 중..." : "재분류"}
+                        </button>
+                      )}
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: 8, maxHeight: "70vh", overflowY: "auto" }}>
                       {items.length === 0 && <p style={{ fontSize: 11, color: C.sub, padding: "4px 0" }}>없음</p>}
