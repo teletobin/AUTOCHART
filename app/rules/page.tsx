@@ -1,9 +1,6 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { formatNumber } from "@/lib/format";
 import type { Alias, Treatment } from "@/lib/types";
@@ -85,15 +82,7 @@ function tabButtonStyle(active: boolean): React.CSSProperties {
 }
 
 export default function RulesPage() {
-  const searchParams = useSearchParams();
   const [tab, setTab] = useState<Tab>("replace");
-
-  useEffect(() => {
-    const tabParam = searchParams.get("tab");
-    if (tabParam === "category" || tabParam === "replace" || tabParam === "exclude" || tabParam === "alias" || tabParam === "manual") {
-      setTab(tabParam as Tab);
-    }
-  }, [searchParams]);
 
   const [rules, setRules] = useState<Rule[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -393,64 +382,6 @@ export default function RulesPage() {
 
   const excludeRules = rules.filter((r) => r.type === "exclude");
   const replaceRules = rules.filter((r) => r.type === "replace");
-
-  async function autoReclassifyUnclassified() {
-    const unclassified = categoryTreatments.filter(t => !t.category);
-    let count = 0;
-    for (const t of unclassified) {
-      const lowerName = t.name.toLowerCase();
-      if (lowerName.includes("보톡스") || lowerName.includes("필러") || lowerName.includes("주사")) {
-        await updateCategory(t.id!, TreatmentCategory.주사기타);
-        count++;
-      }
-    }
-    loadCategoryTreatments();
-  }
-
-  async function resetAndResync() {
-    if (!window.confirm("스크래핑된 모든 시술을 삭제하고 다시 동기화하시겠습니까?\n직접 추가한 시술은 유지됩니다.")) return;
-    try {
-      await fetch("/api/treatments", { method: "DELETE" });
-      alert("데이터 삭제 완료. 메인에서 \"수가 동기화\"를 클릭하세요.");
-    } catch (e) {
-      alert("삭제 실패: " + String(e));
-    }
-  }
-
-  async function bulkClassifyBySection() {
-    if (!window.confirm("섹션명에 \"피부관리\"가 포함된 모든 시술을 1번(피부관리)으로 분류하시겠습니까?")) return;
-    let count = 0;
-    for (const t of categoryTreatments) {
-      const section = (t as any).section || "";
-      if (section.toLowerCase().replace(/\s+/g, "").includes("피부관리")) {
-        await updateCategory(t.id!, TreatmentCategory.피부관리);
-        count++;
-      }
-    }
-    loadCategoryTreatments();
-    alert(`${count}건 분류 완료.`);
-  }
-
-  const [syncing, setSyncing] = useState(false);
-
-  async function handleSync() {
-    if (!window.confirm("홈페이지에서 전체 시술을 다시 불러오시겠습니까?\n기존 분류는 유지됩니다.")) return;
-    setSyncing(true);
-    try {
-      const res = await fetch("/api/scrape", { method: "POST" });
-      const data = await res.json();
-      if (data.error) {
-        alert(`동기화 실패: ${data.error}`);
-      } else {
-        alert(`동기화 완료 (${data.saved}건 저장)`);
-        loadCategoryTreatments();
-      }
-    } catch (e) {
-      alert(`동기화 실패: ${String(e)}`);
-    } finally {
-      setSyncing(false);
-    }
-  }
 
   return (
     <div style={styles.wrap}>
@@ -763,7 +694,7 @@ export default function RulesPage() {
 
             {categoryError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {categoryError}</p>}
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 14, alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
               <input
                 type="text"
                 value={categorySearch}
@@ -788,21 +719,6 @@ export default function RulesPage() {
               >
                 {selectedForBulk.size}개 이동
               </button>
-              <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
-                <button
-                  onClick={handleSync}
-                  disabled={syncing}
-                  style={{ ...styles.btnPrimary, opacity: syncing ? 0.6 : 1 }}
-                >
-                  {syncing ? "동기화 중…" : "수가 동기화"}
-                </button>
-                <button
-                  onClick={resetAndResync}
-                  style={{ ...styles.btnPrimary, background: "#c0392b" }}
-                >
-                  데이터 리셋
-                </button>
-              </div>
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, marginBottom: 16 }}>
@@ -825,18 +741,8 @@ export default function RulesPage() {
                       overflow: "hidden",
                     }}
                   >
-                    <div style={{ padding: "10px 12px", borderBottom: `1px solid ${C.border}`, fontSize: 12, fontWeight: 700, color: C.primary, whiteSpace: "nowrap", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <div>
-                        {cat} <span style={{ fontWeight: 400, color: C.sub, fontSize: 11 }}>({items.length})</span>
-                      </div>
-                      {cat === TreatmentCategory.레이저 && (
-                        <button
-                          onClick={bulkClassifyBySection}
-                          style={{ ...styles.btnPrimary, background: "#27ae60", padding: "4px 8px", fontSize: 10, fontWeight: 600 }}
-                        >
-                          피부관리
-                        </button>
-                      )}
+                    <div style={{ padding: "10px 12px", borderBottom: `1px solid ${C.border}`, fontSize: 12, fontWeight: 700, color: C.primary, whiteSpace: "nowrap" }}>
+                      {cat} <span style={{ fontWeight: 400, color: C.sub, fontSize: 11 }}>({items.length})</span>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: 8, maxHeight: "70vh", overflowY: "auto" }}>
                       {items.length === 0 && <p style={{ fontSize: 11, color: C.sub, padding: "4px 0" }}>없음</p>}
@@ -869,17 +775,9 @@ export default function RulesPage() {
             </div>
 
             <div style={{ borderTop: `2px solid ${C.border}`, paddingTop: 14 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 10 }}>
-                <p style={{ fontSize: 12, fontWeight: 700, color: C.primary }}>
-                  미분류 시술 ({categoryTreatments.filter(t => !t.category).length})
-                </p>
-                <button
-                  onClick={autoReclassifyUnclassified}
-                  style={{ ...styles.btnPrimary, fontSize: 12, padding: "8px 12px" }}
-                >
-                  자동 재분류
-                </button>
-              </div>
+              <p style={{ fontSize: 12, fontWeight: 700, color: C.primary, marginBottom: 10 }}>
+                미분류 시술 ({categoryTreatments.filter(t => !t.category).length})
+              </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: "50vh", overflowY: "auto" }}>
                 {categoryTreatments.filter(t => !t.category).length === 0 ? (
                   <p style={{ fontSize: 11, color: C.sub }}>없음</p>
