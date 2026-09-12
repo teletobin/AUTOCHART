@@ -554,8 +554,8 @@ export default function RulesPage() {
       <header style={styles.header}>
         <div style={styles.headerInner}>
           <div style={styles.logo}>
-            <img src="/logo.png" alt="차팅서포트" style={{ height: 36, width: "auto" }} />
-            <span style={{ fontWeight: 700 }}>차팅서포트</span>
+            <img src="/logo.png" alt="차팅 서포트" style={{ height: 36, width: "auto" }} />
+            <span style={{ fontWeight: 700 }}>차팅 서포트</span>
             <span style={{ color: C.sub, fontWeight: 400, fontSize: 16.5 }}>&gt;</span>
             <span style={{ fontWeight: 500, color: C.sub, fontSize: 16.5 }}>상세설정</span>
           </div>

@@ -303,8 +303,8 @@ export default function Home() {
       <header style={styles.header}>
         <div style={styles.headerInner}>
           <div style={styles.logo}>
-            <img src="/logo.png" alt="차팅서포트" style={{ height: 36, width: "auto" }} />
-            차팅서포트
+            <img src="/logo.png" alt="차팅 서포트" style={{ height: 36, width: "auto" }} />
+            차팅 서포트
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <BranchPicker value={branch} onChange={handleBranchChange} />
@@ -498,7 +498,7 @@ export default function Home() {
 
             <button onClick={handleCopy} disabled={selectedItems.length === 0}
               style={{ ...styles.btnPrimary, width: "100%", marginTop: 10, padding: "10px", opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
-              {copied ? "복사됨 ✓" : "최종차트 복사"}
+              {copied ? "복사됨 ✓" : "최종 차트 복사"}
             </button>
 
             {/* 회원권 / 양도 토글 */}

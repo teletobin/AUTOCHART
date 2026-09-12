@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "자동차팅",
+  title: "차팅 서포트",
   description: "시술 견적 자동 계산 및 차팅 텍스트 생성",
 };
 
