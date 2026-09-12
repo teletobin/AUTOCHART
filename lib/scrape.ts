@@ -63,54 +63,50 @@ async function scrapeOnePage(
   const $ = cheerio.load(html);
   const treatments: ScrapedTreatment[] = [];
 
-  // 페이지의 모든 h2/h3/h4/h5 제목 수집
-  const headingsByOffset: Array<{ text: string; offset: number }> = [];
-  let offset = 0;
+  // 페이지를 위에서 아래로 순회하면서 섹션명 추적
+  let currentSection = "";
+  $("h2, h3, h4, h5, h6, ul.slist > li").each((_, el) => {
+    const $el = $(el);
+    const tag = $el.prop("tagName")?.toLowerCase();
 
-  $("h2, h3, h4, h5, h6").each((_, el) => {
-    const text = $(el).text().trim();
-    if (text && text.length > 0 && text.length < 100) {
-      headingsByOffset.push({ text, offset: offset++ });
-    }
-  });
-
-  // li 처리
-  let liOffset = 0;
-  $("ul.slist > li").each((_, el) => {
-    const $li = $(el);
-    const rawName = $li.find("strong").first().text().trim();
-    const priceText = $li.find("span.o_price01").first().text().trim();
-
-    if (!rawName || !priceText) return;
-
-    const name = applyCleanupRules(rawName, cleanupRules);
-    const price = parseInt(priceText.replace(/[^0-9]/g, ""), 10);
-
-    if (name.length < 5 || !price || price <= 0) return;
-    if (!/[가-힣]/.test(name)) return;
-
-    // 현재 li 위의 가장 가까운 제목 찾기 (아래 li들이 나오기 전까지 같은 섹션)
-    let section = "";
-    for (let i = headingsByOffset.length - 1; i >= 0; i--) {
-      if (headingsByOffset[i].offset <= liOffset) {
-        section = headingsByOffset[i].text;
-        break;
+    // 제목을 만나면 현재 섹션 업데이트
+    if (["h2", "h3", "h4", "h5", "h6"].includes(tag || "")) {
+      const text = $el.text().trim();
+      if (text && text.length > 0 && text.length < 100) {
+        currentSection = text;
       }
+      return;
     }
-    liOffset++;
 
-    // 슬래시가 있으면 각각으로 분리해서 추가
-    const expandedNames = expandSlashTreatments(name);
-    for (const expandedName of expandedNames) {
-      treatments.push({
-        branch: BRANCH,
-        name: expandedName,
-        price,
-        category: detectTreatmentCategory(expandedName, mainCategory, section),
-        scraped_at: new Date().toISOString(),
-        is_manual: false,
-        section: section || undefined,
-      });
+    // li 처리
+    if (tag === "li") {
+      const $li = $el;
+      const rawName = $li.find("strong").first().text().trim();
+      const priceText = $li.find("span.o_price01").first().text().trim();
+
+      if (!rawName || !priceText) return;
+
+      const name = applyCleanupRules(rawName, cleanupRules);
+      const price = parseInt(priceText.replace(/[^0-9]/g, ""), 10);
+
+      if (name.length < 5 || !price || price <= 0) return;
+      if (!/[가-힣]/.test(name)) return;
+
+      const section = currentSection;
+
+      // 슬래시가 있으면 각각으로 분리해서 추가
+      const expandedNames = expandSlashTreatments(name);
+      for (const expandedName of expandedNames) {
+        treatments.push({
+          branch: BRANCH,
+          name: expandedName,
+          price,
+          category: detectTreatmentCategory(expandedName, mainCategory, section),
+          scraped_at: new Date().toISOString(),
+          is_manual: false,
+          section: section || undefined,
+        });
+      }
     }
   });
 
