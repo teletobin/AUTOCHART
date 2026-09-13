@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { runScrapeAndSync } from "@/lib/scrape";
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => ({}));

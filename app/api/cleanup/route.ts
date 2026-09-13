@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 import { applyCleanupRules, type CleanupRule } from "@/lib/cleanup";
 
+export const maxDuration = 60;
+
 // 현재 저장된 규칙을 treatments 테이블의 기존 데이터에 즉시 적용한다.
 export async function POST() {
   const supabase = getSupabaseServerClient();
@@ -63,17 +65,23 @@ export async function POST() {
   const errors: { id: string; message: string }[] = [];
   let updatedCount = 0;
 
-  for (const u of updates) {
-    const { error } = await supabase
-      .from("treatments")
-      .update({ name: u.newName })
-      .eq("id", u.id);
-
-    if (error) {
-      errors.push({ id: u.id, message: error.message });
-    } else {
-      updatedCount++;
-    }
+  // 수천 건이 될 수 있어 한 건씩 순차 update하면 타임아웃이 나므로
+  // 일정 개수씩 묶어 병렬로 처리한다.
+  const CHUNK_SIZE = 50;
+  for (let i = 0; i < updates.length; i += CHUNK_SIZE) {
+    const chunk = updates.slice(i, i + CHUNK_SIZE);
+    const results = await Promise.all(
+      chunk.map((u) =>
+        supabase.from("treatments").update({ name: u.newName }).eq("id", u.id)
+      )
+    );
+    results.forEach((result, idx) => {
+      if (result.error) {
+        errors.push({ id: chunk[idx].id, message: result.error.message });
+      } else {
+        updatedCount++;
+      }
+    });
   }
 
   return NextResponse.json({ updated: updatedCount, skipped, errors });

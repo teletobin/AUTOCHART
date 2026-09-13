@@ -58,6 +58,7 @@ async function scrapeOnePage(
   mainCategory?: string
 ): Promise<ScrapedTreatment[]> {
   const { data: html } = await axios.get(url, {
+    timeout: 15000,
     headers: {
       "User-Agent":
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
@@ -131,11 +132,10 @@ export async function runScrapeAndSync(branch: string) {
 
   const cleanupRules = (rules ?? []) as CleanupRule[];
 
-  const treatments: ScrapedTreatment[] = [];
-  for (const item of buildUrls(branch)) {
-    const pageTreatments = await scrapeOnePage(item.url, cleanupRules, branch, item.mainCategory);
-    treatments.push(...pageTreatments);
-  }
+  const pageResults = await Promise.all(
+    buildUrls(branch).map((item) => scrapeOnePage(item.url, cleanupRules, branch, item.mainCategory))
+  );
+  const treatments: ScrapedTreatment[] = pageResults.flat();
 
   // 같은 시술명이 여러 섹션에 중복 노출되는 경우가 있어 branch+name 기준으로
   // 중복 제거 (마지막에 나온 값으로 덮어씀) 하지 않으면 upsert가 실패함
