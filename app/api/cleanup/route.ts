@@ -10,7 +10,7 @@ export async function POST() {
 
   const { data: rules, error: rulesError } = await supabase
     .from("cleanup_rules")
-    .select("id, type, pattern, replacement");
+    .select("id, type, pattern, replacement, branch");
 
   if (rulesError) {
     return NextResponse.json({ error: rulesError.message }, { status: 500 });
@@ -34,13 +34,16 @@ export async function POST() {
     if (!page || page.length < PAGE_SIZE) break;
   }
 
-  const cleanupRules = (rules ?? []) as CleanupRule[];
-  const cleaned = (treatments ?? []).map((t) => ({
-    id: t.id as string,
-    branch: t.branch as string,
-    oldName: t.name as string,
-    newName: applyCleanupRules(t.name as string, cleanupRules),
-  }));
+  const allRules = (rules ?? []) as CleanupRule[];
+  const cleaned = (treatments ?? []).map((t) => {
+    const rulesForBranch = allRules.filter((r) => !r.branch || r.branch === t.branch);
+    return {
+      id: t.id as string,
+      branch: t.branch as string,
+      oldName: t.name as string,
+      newName: applyCleanupRules(t.name as string, rulesForBranch),
+    };
+  });
 
   // 정리 후 같은 branch+name으로 겹치는 항목은 unique 제약 위반이므로 건너뛴다.
   const nameCount = new Map<string, number>();

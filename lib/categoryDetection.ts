@@ -13,8 +13,7 @@ function extractCleanName(name: string): string {
 // 기획전(sField=1)은 프로모션 태그를 제거한 실제 시술명으로 분류한다.
 // 카테고리1(피부관리)은 아직 규칙이 정해지지 않아, 일단 레이저(피부 탭)에
 // 함께 묶어두고 나중에 키워드 규칙이 정해지면 그중 일부를 분리할 예정이다.
-// 피부 탭 섹션 타이틀만 보고 판단하는 규칙. scrape.ts의 최초 분류와
-// 상세설정 화면의 "재분류" 버튼(기존 데이터 재계산)에서 함께 사용한다.
+// 피부 탭 섹션 타이틀만 보고 판단하는 규칙.
 export function detectCategoryBySkinSection(section?: string | null): TreatmentCategory | null {
   const sectionNoSpace = (section ?? "").toLowerCase().replace(/\s+/g, "");
   if (!sectionNoSpace) return null;
@@ -45,6 +44,17 @@ export function detectTreatmentCategory(
   section?: string
 ): TreatmentCategory | null {
   const lowerName = name.toLowerCase();
+  const nameNoSpace = lowerName.replace(/\s+/g, "");
+
+  // 최우선: 셀바이브/LDM/물방울리프팅은 리프팅 탭에서 스크래핑되지만
+  // 실제로는 피부관리 장비라 카테고리 예외 처리한다.
+  if (
+    nameNoSpace.includes("셀바이브") ||
+    nameNoSpace.includes("ldm") ||
+    nameNoSpace.includes("물방울리프팅")
+  ) {
+    return TreatmentCategory.피부관리;
+  }
 
   // 최우선: 섹션명 기반 분류 (피부 탭)
   if (mainCategory === "피부") {

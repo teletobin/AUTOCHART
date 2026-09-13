@@ -3,6 +3,7 @@ export type CleanupRule = {
   type: "exclude" | "replace";
   pattern: string;
   replacement: string | null;
+  branch?: string | null;
 };
 
 // "+" 앞뒤 공백을 없애고("A + B" → "A+B"), "A N회+B N회"처럼 양쪽 회차가

@@ -6,7 +6,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("cleanup_rules")
-    .select("id, type, pattern, replacement, created_at")
+    .select("id, type, pattern, replacement, branch, created_at")
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -23,6 +23,7 @@ export async function POST(request: Request) {
   const type = body.type === "replace" ? "replace" : "exclude";
   const pattern = String(body.pattern ?? "").trim();
   const replacement = type === "replace" ? String(body.replacement ?? "") : null;
+  const branch = body.branch ? String(body.branch).trim() : null;
 
   if (!pattern) {
     return NextResponse.json({ error: "pattern은 필수입니다." }, { status: 400 });
@@ -30,8 +31,8 @@ export async function POST(request: Request) {
 
   const { data, error } = await supabase
     .from("cleanup_rules")
-    .insert({ type, pattern, replacement })
-    .select("id, type, pattern, replacement, created_at")
+    .insert({ type, pattern, replacement, branch })
+    .select("id, type, pattern, replacement, branch, created_at")
     .single();
 
   if (error) {

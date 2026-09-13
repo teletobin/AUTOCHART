@@ -23,7 +23,7 @@ export async function PATCH(
     .from("cleanup_rules")
     .update(update)
     .eq("id", id)
-    .select("id, type, pattern, replacement, created_at")
+    .select("id, type, pattern, replacement, branch, created_at")
     .single();
 
   if (error) {

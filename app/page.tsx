@@ -123,7 +123,6 @@ const styles: Record<string, React.CSSProperties> = {
 
 export default function Home() {
   const [branch, setBranch] = useState("");
-  const [syncing, setSyncing] = useState(false);
   const [treatments, setTreatments] = useState<Treatment[]>([]);
   const [aliases, setAliases] = useState<Alias[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -168,24 +167,6 @@ export default function Home() {
     localStorage.setItem(BRANCH_STORAGE_KEY, next);
   }
 
-  async function handleSyncBranch() {
-    if (!branch) return;
-    setSyncing(true);
-    try {
-      const res = await fetch("/api/scrape", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branch }),
-      });
-      const data = await res.json();
-      if (data.error) setLoadError(data.error);
-      else await loadTreatments(branch);
-    } catch (e) {
-      setLoadError(String(e));
-    } finally {
-      setSyncing(false);
-    }
-  }
 
   const matcher = useMemo(() => buildMatcher(treatments, aliases), [treatments, aliases]);
   const candidates = useMemo(() => (inputValue.trim().length >= 2 ? matcher(inputValue, 12) : []), [inputValue, matcher]);
@@ -308,16 +289,6 @@ export default function Home() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <BranchPicker value={branch} onChange={handleBranchChange} />
-            {branch && (
-              <button
-                onClick={handleSyncBranch}
-                disabled={syncing}
-                title="홈페이지 수가가 변경되었다면 눌러주세요"
-                style={{ ...styles.btnGhost, fontSize: 11, padding: "6px 10px", opacity: syncing ? 0.6 : 1 }}
-              >
-                {syncing ? "연동 중..." : "홈페이지 연동"}
-              </button>
-            )}
             <Link
               href="/rules?tab=category"
               aria-label="상세설정"
@@ -335,7 +306,7 @@ export default function Home() {
 
       {!branch && (
         <p style={{ maxWidth: MAX_WIDTH, margin: "12px auto 0", padding: "0 20px", fontSize: 13, fontWeight: 700, color: C.primary }}>
-          상단에서 지점을 선택한 후 홈페이지 연동 버튼을 눌러주세요.
+          상단에서 지점을 선택해주세요.
         </p>
       )}
       {loadError && <p style={{ maxWidth: MAX_WIDTH, margin: "8px auto 0", padding: "0 20px", fontSize: 12, color: C.danger }}>시술 데이터를 불러오지 못했습니다: {loadError}</p>}
@@ -545,6 +516,8 @@ export default function Home() {
                               padding: "4px 10px",
                               fontSize: 11,
                               flex: 1,
+                              minWidth: 0,
+                              whiteSpace: "nowrap",
                               border: `1px solid ${isSelected ? C.primary : C.border}`,
                               borderRadius: 8,
                               background: isSelected ? C.primary : "#fff",
@@ -569,6 +542,8 @@ export default function Home() {
                               padding: "4px 10px",
                               fontSize: 11,
                               flex: 1,
+                              minWidth: 0,
+                              whiteSpace: "nowrap",
                               border: `1px solid ${isSelected ? C.primary : C.border}`,
                               borderRadius: 8,
                               background: isSelected ? C.primary : "#fff",
@@ -595,6 +570,8 @@ export default function Home() {
                             padding: "4px 10px",
                             fontSize: 11,
                             flex: 1,
+                            minWidth: 0,
+                            whiteSpace: "nowrap",
                             border: `1px solid ${isSelected ? C.primary : C.border}`,
                             borderRadius: 8,
                             background: isSelected ? C.primary : "#fff",

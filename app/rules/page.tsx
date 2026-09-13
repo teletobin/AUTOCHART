@@ -16,6 +16,7 @@ type Rule = {
   type: "exclude" | "replace";
   pattern: string;
   replacement: string | null;
+  branch: string | null;
 };
 
 type ManualTreatment = {
@@ -31,14 +32,14 @@ type ApplyResult = {
   errors: { id: string; message: string }[];
 };
 
-type Tab = "replace" | "exclude" | "alias" | "manual" | "category";
+type Tab = "exclude" | "alias" | "manual" | "category" | "branchRules";
 
 const TABS: { key: Tab; label: string }[] = [
-  { key: "category", label: "시술 카테고리 분류" },
-  { key: "replace", label: "치환" },
-  { key: "exclude", label: "삭제" },
-  { key: "alias", label: "매칭" },
-  { key: "manual", label: "홈페이지에 없는 시술" },
+  { key: "category", label: "시술별 카테고리" },
+  { key: "exclude", label: "시술명 정리" },
+  { key: "alias", label: "검색어 매칭" },
+  { key: "branchRules", label: "지점별 규칙" },
+  { key: "manual", label: "지점별 시술 추가" },
 ];
 
 const SETUP_SQL = `create table cleanup_rules (
@@ -61,8 +62,8 @@ const styles: Record<string, React.CSSProperties> = {
   tabBarInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", gap: 4, padding: "0 28px", overflowX: "auto" as const, boxSizing: "border-box" },
   main:      { width: "100%", maxWidth: "none", margin: "0", padding: "24px 28px", boxSizing: "border-box" },
   card:      { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px" },
-  cardTitle: { fontSize: 12, fontWeight: 700, color: C.sub, marginBottom: 6, letterSpacing: "0.04em" },
-  cardHint:  { fontSize: 11, color: C.sub, marginBottom: 14 },
+  cardTitle: { fontSize: 14, fontWeight: 700, color: C.primary, marginBottom: 6, letterSpacing: "0.04em" },
+  cardHint:  { fontSize: 13, color: C.primary, marginBottom: 14, lineHeight: 1.6 },
   input:     { flex: 1, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
   btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 },
   btnGhost: { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" },
@@ -76,7 +77,7 @@ const styles: Record<string, React.CSSProperties> = {
 function tabButtonStyle(active: boolean): React.CSSProperties {
   return {
     padding: "10px 14px",
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: 600,
     color: active ? C.primary : C.sub,
     background: "none",
@@ -88,8 +89,14 @@ function tabButtonStyle(active: boolean): React.CSSProperties {
 }
 
 export default function RulesPage() {
-  const [tab, setTab] = useState<Tab>("replace");
+  const [tab, setTab] = useState<Tab>("category");
   const [branch, setBranch] = useState("");
+  const [confirmModal, setConfirmModal] = useState<{
+    message: string;
+    confirmLabel: string;
+    danger?: boolean;
+    onConfirm: () => void;
+  } | null>(null);
 
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get("tab") as Tab | null;
@@ -108,8 +115,8 @@ export default function RulesPage() {
   const [tableMissing, setTableMissing] = useState(false);
 
   const [newExclude, setNewExclude] = useState("");
-  const [newFind, setNewFind] = useState("");
-  const [newReplacement, setNewReplacement] = useState("");
+  const [newBranchFind, setNewBranchFind] = useState("");
+  const [newBranchReplacement, setNewBranchReplacement] = useState("");
 
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [editPattern, setEditPattern] = useState("");
@@ -128,6 +135,7 @@ export default function RulesPage() {
   const [editingManualId, setEditingManualId] = useState<string | null>(null);
   const [editManualName, setEditManualName] = useState("");
   const [editManualPrice, setEditManualPrice] = useState("");
+  const [editManualCategory, setEditManualCategory] = useState<TreatmentCategory | null>(null);
 
   const [categoryTreatments, setCategoryTreatments] = useState<Treatment[]>([]);
   const [categoryError, setCategoryError] = useState<string | null>(null);
@@ -141,12 +149,6 @@ export default function RulesPage() {
 
   const [resetting, setResetting] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
-
-  const [reclassifying, setReclassifying] = useState(false);
-  const [reclassifyError, setReclassifyError] = useState<string | null>(null);
-
-  const [reclassifyingLdm, setReclassifyingLdm] = useState(false);
-  const [reclassifyLdmError, setReclassifyLdmError] = useState<string | null>(null);
 
   const [aliases, setAliases] = useState<Alias[]>([]);
   const [aliasError, setAliasError] = useState<string | null>(null);
@@ -227,12 +229,12 @@ export default function RulesPage() {
     if (tab === "category" && branch) loadCategoryTreatments(branch);
   }, [tab, branch]);
 
-  async function addRule(type: "exclude" | "replace", pattern: string, replacement?: string) {
+  async function addRule(type: "exclude" | "replace", pattern: string, replacement?: string, ruleBranch?: string) {
     if (!pattern.trim()) return;
     const res = await fetch("/api/rules", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, pattern, replacement }),
+      body: JSON.stringify({ type, pattern, replacement, branch: ruleBranch ?? null }),
     });
     const data = await res.json();
     if (data.error) {
@@ -320,19 +322,21 @@ export default function RulesPage() {
     setEditingManualId(t.id);
     setEditManualName(t.name);
     setEditManualPrice(String(t.price));
+    setEditManualCategory(t.category ?? null);
   }
 
   function cancelEditManual() {
     setEditingManualId(null);
     setEditManualName("");
     setEditManualPrice("");
+    setEditManualCategory(null);
   }
 
   async function saveEditManual(id: string) {
     const res = await fetch(`/api/manual-treatments/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: editManualName, price: Number(editManualPrice) }),
+      body: JSON.stringify({ name: editManualName, price: Number(editManualPrice), category: editManualCategory }),
     });
     const data = await res.json();
     if (data.error) {
@@ -348,7 +352,7 @@ export default function RulesPage() {
     setManualTreatments((prev) => prev.filter((t) => t.id !== id));
   }
 
-  async function handleSync() {
+  async function runSync() {
     if (!branch) return;
     setSyncing(true);
     setSyncError(null);
@@ -373,9 +377,17 @@ export default function RulesPage() {
     }
   }
 
-  async function handleReset() {
+  function handleSync() {
     if (!branch) return;
-    if (!confirm("홈페이지에서 불러온 시술을 모두 삭제합니다 (미등재 시술은 유지됩니다). 계속할까요?")) return;
+    setConfirmModal({
+      message: "매일 오전 9시50분마다 홈페이지 시술 정보가 연동됩니다.\n가격 변동이 확인되어 재연동이 필요할 때만 눌러주세요.",
+      confirmLabel: "확인 후 연동",
+      onConfirm: runSync,
+    });
+  }
+
+  async function runReset() {
+    if (!branch) return;
     setResetting(true);
     setResetError(null);
     try {
@@ -393,50 +405,14 @@ export default function RulesPage() {
     }
   }
 
-  async function handleReclassifyLaser() {
+  function handleReset() {
     if (!branch) return;
-    setReclassifying(true);
-    setReclassifyError(null);
-    try {
-      const res = await fetch("/api/treatments/reclassify-laser", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branch }),
-      });
-      const data = await res.json();
-      if (data.error) {
-        setReclassifyError(data.error);
-      } else {
-        loadCategoryTreatments(branch);
-      }
-    } catch (e) {
-      setReclassifyError(String(e));
-    } finally {
-      setReclassifying(false);
-    }
-  }
-
-  async function handleReclassifyLdm() {
-    if (!branch) return;
-    setReclassifyingLdm(true);
-    setReclassifyLdmError(null);
-    try {
-      const res = await fetch("/api/treatments/reclassify-ldm", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ branch }),
-      });
-      const data = await res.json();
-      if (data.error) {
-        setReclassifyLdmError(data.error);
-      } else {
-        loadCategoryTreatments(branch);
-      }
-    } catch (e) {
-      setReclassifyLdmError(String(e));
-    } finally {
-      setReclassifyingLdm(false);
-    }
+    setConfirmModal({
+      message: "홈페이지에서 연동된 시술을 모두 삭제합니다.\n직접 추가한 시술은 유지됩니다. 데이터를 리셋할까요?",
+      confirmLabel: "확인 후 삭제",
+      danger: true,
+      onConfirm: runReset,
+    });
   }
 
   async function updateCategory(id: string, category: TreatmentCategory) {
@@ -514,37 +490,25 @@ export default function RulesPage() {
   }
 
   const excludeRules = rules.filter((r) => r.type === "exclude");
-  const replaceRules = rules.filter((r) => r.type === "replace");
+  const branchRules = rules.filter((r) => r.type === "replace" && r.branch === branch);
 
   const applySection = (
     <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: `1px solid ${C.border}` }}>
-      <button
-        onClick={handleApply}
-        disabled={applying}
-        style={{ ...styles.btnPrimary, opacity: applying ? 0.6 : 1 }}
-      >
-        {applying ? "적용 중..." : "연동된 데이터에 적용"}
-      </button>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <button
+          onClick={handleApply}
+          disabled={applying}
+          style={{ ...styles.btnPrimary, opacity: applying ? 0.6 : 1 }}
+        >
+          {applying ? "적용 중..." : "연동된 데이터에 적용"}
+        </button>
+        {applyResult && <span style={{ fontSize: 13, color: C.primary }}>업데이트: {applyResult.updated}건</span>}
+      </div>
 
       {applyError && <p style={{ marginTop: 10, fontSize: 13, color: C.danger }}>에러: {applyError}</p>}
 
-      {applyResult && (
-        <div style={{ marginTop: 10, fontSize: 13, color: C.primary }}>
-          <p>업데이트: {applyResult.updated}건</p>
-          {applyResult.skipped.length > 0 && (
-            <div style={{ marginTop: 4 }}>
-              <p style={{ color: "#b8860b" }}>중복으로 건너뜀: {applyResult.skipped.length}건</p>
-              <ul style={{ marginTop: 4, paddingLeft: 18, fontSize: 11, color: C.sub, listStyle: "disc" }}>
-                {applyResult.skipped.map((s) => (
-                  <li key={s.id}>{s.oldName} → {s.newName}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-          {applyResult.errors.length > 0 && (
-            <p style={{ marginTop: 4, color: C.danger }}>에러: {applyResult.errors.length}건</p>
-          )}
-        </div>
+      {applyResult && applyResult.errors.length > 0 && (
+        <p style={{ marginTop: 10, fontSize: 13, color: C.danger }}>에러: {applyResult.errors.length}건</p>
       )}
     </div>
   );
@@ -554,8 +518,10 @@ export default function RulesPage() {
       <header style={styles.header}>
         <div style={styles.headerInner}>
           <div style={styles.logo}>
-            <img src="/logo.png" alt="차팅 서포트" style={{ height: 36, width: "auto" }} />
-            <span style={{ fontWeight: 700 }}>차팅 서포트</span>
+            <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, color: C.primary, textDecoration: "none" }}>
+              <img src="/logo.png" alt="차팅 서포트" style={{ height: 36, width: "auto" }} />
+              <span style={{ fontWeight: 700 }}>차팅 서포트</span>
+            </Link>
             <span style={{ color: C.sub, fontWeight: 400, fontSize: 16.5 }}>&gt;</span>
             <span style={{ fontWeight: 500, color: C.sub, fontSize: 16.5 }}>상세설정</span>
           </div>
@@ -602,81 +568,15 @@ export default function RulesPage() {
         style={
           tab === "category"
             ? styles.main
-            : { ...styles.main, maxWidth: tab === "manual" ? 760 : 640, margin: "0" }
+            : { ...styles.main, maxWidth: 760, margin: "0" }
         }
       >
-        {tab === "replace" && (
-          <section style={styles.card}>
-            <p style={styles.cardTitle}>치환 규칙 (찾을 문자열 → 바꿀 문자열)</p>
-
-            {applySection}
-
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-              <input
-                type="text"
-                value={newFind}
-                onChange={(e) => setNewFind(e.target.value)}
-                placeholder="찾을 문자열"
-                style={styles.input}
-              />
-              <input
-                type="text"
-                value={newReplacement}
-                onChange={(e) => setNewReplacement(e.target.value)}
-                placeholder="바꿀 문자열"
-                style={styles.input}
-              />
-              <button
-                onClick={() => {
-                  addRule("replace", newFind, newReplacement);
-                  setNewFind("");
-                  setNewReplacement("");
-                }}
-                style={styles.btnPrimary}
-              >
-                추가
-              </button>
-            </div>
-
-            <div style={styles.list}>
-              {replaceRules.length === 0 && <p style={styles.empty}>등록된 치환 규칙이 없습니다.</p>}
-              {replaceRules.map((r) =>
-                editingRuleId === r.id ? (
-                  <div key={r.id} style={styles.rowEdit}>
-                    <input
-                      type="text"
-                      value={editPattern}
-                      onChange={(e) => setEditPattern(e.target.value)}
-                      style={styles.input}
-                    />
-                    <input
-                      type="text"
-                      value={editReplacement}
-                      onChange={(e) => setEditReplacement(e.target.value)}
-                      style={styles.input}
-                    />
-                    <button onClick={() => saveEditRule(r)} style={{ ...styles.linkBtn, color: C.primary }}>저장</button>
-                    <button onClick={cancelEditRule} style={styles.linkBtn}>취소</button>
-                  </div>
-                ) : (
-                  <div key={r.id} style={styles.row}>
-                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {r.pattern} → {r.replacement}
-                    </span>
-                    <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
-                      <button onClick={() => startEditRule(r)} style={styles.linkBtn}>수정</button>
-                      <button onClick={() => deleteRule(r.id)} style={styles.linkBtn} aria-label="삭제">×</button>
-                    </div>
-                  </div>
-                )
-              )}
-            </div>
-          </section>
-        )}
-
         {tab === "exclude" && (
           <section style={styles.card}>
-            <p style={styles.cardTitle}>제외 문구 (해당 문자열을 삭제)</p>
+            <p style={styles.cardTitle}>시술명 정리</p>
+            <p style={styles.cardHint}>
+              차팅에 불필요한 시술명 속의 괄호 내용(장비, 제품, 시술 설명 등)을 삭제합니다.
+            </p>
 
             {applySection}
 
@@ -724,7 +624,7 @@ export default function RulesPage() {
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.pattern}</span>
                     <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
                       <button onClick={() => startEditRule(r)} style={styles.linkBtn}>수정</button>
-                      <button onClick={() => deleteRule(r.id)} style={styles.linkBtn} aria-label="삭제">×</button>
+                      <button onClick={() => deleteRule(r.id)} style={styles.linkBtn}>삭제</button>
                     </div>
                   </div>
                 )
@@ -735,10 +635,15 @@ export default function RulesPage() {
 
         {tab === "alias" && (
           <section style={styles.card}>
-            <p style={styles.cardTitle}>매칭 (예: 포마 → FORMA)</p>
+            <p style={styles.cardTitle}>검색어 매칭</p>
             <p style={styles.cardHint}>
-              시술 입력창에 축약어를 타이핑하면 검색 키워드로 치환되어, 그 키워드가
-              들어간 모든 시술이 후보로 뜹니다.
+              시술검색창에 줄임말, 오타, 한글로 입력해도 원하는 시술이 검색되도록 합니다.
+              <br />
+              (줄임말 예: 스보 → 스킨보톡스)
+              <br />
+              (오타 예: 울쎼라 → 울쎄라)
+              <br />
+              (한글 입력 예: 포마 → FORMA)
             </p>
 
             {aliasError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {aliasError}</p>}
@@ -796,7 +701,87 @@ export default function RulesPage() {
                     </span>
                     <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
                       <button onClick={() => startEditAlias(a)} style={styles.linkBtn}>수정</button>
-                      <button onClick={() => deleteAlias(a.id)} style={styles.linkBtn} aria-label="삭제">×</button>
+                      <button onClick={() => deleteAlias(a.id)} style={styles.linkBtn}>삭제</button>
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          </section>
+        )}
+
+        {tab === "branchRules" && (
+          <section style={styles.card}>
+            <p style={styles.cardTitle}>지점별 규칙</p>
+            <p style={styles.cardHint}>
+              {branch || "우리 지점"}에서만 사용하는 시술명 치환 규칙을 등록해주세요.
+              <br />
+              (예: 국산 고순도 → 코어)
+            </p>
+
+            {applySection}
+
+            {!branch && <p style={{ marginBottom: 8, fontSize: 13, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
+            {loadError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {loadError}</p>}
+
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <input
+                type="text"
+                value={newBranchFind}
+                onChange={(e) => setNewBranchFind(e.target.value)}
+                placeholder="찾을 문자열"
+                disabled={!branch}
+                style={styles.input}
+              />
+              <input
+                type="text"
+                value={newBranchReplacement}
+                onChange={(e) => setNewBranchReplacement(e.target.value)}
+                placeholder="바꿀 문자열"
+                disabled={!branch}
+                style={styles.input}
+              />
+              <button
+                onClick={() => {
+                  addRule("replace", newBranchFind, newBranchReplacement, branch);
+                  setNewBranchFind("");
+                  setNewBranchReplacement("");
+                }}
+                disabled={!branch}
+                style={{ ...styles.btnPrimary, opacity: !branch ? 0.4 : 1 }}
+              >
+                추가
+              </button>
+            </div>
+
+            <div style={styles.list}>
+              {branch && branchRules.length === 0 && <p style={styles.empty}>등록된 지점별 규칙이 없습니다.</p>}
+              {branchRules.map((r) =>
+                editingRuleId === r.id ? (
+                  <div key={r.id} style={styles.rowEdit}>
+                    <input
+                      type="text"
+                      value={editPattern}
+                      onChange={(e) => setEditPattern(e.target.value)}
+                      style={styles.input}
+                    />
+                    <input
+                      type="text"
+                      value={editReplacement}
+                      onChange={(e) => setEditReplacement(e.target.value)}
+                      style={styles.input}
+                    />
+                    <button onClick={() => saveEditRule(r)} style={{ ...styles.linkBtn, color: C.primary }}>저장</button>
+                    <button onClick={cancelEditRule} style={styles.linkBtn}>취소</button>
+                  </div>
+                ) : (
+                  <div key={r.id} style={styles.row}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {r.pattern} → {r.replacement}
+                    </span>
+                    <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
+                      <button onClick={() => startEditRule(r)} style={styles.linkBtn}>수정</button>
+                      <button onClick={() => deleteRule(r.id)} style={styles.linkBtn}>삭제</button>
                     </div>
                   </div>
                 )
@@ -807,7 +792,12 @@ export default function RulesPage() {
 
         {tab === "manual" && (
           <section style={styles.card}>
-            <p style={styles.cardTitle}>홈페이지에 없는 시술</p>
+            <p style={styles.cardTitle}>지점별 시술 추가</p>
+            <p style={styles.cardHint}>
+              홈페이지에는 없는 {branch || "우리 지점"}만의 시술을 추가해 주세요.
+              <br />
+              (예: 서브시전 얼굴전체 150,000원)
+            </p>
 
             {!branch && <p style={{ marginBottom: 8, fontSize: 13, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
             {manualError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {manualError}</p>}
@@ -860,6 +850,13 @@ export default function RulesPage() {
                       onChange={(e) => setEditManualPrice(e.target.value)}
                       style={{ ...styles.input, flex: "0 0 120px" }}
                     />
+                    <Dropdown
+                      value={editManualCategory ?? ""}
+                      onChange={(v) => setEditManualCategory(v ? (v as TreatmentCategory) : null)}
+                      placeholder="카테고리"
+                      options={CATEGORY_ORDER.map((cat) => ({ value: cat, label: cat }))}
+                      style={{ flex: "0 0 110px" }}
+                    />
                     <button onClick={() => saveEditManual(t.id)} style={{ ...styles.linkBtn, color: C.primary }}>저장</button>
                     <button onClick={cancelEditManual} style={styles.linkBtn}>취소</button>
                   </div>
@@ -885,14 +882,16 @@ export default function RulesPage() {
           <section style={styles.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
               <div>
-                <p style={styles.cardTitle}>시술 카테고리 분류</p>
+                <p style={styles.cardTitle}>시술별 카테고리</p>
                 <p style={styles.cardHint}>
-                  분류별로 속한 시술 목록입니다. 체크박스로 여러 개 선택한 뒤 원하는 분류로 한번에 이동할 수 있습니다.
+                  각 카테고리 순서대로 차트를 출력합니다.
+                  <br />
+                  자동 분류되지만 오류가 있을 경우 체크박스를 선택해 원하는 카테고리로 변경해 주세요.
                 </p>
               </div>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                 <button onClick={handleSync} disabled={syncing || !branch} style={{ ...styles.btnPrimary, opacity: syncing || !branch ? 0.6 : 1 }}>
-                  {syncing ? "연동 중..." : "시술연동"}
+                  {syncing ? "연동 중..." : "홈페이지 연동"}
                 </button>
                 <button
                   onClick={handleReset}
@@ -909,8 +908,6 @@ export default function RulesPage() {
             {syncError && <p style={{ marginTop: 8, fontSize: 13, color: C.danger }}>연동 에러: {syncError}</p>}
             {syncResult && <p style={{ marginTop: 8, fontSize: 12, color: C.sub }}>연동 완료: {syncResult.scraped}건 수집, {syncResult.saved}건 저장</p>}
             {resetError && <p style={{ marginTop: 8, fontSize: 13, color: C.danger }}>리셋 에러: {resetError}</p>}
-            {reclassifyError && <p style={{ marginTop: 8, fontSize: 13, color: C.danger }}>재분류 에러: {reclassifyError}</p>}
-            {reclassifyLdmError && <p style={{ marginTop: 8, fontSize: 13, color: C.danger }}>재분류 에러: {reclassifyLdmError}</p>}
 
             {categoryError && <p style={{ marginTop: 8, marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {categoryError}</p>}
 
@@ -960,26 +957,6 @@ export default function RulesPage() {
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, padding: "10px 12px", borderBottom: `1px solid ${C.border}`, fontSize: 12, fontWeight: 700, color: C.primary, whiteSpace: "nowrap" }}>
                       <span>{cat} <span style={{ fontWeight: 400, color: C.sub, fontSize: 11 }}>({items.length})</span></span>
-                      {cat === TreatmentCategory.레이저 && (
-                        <button
-                          onClick={handleReclassifyLaser}
-                          disabled={reclassifying}
-                          title="섹션 타이틀 기준으로 피부관리/주사시술을 다시 분류합니다"
-                          style={{ fontSize: 10, fontWeight: 600, color: C.sub, background: "none", border: `1px solid ${C.border}`, borderRadius: 6, padding: "2px 6px", cursor: "pointer", opacity: reclassifying ? 0.6 : 1, flexShrink: 0 }}
-                        >
-                          {reclassifying ? "재분류 중..." : "재분류"}
-                        </button>
-                      )}
-                      {cat === TreatmentCategory.리프팅 && (
-                        <button
-                          onClick={handleReclassifyLdm}
-                          disabled={reclassifyingLdm}
-                          title="시술명에 LDM이 포함된 항목을 피부관리로 다시 분류합니다"
-                          style={{ fontSize: 10, fontWeight: 600, color: C.sub, background: "none", border: `1px solid ${C.border}`, borderRadius: 6, padding: "2px 6px", cursor: "pointer", opacity: reclassifyingLdm ? 0.6 : 1, flexShrink: 0 }}
-                        >
-                          {reclassifyingLdm ? "재분류 중..." : "재분류"}
-                        </button>
-                      )}
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: 8, maxHeight: "70vh", overflowY: "auto" }}>
                       {items.length === 0 && <p style={{ fontSize: 11, color: C.sub, padding: "4px 0" }}>없음</p>}
@@ -1054,6 +1031,56 @@ export default function RulesPage() {
         )}
 
       </main>
+
+      {confirmModal && (
+        <div
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(40,36,34,0.35)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1000,
+            padding: 20,
+          }}
+          onClick={() => setConfirmModal(null)}
+        >
+          <div
+            style={{
+              background: C.surface,
+              border: `1px solid ${C.border}`,
+              borderRadius: 14,
+              padding: "22px 22px 18px",
+              maxWidth: 380,
+              width: "100%",
+              boxShadow: "0 12px 32px rgba(40,36,34,0.18)",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <p style={{ fontSize: 13.5, lineHeight: 1.6, color: C.primary, marginBottom: 18, whiteSpace: "pre-line" }}>
+              {confirmModal.message}
+            </p>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+              <button onClick={() => setConfirmModal(null)} style={styles.btnGhost}>
+                취소
+              </button>
+              <button
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+                style={{
+                  ...styles.btnPrimary,
+                  background: confirmModal.danger ? C.danger : C.primary,
+                }}
+              >
+                {confirmModal.confirmLabel}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -51,19 +51,40 @@ type ScrapedTreatment = {
   section?: string;
 };
 
+// axios/네트워크 에러 코드를 사용자에게 보여줄 한국어 메시지로 변환한다.
+function toKoreanNetworkError(e: unknown): Error {
+  const code = (e as { code?: string })?.code;
+  if (code === "EAI_AGAIN" || code === "ENOTFOUND") {
+    return new Error("홈페이지 서버에 연결하지 못했습니다. 인터넷 연결 상태를 확인한 뒤 다시 시도해주세요.");
+  }
+  if (code === "ECONNABORTED" || code === "ETIMEDOUT") {
+    return new Error("홈페이지 응답이 너무 느려 시간 초과되었습니다. 잠시 후 다시 시도해주세요.");
+  }
+  if (code === "ECONNREFUSED") {
+    return new Error("홈페이지 서버가 연결을 거부했습니다. 잠시 후 다시 시도해주세요.");
+  }
+  return e instanceof Error ? e : new Error(String(e));
+}
+
 async function scrapeOnePage(
   url: string,
   cleanupRules: CleanupRule[],
   branch: string,
   mainCategory?: string
 ): Promise<ScrapedTreatment[]> {
-  const { data: html } = await axios.get(url, {
-    timeout: 15000,
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-    },
-  });
+  let html: string;
+  try {
+    const res = await axios.get(url, {
+      timeout: 15000,
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      },
+    });
+    html = res.data;
+  } catch (e) {
+    throw toKoreanNetworkError(e);
+  }
 
   const $ = cheerio.load(html);
   const treatments: ScrapedTreatment[] = [];
@@ -119,18 +140,23 @@ async function scrapeOnePage(
   return treatments;
 }
 
-export async function runScrapeAndSync(branch: string) {
+export async function runScrapeAndSync(branch: string, presetRules?: CleanupRule[]) {
   const supabase = getSupabaseServerClient();
 
-  const { data: rules, error: rulesError } = await supabase
-    .from("cleanup_rules")
-    .select("type, pattern, replacement");
+  let allRules = presetRules;
+  if (!allRules) {
+    const { data: rules, error: rulesError } = await supabase
+      .from("cleanup_rules")
+      .select("type, pattern, replacement, branch");
 
-  if (rulesError) {
-    throw new Error(`정리 규칙을 불러오지 못했습니다: ${rulesError.message}`);
+    if (rulesError) {
+      throw new Error(`정리 규칙을 불러오지 못했습니다: ${rulesError.message}`);
+    }
+    allRules = (rules ?? []) as CleanupRule[];
   }
 
-  const cleanupRules = (rules ?? []) as CleanupRule[];
+  // branch가 없는 규칙(null)은 전지점 공통 규칙, branch가 있으면 그 지점 전용 규칙이다.
+  const cleanupRules = allRules.filter((r) => !r.branch || r.branch === branch);
 
   const pageResults = await Promise.all(
     buildUrls(branch).map((item) => scrapeOnePage(item.url, cleanupRules, branch, item.mainCategory))
@@ -192,4 +218,41 @@ export async function runScrapeAndSync(branch: string) {
   }
 
   return { scraped: treatments.length, saved: deduped.length };
+}
+
+// 크론에서 전체 지점을 한 번에 돌릴 때 쓴다. velyb.kr에 부담을 주지 않도록
+// BATCH_SIZE만큼만 동시에 진행하고, 한 지점이 실패해도 나머지 지점은 계속 처리한다.
+export async function runScrapeAndSyncAll(branches: readonly string[]) {
+  const supabase = getSupabaseServerClient();
+
+  const { data: rules, error: rulesError } = await supabase
+    .from("cleanup_rules")
+    .select("type, pattern, replacement, branch");
+
+  if (rulesError) {
+    throw new Error(`정리 규칙을 불러오지 못했습니다: ${rulesError.message}`);
+  }
+
+  const allRules = (rules ?? []) as CleanupRule[];
+
+  const BATCH_SIZE = 8;
+  const results: { branch: string; ok: boolean; scraped?: number; saved?: number; error?: string }[] = [];
+
+  for (let i = 0; i < branches.length; i += BATCH_SIZE) {
+    const batch = branches.slice(i, i + BATCH_SIZE);
+    const batchResults = await Promise.allSettled(
+      batch.map((branch) => runScrapeAndSync(branch, allRules))
+    );
+
+    batchResults.forEach((r, idx) => {
+      const branch = batch[idx];
+      if (r.status === "fulfilled") {
+        results.push({ branch, ok: true, scraped: r.value.scraped, saved: r.value.saved });
+      } else {
+        results.push({ branch, ok: false, error: String(r.reason instanceof Error ? r.reason.message : r.reason) });
+      }
+    });
+  }
+
+  return results;
 }

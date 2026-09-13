@@ -37,6 +37,12 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
+    if (error.code === "23505") {
+      return NextResponse.json(
+        { error: "이미 등록된 매칭항목입니다. 기존 항목을 수정하거나 삭제한 뒤 다시 등록해 주세요." },
+        { status: 409 }
+      );
+    }
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 

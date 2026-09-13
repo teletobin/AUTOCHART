@@ -11,6 +11,7 @@ export async function PATCH(
 
   const name = String(body.name ?? "").trim();
   const price = Number(body.price);
+  const category = body.category ?? null;
 
   if (!name || !price || price <= 0) {
     return NextResponse.json({ error: "시술명과 가격을 입력하세요." }, { status: 400 });
@@ -18,10 +19,10 @@ export async function PATCH(
 
   const { data, error } = await supabase
     .from("treatments")
-    .update({ name, price })
+    .update({ name, price, category })
     .eq("id", id)
     .eq("is_manual", true)
-    .select("id, name, price")
+    .select("id, name, price, category")
     .single();
 
   if (error) {
