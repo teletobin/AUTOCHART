@@ -28,6 +28,21 @@ function computeUnitPrice(item: SelectedItem): number {
   return Math.round(item.basePrice * item.count * VAT_RATE);
 }
 
+// panelItems가 null이면 금액 직접입력, 배열이면 팝업에서 시술을 골라
+// 자동 합산한 금액을 쓴다.
+type TransferRecipient = {
+  id: string;
+  name: string; // 양수인(받는 사람) 이름
+  amount: string;
+  panelItems: SelectedItem[] | null;
+  panelInput: string;
+  panelHighlightedIndex: number;
+  panelManualName: string;
+  panelManualPrice: string;
+  panelManualCategory: TreatmentCategory | null;
+  panelEditableText: string;
+};
+
 // 시술명 끝에 붙은 "N회"를 분리한다. 없으면 1회로 취급.
 function splitCountSuffix(name: string): { base: string; n: string } {
   const m = name.match(/(\d+)\s*회\s*$/);
@@ -104,7 +119,7 @@ const styles: Record<string, React.CSSProperties> = {
   btnGhost:   { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" },
   main:    { maxWidth: MAX_WIDTH, margin: "0 auto", width: "100%", padding: "24px 20px", display: "grid", gridTemplateColumns: "1fr", gap: 16 },
   card:    { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px" },
-  cardTitle: { fontSize: 12, fontWeight: 700, color: C.sub, marginBottom: 14, letterSpacing: "0.04em" },
+  cardTitle: { fontSize: 14, fontWeight: 700, color: C.sub, marginBottom: 14, letterSpacing: "0.04em" },
   titleRow: { display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 34, marginBottom: 14 },
   input:   { width: "100%", border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
   hint:    { fontSize: 11, color: C.sub, marginTop: 6 },
@@ -137,10 +152,17 @@ export default function Home() {
   const [manualPrice, setManualPrice] = useState("");
   const [manualCategory, setManualCategory] = useState<TreatmentCategory | null>(null);
   const [copied, setCopied] = useState(false);
+  const [panelCopied, setPanelCopied] = useState(false);
   const [includeHeader, setIncludeHeader] = useState(false);
   const [membershipType, setMembershipType] = useState<"VIP" | "쁘띠">("VIP");
   const [transferEnabled, setTransferEnabled] = useState(false);
-  const [transferRecipients, setTransferRecipients] = useState<Array<{ name: string; amount: string }>>([]);
+  const [transferRecipients, setTransferRecipients] = useState<TransferRecipient[]>([]);
+  const [openTransferPanelId, setOpenTransferPanelId] = useState<string | null>(null);
+  // 양도자(회원권 보유 고객, A) 이름은 여러 양도차트에서 하나로 통일해서 써야 하므로
+  // 팝업마다 따로 두지 않고 여기서 한 곳에서만 관리한다.
+  const [giverName, setGiverName] = useState("");
+  const [showGiverPrompt, setShowGiverPrompt] = useState(false);
+  const [giverPromptInput, setGiverPromptInput] = useState("");
 
   function loadTreatments(forBranch: string) {
     return fetch(`/api/treatments?branch=${encodeURIComponent(forBranch)}`).then((res) => res.json()).then((data) => {
@@ -177,6 +199,156 @@ export default function Home() {
     setInputValue(""); setHighlightedIndex(0);
   }
   function removeItem(id: string) { setSelectedItems((prev) => prev.filter((i) => i.id !== id)); }
+
+  function makeEmptyRecipient(): TransferRecipient {
+    return {
+      id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      name: "",
+      amount: "0",
+      panelItems: [],
+      panelInput: "",
+      panelHighlightedIndex: 0,
+      panelManualName: "",
+      panelManualPrice: "",
+      panelManualCategory: null,
+      panelEditableText: "",
+    };
+  }
+  // "양도" 토글을 켜면 바로 팝업이 뜨도록, 동행인이 없으면 하나 만들어서 연다.
+  // 단, 양도자(A) 이름이 아직 없으면 그것부터 먼저 물어봐서 여러 양도차트에
+  // 항상 같은 양도자 이름이 쓰이도록 한다.
+  function handleToggleTransfer() {
+    const turningOn = !transferEnabled;
+    setTransferEnabled(turningOn);
+    if (!turningOn) { setOpenTransferPanelId(null); return; }
+    if (!giverName.trim()) {
+      setGiverPromptInput("");
+      setShowGiverPrompt(true);
+      return;
+    }
+    openFirstOrNewRecipientPanel();
+  }
+  function openFirstOrNewRecipientPanel() {
+    if (transferRecipients.length === 0) {
+      const recipient = makeEmptyRecipient();
+      setTransferRecipients([recipient]);
+      setOpenTransferPanelId(recipient.id);
+    } else {
+      setOpenTransferPanelId(transferRecipients[0].id);
+    }
+  }
+  function confirmGiverPrompt() {
+    if (!giverPromptInput.trim()) return;
+    setGiverName(giverPromptInput.trim());
+    setShowGiverPrompt(false);
+    openFirstOrNewRecipientPanel();
+  }
+  function addTransferRecipient() {
+    if (!giverName.trim()) {
+      setGiverPromptInput("");
+      setShowGiverPrompt(true);
+      return;
+    }
+    const recipient = makeEmptyRecipient();
+    setTransferRecipients((prev) => [...prev, recipient]);
+    setOpenTransferPanelId(recipient.id);
+  }
+  function updateTransferRecipient(id: string, patch: Partial<TransferRecipient>) {
+    setTransferRecipients((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+  }
+  function removeTransferRecipient(id: string) {
+    setTransferRecipients((prev) => prev.filter((r) => r.id !== id));
+    setOpenTransferPanelId((cur) => (cur === id ? null : cur));
+  }
+  function panelRecalcTotal(items: SelectedItem[]) {
+    return items.filter((i) => i.displayed).reduce((sum, i) => sum + computeUnitPrice(i), 0);
+  }
+  function panelSelectCandidate(id: string, candidate: Treatment) {
+    setTransferRecipients((prev) => prev.map((r) => {
+      if (r.id !== id || r.panelItems === null) return r;
+      const newItem: SelectedItem = {
+        id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        name: candidate.name,
+        basePrice: candidate.price,
+        count: 1,
+        unused: false,
+        displayed: true,
+        category: candidate.category,
+      };
+      const items = [...r.panelItems, newItem];
+      return { ...r, panelItems: items, amount: String(panelRecalcTotal(items)), panelInput: "", panelHighlightedIndex: 0 };
+    }));
+  }
+  function panelAddManualItem(id: string) {
+    setTransferRecipients((prev) => prev.map((r) => {
+      if (r.id !== id || r.panelItems === null) return r;
+      const price = Number(r.panelManualPrice);
+      if (!r.panelManualName.trim() || !price || price <= 0) return r;
+      const newItem: SelectedItem = {
+        id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        name: r.panelManualName.trim(),
+        basePrice: price,
+        count: 1,
+        unused: false,
+        displayed: true,
+        category: r.panelManualCategory ?? undefined,
+      };
+      const items = [...r.panelItems, newItem];
+      return { ...r, panelItems: items, amount: String(panelRecalcTotal(items)), panelManualName: "", panelManualPrice: "", panelManualCategory: null };
+    }));
+  }
+  function panelRemoveItem(id: string, itemId: string) {
+    setTransferRecipients((prev) => prev.map((r) => {
+      if (r.id !== id || r.panelItems === null) return r;
+      const items = r.panelItems.filter((it) => it.id !== itemId);
+      return { ...r, panelItems: items, amount: String(panelRecalcTotal(items)) };
+    }));
+  }
+  function panelUpdateCount(id: string, itemId: string, count: number) {
+    setTransferRecipients((prev) => prev.map((r) => {
+      if (r.id !== id || r.panelItems === null) return r;
+      const items = r.panelItems.map((it) => (it.id === itemId ? { ...it, count: Math.max(1, count || 1) } : it));
+      return { ...r, panelItems: items, amount: String(panelRecalcTotal(items)) };
+    }));
+  }
+  function panelUpdateItemName(id: string, itemId: string, name: string) {
+    setTransferRecipients((prev) => prev.map((r) => {
+      if (r.id !== id || r.panelItems === null) return r;
+      const items = r.panelItems.map((it) => (it.id === itemId ? { ...it, name } : it));
+      return { ...r, panelItems: items };
+    }));
+  }
+  function panelToggleDisplayed(id: string, itemId: string) {
+    setTransferRecipients((prev) => prev.map((r) => {
+      if (r.id !== id || r.panelItems === null) return r;
+      const items = r.panelItems.map((it) => (it.id === itemId ? { ...it, displayed: !it.displayed } : it));
+      return { ...r, panelItems: items, amount: String(panelRecalcTotal(items)) };
+    }));
+  }
+  function panelToggleUnused(id: string, itemId: string) {
+    setTransferRecipients((prev) => prev.map((r) => {
+      if (r.id !== id || r.panelItems === null) return r;
+      const items = r.panelItems.map((it) => (it.id === itemId ? { ...it, unused: !it.unused } : it));
+      return { ...r, panelItems: items };
+    }));
+  }
+  // 양도인/양수인 이름은 유지한 채 팝업 안의 시술 내역만 초기화한다.
+  function panelClearChart(id: string) {
+    setTransferRecipients((prev) => prev.map((r) => {
+      if (r.id !== id) return r;
+      return {
+        ...r,
+        amount: "0",
+        panelItems: [],
+        panelInput: "",
+        panelHighlightedIndex: 0,
+        panelManualName: "",
+        panelManualPrice: "",
+        panelManualCategory: null,
+        panelEditableText: "",
+      };
+    }));
+  }
   // 실장 이름(staffName)은 새로고침 전까지 유지하는 값이라 여기서 건드리지 않는다.
   function clearAllItems() {
     setSelectedItems([]);
@@ -184,6 +356,8 @@ export default function Home() {
     setExtraCreditInput("");
     setExistingBalanceInput("");
     setTransferRecipients([]);
+    setOpenTransferPanelId(null);
+    setGiverName("");
     setTransferEnabled(false);
     setIncludeHeader(false);
     setMembershipType("VIP");
@@ -215,6 +389,52 @@ export default function Home() {
   const balance = totalCreditWon - totalPrice - transferAmount;
   const RED_DOT = " 🔸";
   const headerVisible = includeHeader && paymentAmount > 0 && extraCredit > 0;
+
+  // 동행인 팝업 안에서 보여줄 미니 차트 텍스트 (시술 목록 + TOTAL + 양도받음 문구)
+  function buildPanelText(items: SelectedItem[], giverName: string): string {
+    const displayedItems = items.filter((i) => i.displayed);
+    const normalItems = displayedItems.filter((i) => !i.unused);
+    const unusedItems = displayedItems.filter((i) => i.unused);
+    const itemLines = normalItems.map((i) => {
+      const { base, n } = splitCountSuffix(i.name);
+      const dot = i.count !== 1 ? RED_DOT : "";
+      let displayName = base;
+      if (i.name.includes("구독")) {
+        const oneYearLater = new Date();
+        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
+        oneYearLater.setDate(oneYearLater.getDate() - 1);
+        const yy = String(oneYearLater.getFullYear()).slice(-2);
+        const mm = String(oneYearLater.getMonth() + 1).padStart(2, "0");
+        const dd = String(oneYearLater.getDate()).padStart(2, "0");
+        displayName = `${base}(~${yy}.${mm}.${dd}) 1차`;
+      }
+      return `${displayName} ${n}-1  ${formatNumber(computeUnitPrice(i))}원${dot}`;
+    });
+    const unusedLines = unusedItems.length > 0
+      ? ["=".repeat(20), ...unusedItems.map((i) => {
+          const displayName = i.name.replace(/\s+/g, " ").trim();
+          const dot = i.count !== 1 ? RED_DOT : "";
+          return `${displayName} ${formatNumber(computeUnitPrice(i))}원${dot} *미사용`;
+        })]
+      : [];
+    const total = panelRecalcTotal(items);
+    const totalLine = displayedItems.length > 1 ? [`총 ${formatNumber(total)}원`] : [];
+    const bottomLine = `ㄴ ${giverName.trim() || "___"}님께 양도받음`;
+    return [...itemLines, ...unusedLines, ...totalLine, bottomLine].join("\n");
+  }
+
+  const openPanelRecipient = transferRecipients.find((r) => r.id === openTransferPanelId) ?? null;
+  const panelGeneratedText = useMemo(() => {
+    if (!openPanelRecipient || openPanelRecipient.panelItems === null) return "";
+    return buildPanelText(openPanelRecipient.panelItems, giverName);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openPanelRecipient?.panelItems, giverName]);
+
+  useEffect(() => {
+    if (openTransferPanelId && panelGeneratedText) {
+      updateTransferRecipient(openTransferPanelId, { panelEditableText: panelGeneratedText });
+    }
+  }, [panelGeneratedText, openTransferPanelId]);
 
   const finalText = useMemo(() => {
     const staffDisplay = staffName.trim() ? `${staffName.trim()}S` : "";
@@ -254,8 +474,10 @@ export default function Home() {
         })]
       : [];
     const totalLine = selectedItems.length > 1 ? [`총 ${formatNumber(totalPrice)}원`] : [];
+    // A(메인페이지)의 차트에는 B의 시술 내역이 섞이지 않도록, 여기서는 요약 한 줄만 남긴다.
+    // B의 시술 내역 + 총액은 팝업 안의 별도 차트(panelEditableText)로만 존재하고, 병원 시스템에는 따로 붙여넣는다.
     const transferLine = includeHeader && transferEnabled && transferRecipients.length > 0
-      ? transferRecipients.map(r => `+${r.name.trim() || "___"}님께 ${formatNumber(Number(r.amount) || 0)}원 양도함`)
+      ? transferRecipients.map((r) => `+${r.name.trim() || "___"}님께 ${formatNumber(Number(r.amount) || 0)}원 양도함`)
       : [];
     let creditLines: string[] = [];
     if (includeHeader) {
@@ -276,6 +498,12 @@ export default function Home() {
     const cleaned = editableText.split(RED_DOT).join("");
     await navigator.clipboard.writeText(cleaned);
     setCopied(true); setTimeout(() => setCopied(false), 1500);
+  }
+
+  async function handlePanelCopy(text: string) {
+    const cleaned = text.split(RED_DOT).join("");
+    await navigator.clipboard.writeText(cleaned);
+    setPanelCopied(true); setTimeout(() => setPanelCopied(false), 1500);
   }
 
   return (
@@ -318,7 +546,7 @@ export default function Home() {
           {/* ── 좌: 시술 입력 ── */}
           <div style={styles.card}>
             <div style={styles.titleRow}>
-              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>시술 입력</p>
+              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>시술 검색</p>
             </div>
 
             <div style={{ position: "relative" }}>
@@ -454,9 +682,9 @@ export default function Home() {
           {/* ── 우: 선택 결과 ── */}
           <div style={styles.card}>
             <div style={styles.titleRow}>
-              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>선택 결과</p>
+              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>차트 생성</p>
               <button onClick={clearAllItems} disabled={selectedItems.length === 0}
-                style={{ ...styles.btnGhost, fontSize: 11, opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
+                style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700, opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
                 CLEAR
               </button>
             </div>
@@ -464,7 +692,7 @@ export default function Home() {
             <textarea
               value={editableText}
               onChange={(e) => setEditableText(e.target.value)}
-              style={{ ...styles.textarea, height: 220 }}
+              style={{ ...styles.textarea, height: Math.max(220, editableText.split("\n").length * 24 + 40) }}
             />
 
             <button onClick={handleCopy} disabled={selectedItems.length === 0}
@@ -476,7 +704,7 @@ export default function Home() {
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
               {(["회원권", "양도"] as const).map((label) => {
                 const checked = label === "회원권" ? includeHeader : transferEnabled;
-                const toggle = label === "회원권" ? () => setIncludeHeader((v) => !v) : () => setTransferEnabled((v) => !v);
+                const toggle = label === "회원권" ? () => setIncludeHeader((v) => !v) : handleToggleTransfer;
                 return (
                   <button key={label} onClick={toggle} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, border: `1px solid ${checked ? C.primary : C.border}`, borderRadius: 8, padding: "8px 12px", cursor: "pointer", background: checked ? C.primaryLt : "#fff", fontSize: 13, fontWeight: 600, color: C.primary }}>
                     {label}
@@ -610,29 +838,21 @@ export default function Home() {
                 {transferEnabled && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     <span style={{ ...styles.label, textAlign: "left" }}>양도금액</span>
-                    {transferRecipients.map((recipient, idx) => (
-                      <div key={idx} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
-                        <input type="text" value={recipient.name} onChange={(e) => {
-                          const newRecipients = [...transferRecipients];
-                          newRecipients[idx].name = e.target.value;
-                          setTransferRecipients(newRecipients);
-                        }} placeholder="이름" style={{ ...styles.numInput, width: 64, textAlign: "left" }} />
-                        <span style={{ fontSize: 12, color: C.sub }}>님께</span>
-                        <input type="number" value={recipient.amount} onChange={(e) => {
-                          const newRecipients = [...transferRecipients];
-                          newRecipients[idx].amount = e.target.value;
-                          setTransferRecipients(newRecipients);
-                        }} style={styles.numInput} />
-                        <span style={{ fontSize: 11, color: C.sub, width: 14 }}>원</span>
-                        <button onClick={() => {
-                          setTransferRecipients(transferRecipients.filter((_, i) => i !== idx));
-                        }} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 14 }}>×</button>
+                    {transferRecipients.map((recipient) => (
+                      <div key={recipient.id} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
+                        <button onClick={() => setOpenTransferPanelId(recipient.id)}
+                          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, border: `1px solid ${C.primary}`, borderRadius: 8, padding: "6px 10px", cursor: "pointer", background: C.primaryLt, color: C.primary, fontWeight: 700, fontSize: 13 }}>
+                          <span>{recipient.name || "동행인"}님께</span>
+                          <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatNumber(Number(recipient.amount) || 0)}원</span>
+                          <span>양도함</span>
+                        </button>
+                        <button onClick={() => removeTransferRecipient(recipient.id)}
+                          style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 14 }}>×</button>
                       </div>
                     ))}
                     {transferRecipients.length < 5 && (
-                      <button onClick={() => {
-                        setTransferRecipients([...transferRecipients, { name: "", amount: "" }]);
-                      }} style={{ alignSelf: "flex-end", width: 32, height: 32, borderRadius: "50%", border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", fontSize: 18, fontWeight: 700, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, padding: 0 }}>
+                      <button onClick={addTransferRecipient}
+                        style={{ alignSelf: "flex-end", width: 32, height: 32, borderRadius: "50%", border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", fontSize: 18, fontWeight: 700, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, padding: 0 }}>
                         +
                       </button>
                     )}
@@ -650,6 +870,238 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {showGiverPrompt && (
+        <div
+          onClick={() => setShowGiverPrompt(false)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 600, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: "min(360px, 92vw)", background: C.surface, borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,0.35)", padding: 22 }}
+          >
+            <p style={{ fontSize: 15, fontWeight: 700, color: C.primary, marginBottom: 6 }}>회원권 보유 고객(양도인)</p>
+            <p style={{ fontSize: 12, color: C.sub, marginBottom: 14, lineHeight: 1.5 }}>
+              회원권을 보유한 고객(양도인) 이름을 입력해주세요.
+            </p>
+            <input
+              type="text"
+              autoFocus
+              value={giverPromptInput}
+              onChange={(e) => setGiverPromptInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") confirmGiverPrompt(); }}
+              placeholder="양도인 이름"
+              style={styles.input}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
+              <button onClick={() => setShowGiverPrompt(false)} style={styles.btnGhost}>취소</button>
+              <button onClick={confirmGiverPrompt} disabled={!giverPromptInput.trim()}
+                style={{ ...styles.btnPrimary, opacity: !giverPromptInput.trim() ? 0.4 : 1 }}>
+                확인
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {openTransferPanelId && (() => {
+        const panelRecipient = transferRecipients.find((r) => r.id === openTransferPanelId);
+        if (!panelRecipient || panelRecipient.panelItems === null) return null;
+        const panelIndex = transferRecipients.findIndex((r) => r.id === openTransferPanelId);
+        const items = panelRecipient.panelItems;
+        const panelCandidates = panelRecipient.panelInput.trim().length >= 2 ? matcher(panelRecipient.panelInput, 12) : [];
+        const panelTotal = panelRecalcTotal(items);
+        return (
+          <div
+            onClick={() => setOpenTransferPanelId(null)}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              style={{ width: "min(1000px, 96vw)", maxHeight: "90vh", overflowY: "auto", background: C.bg, borderRadius: 18, boxShadow: "0 24px 64px rgba(0,0,0,0.35)", padding: 24 }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                <span style={{ fontSize: 16, fontWeight: 700, color: C.primary }}>양도차트 {panelIndex + 1}</span>
+                <button onClick={() => setOpenTransferPanelId(null)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 22, lineHeight: 1 }}>×</button>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 16 }}>
+                {/* 좌: 시술 검색 */}
+                <div style={styles.card}>
+                  <p style={{ ...styles.cardTitle, marginBottom: 14 }}>시술 검색</p>
+
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type="text"
+                      value={panelRecipient.panelInput}
+                      onChange={(e) => updateTransferRecipient(panelRecipient.id, { panelInput: e.target.value, panelHighlightedIndex: 0 })}
+                      onKeyDown={(e) => {
+                        if (panelCandidates.length === 0) return;
+                        if (e.key === "ArrowDown") { e.preventDefault(); updateTransferRecipient(panelRecipient.id, { panelHighlightedIndex: Math.min(panelRecipient.panelHighlightedIndex + 1, panelCandidates.length - 1) }); }
+                        else if (e.key === "ArrowUp") { e.preventDefault(); updateTransferRecipient(panelRecipient.id, { panelHighlightedIndex: Math.max(panelRecipient.panelHighlightedIndex - 1, 0) }); }
+                        else if (e.key === "Enter") { e.preventDefault(); panelSelectCandidate(panelRecipient.id, panelCandidates[panelRecipient.panelHighlightedIndex]); }
+                      }}
+                      placeholder="예: 써마지 600샷 체험가"
+                      style={styles.input}
+                    />
+                    {panelCandidates.length > 0 && (
+                      <div style={styles.candidateBox}>
+                        {panelCandidates.map((c, idx) => (
+                          <button
+                            key={c.name}
+                            onMouseEnter={() => updateTransferRecipient(panelRecipient.id, { panelHighlightedIndex: idx })}
+                            onClick={() => panelSelectCandidate(panelRecipient.id, c)}
+                            style={{
+                              ...styles.candidateRow,
+                              background: idx === panelRecipient.panelHighlightedIndex ? C.primaryLt : C.surface,
+                              color: idx === panelRecipient.panelHighlightedIndex ? C.primary : "#555",
+                              fontWeight: idx === panelRecipient.panelHighlightedIndex ? 700 : 400,
+                              width: "100%", border: "none", textAlign: "left",
+                            }}
+                          >
+                            <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
+                            <span style={{ marginLeft: 12, flexShrink: 0, fontVariantNumeric: "tabular-nums", color: C.sub }}>{formatNumber(c.price)}원</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <p style={styles.hint}>방향키로 후보 선택 후 Enter로 추가 · 수량은 아래 목록에서 조절</p>
+
+                  <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                    <input type="text" value={panelRecipient.panelManualName}
+                      onChange={(e) => updateTransferRecipient(panelRecipient.id, { panelManualName: e.target.value })}
+                      placeholder="시술 직접 입력" style={{ ...styles.input, flex: 2, minWidth: 0, height: 36, boxSizing: "border-box" }} />
+                    <input type="number" value={panelRecipient.panelManualPrice}
+                      onChange={(e) => updateTransferRecipient(panelRecipient.id, { panelManualPrice: e.target.value })}
+                      placeholder="세전 금액" style={{ ...styles.input, flex: "0 0 96px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
+                    <Dropdown
+                      value={panelRecipient.panelManualCategory ?? ""}
+                      onChange={(v) => updateTransferRecipient(panelRecipient.id, { panelManualCategory: v ? (v as TreatmentCategory) : null })}
+                      placeholder="분류"
+                      options={CATEGORY_ORDER.map((cat) => ({ value: cat, label: cat }))}
+                      style={{ flex: "0 0 140px", height: 36 }}
+                    />
+                    <button onClick={() => panelAddManualItem(panelRecipient.id)} disabled={!panelRecipient.panelManualName.trim() || !panelRecipient.panelManualPrice}
+                      style={{ ...styles.btnPrimary, height: 36, boxSizing: "border-box", padding: "0 14px", fontSize: 13, opacity: (!panelRecipient.panelManualName.trim() || !panelRecipient.panelManualPrice) ? 0.4 : 1, flexShrink: 0 }}>
+                      추가
+                    </button>
+                  </div>
+
+                  <div style={{ marginTop: 18, borderTop: `1px solid ${C.border}`, paddingTop: 14 }}>
+                    {items.length === 0 ? (
+                      <p style={{ ...styles.hint, textAlign: "center", padding: "20px 0" }}>추가된 시술이 없습니다</p>
+                    ) : (
+                      <>
+                        <div style={styles.tableHead}>
+                          <span style={{ width: 16 }} />
+                          <span style={{ width: 24, textAlign: "center" }} />
+                          <span style={{ flex: 1, textAlign: "center" }}>시술명</span>
+                          <span style={{ width: 58, textAlign: "center" }}>단가</span>
+                          <span style={{ width: 40, textAlign: "center" }}>수량</span>
+                          <span style={{ width: 76, textAlign: "center" }}>합계</span>
+                          <span style={{ width: 24, textAlign: "center", whiteSpace: "nowrap" }}>미사용</span>
+                        </div>
+                        {items.map((item) => (
+                          <div key={item.id} style={styles.tableRow}>
+                            <div style={{ width: 16, display: "flex", justifyContent: "center" }}>
+                              <button onClick={() => panelRemoveItem(panelRecipient.id, item.id)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                            </div>
+                            <button
+                              onClick={() => panelToggleDisplayed(panelRecipient.id, item.id)}
+                              style={{
+                                width: 16, height: 16, borderRadius: "50%", border: `1px solid ${C.primary}`,
+                                background: "transparent", color: C.primary, fontSize: 11, fontWeight: "bold",
+                                cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
+                              }}
+                              aria-label="선택결과 표시"
+                            >
+                              {item.displayed ? "+" : "−"}
+                            </button>
+                            <AutoGrowInput
+                              value={item.name}
+                              onChange={(v) => panelUpdateItemName(panelRecipient.id, item.id, v)}
+                              className=""
+                              style={{ flex: 1, minWidth: 120, border: `1px solid transparent`, borderRadius: 6, padding: "2px 4px", background: "transparent", fontSize: 13, color: C.primary, lineHeight: 1.5 } as React.CSSProperties}
+                            />
+                            <span style={{ width: 58, textAlign: "center", fontVariantNumeric: "tabular-nums", color: C.primary, fontSize: 13 }}>{formatNumber(item.basePrice)}</span>
+                            <div style={{ width: 40, display: "flex", justifyContent: "center" }}>
+                              <CountDial count={item.count} onChange={(count) => panelUpdateCount(panelRecipient.id, item.id, count)} />
+                            </div>
+                            <span style={{ width: 76, textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 13 }}>{formatNumber(computeUnitPrice(item))}</span>
+                            <div style={{ width: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                              <input
+                                type="checkbox"
+                                checked={item.unused}
+                                onChange={() => panelToggleUnused(panelRecipient.id, item.id)}
+                                style={{ accentColor: C.primary, cursor: "pointer" }}
+                                aria-label="미사용"
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  </div>
+
+                  {items.length > 0 && (
+                    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, gap: 4 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>TOTAL</span>
+                      <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(panelTotal)}원</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* 우: 차트 생성 */}
+                <div style={styles.card}>
+                  <div style={styles.titleRow}>
+                    <p style={{ ...styles.cardTitle, marginBottom: 0 }}>차트 생성</p>
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button onClick={() => panelClearChart(panelRecipient.id)}
+                        style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700 }}>
+                        CLEAR
+                      </button>
+                      <button onClick={() => handlePanelCopy(panelRecipient.panelEditableText)}
+                        style={{ ...styles.btnPrimary, fontSize: 11, padding: "5px 10px" }}>
+                        {panelCopied ? "복사됨 ✓" : "차트 복사"}
+                      </button>
+                    </div>
+                  </div>
+                  <textarea
+                    value={panelRecipient.panelEditableText}
+                    onChange={(e) => updateTransferRecipient(panelRecipient.id, { panelEditableText: e.target.value })}
+                    style={{ ...styles.textarea, height: Math.max(160, panelRecipient.panelEditableText.split("\n").length * 24 + 40) }}
+                  />
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.primary, flexShrink: 0, width: 50 }}>양도인 :</span>
+                    <input
+                      type="text"
+                      value={giverName}
+                      readOnly
+                      disabled
+                      style={{ ...styles.input, flex: 1, background: C.bg, color: C.sub, cursor: "not-allowed" }}
+                    />
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.primary, flexShrink: 0, width: 50 }}>양수인 :</span>
+                    <input
+                      type="text"
+                      value={panelRecipient.name}
+                      onChange={(e) => updateTransferRecipient(panelRecipient.id, { name: e.target.value })}
+                      placeholder="양수인 이름"
+                      style={{ ...styles.input, flex: 1 }}
+                    />
+                  </div>
+                  <button onClick={() => setOpenTransferPanelId(null)} style={{ ...styles.btnPrimary, width: "100%", marginTop: 16 }}>
+                    확인 ({giverName.trim() || "___"}님 차트에 반영)
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
