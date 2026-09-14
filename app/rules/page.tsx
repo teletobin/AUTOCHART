@@ -105,9 +105,40 @@ export default function RulesPage() {
     if (saved) setBranch(saved);
   }, []);
 
+  // 지점 변경 확인/진행 상태 팝업. confirm(변경할지 물어보는 중) -> loading(불러오는 중)
+  // -> done(완료 표시 후 자동 닫힘) 순서로 진행된다.
+  const [branchSwitch, setBranchSwitch] = useState<{ target: string; phase: "confirm" | "loading" | "done" } | null>(null);
+  // 지점 변경을 취소했을 때 BranchPicker 내부에 이미 그려진 입력값을 원래
+  // 지점명으로 되돌리기 위해 key를 바꿔 강제로 다시 마운트시키는 용도.
+  const [branchPickerResetKey, setBranchPickerResetKey] = useState(0);
+
+  async function applyBranchChange(target: string) {
+    setBranchSwitch({ target, phase: "loading" });
+    setBranch(target);
+    localStorage.setItem(BRANCH_STORAGE_KEY, target);
+    await Promise.all([loadManualTreatments(target), loadCategoryTreatments(target)]);
+    setBranchSwitch({ target, phase: "done" });
+    setTimeout(() => setBranchSwitch(null), 1200);
+  }
+
   function handleBranchChange(next: string) {
-    setBranch(next);
-    localStorage.setItem(BRANCH_STORAGE_KEY, next);
+    if (!next || next === branch) return;
+    // 아직 지점이 선택되지 않은 최초 선택은 "변경"이 아니므로 바로 적용한다.
+    if (!branch) {
+      applyBranchChange(next);
+      return;
+    }
+    setBranchSwitch({ target: next, phase: "confirm" });
+  }
+
+  function confirmBranchSwitch() {
+    if (!branchSwitch) return;
+    applyBranchChange(branchSwitch.target);
+  }
+
+  function cancelBranchSwitch() {
+    setBranchSwitch(null);
+    setBranchPickerResetKey((k) => k + 1);
   }
 
   const [rules, setRules] = useState<Rule[]>([]);
@@ -175,8 +206,8 @@ export default function RulesPage() {
   }
 
   function loadManualTreatments(forBranch: string) {
-    if (!forBranch) { setManualTreatments([]); return; }
-    fetch(`/api/manual-treatments?branch=${encodeURIComponent(forBranch)}`)
+    if (!forBranch) { setManualTreatments([]); return Promise.resolve(); }
+    return fetch(`/api/manual-treatments?branch=${encodeURIComponent(forBranch)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.error) setManualError(data.error);
@@ -189,8 +220,8 @@ export default function RulesPage() {
   }
 
   function loadCategoryTreatments(forBranch: string) {
-    if (!forBranch) { setCategoryTreatments([]); return; }
-    fetch(`/api/treatments?branch=${encodeURIComponent(forBranch)}`)
+    if (!forBranch) { setCategoryTreatments([]); return Promise.resolve(); }
+    return fetch(`/api/treatments?branch=${encodeURIComponent(forBranch)}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.error) setCategoryError(data.error);
@@ -526,7 +557,7 @@ export default function RulesPage() {
             <span style={{ fontWeight: 500, color: C.sub, fontSize: 16.5 }}>상세설정</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <BranchPicker value={branch} onChange={handleBranchChange} />
+            <BranchPicker key={`${branch}-${branchPickerResetKey}`} value={branch} onChange={handleBranchChange} />
             <Link
               href="/"
               style={{ ...styles.btnGhost, fontSize: 11, padding: "6px 10px", textDecoration: "none", display: "inline-block" }}
@@ -536,6 +567,57 @@ export default function RulesPage() {
           </div>
         </div>
       </header>
+
+      {branchSwitch && (
+        <div
+          onClick={() => { if (branchSwitch.phase === "confirm") cancelBranchSwitch(); }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.55)",
+            zIndex: 700,
+            display: "flex",
+            justifyContent: "center",
+            paddingTop: 90,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              height: "fit-content",
+              background: C.surface,
+              border: `1px solid ${C.border}`,
+              borderRadius: 12,
+              boxShadow: "0 12px 32px rgba(40,36,34,0.18)",
+              padding: "16px 22px",
+              minWidth: 260,
+              textAlign: "center",
+            }}
+          >
+            {branchSwitch.phase === "confirm" && (
+              <>
+                <p style={{ fontSize: 14, color: C.primary, marginBottom: 14 }}>
+                  지점을 {branchSwitch.target}으로 변경할까요?
+                </p>
+                <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
+                  <button onClick={cancelBranchSwitch} style={styles.btnGhost}>아니오</button>
+                  <button onClick={confirmBranchSwitch} style={styles.btnPrimary}>예</button>
+                </div>
+              </>
+            )}
+            {branchSwitch.phase === "loading" && (
+              <p style={{ fontSize: 14, color: C.primary }}>
+                {branchSwitch.target} 시술을 불러오는 중입니다...
+              </p>
+            )}
+            {branchSwitch.phase === "done" && (
+              <p style={{ fontSize: 14, color: C.primary }}>
+                연동이 완료되었습니다.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {loadError && (
         <div style={{ maxWidth: MAX_WIDTH, margin: "0 auto", padding: "16px 20px 0" }}>

@@ -5,9 +5,23 @@ import { applyCleanupRules, type CleanupRule } from "@/lib/cleanup";
 import { detectTreatmentCategory } from "@/lib/categoryDetection";
 import { TreatmentCategory } from "@/lib/types";
 
-// 시술명에 슬래시가 있으면 각각을 분리된 시술명으로 확장한다
+// 시술명에 슬래시가 있으면 각각을 분리된 시술명으로 확장한다.
+//
+// 슬래시가 괄호 안에 있으면("수액주사(신데렐라/비타민C)") 괄호를 그대로
+// 유지한 채 안쪽 키워드만 나눠서 각각 괄호로 열고 닫아준다.
+// 예: "영양 수액주사(신데렐라/비타민C) 한정가"
+//  -> ["영양 수액주사(신데렐라) 한정가", "영양 수액주사(비타민C) 한정가"]
+// (괄호 없이 "수액주사(신데렐라"와 "비타민C) 한정가"처럼 어긋나게 잘리면 안 됨)
+//
+// 슬래시가 괄호 밖에 있으면 그 토큰만 분리한다.
 // 예: "(여자) 종아리/허벅지 제모" -> ["(여자) 종아리 제모", "(여자) 허벅지 제모"]
 function expandSlashTreatments(name: string): string[] {
+  const parenSlashMatch = name.match(/\(([^()/]+)\/([^()/]+)\)/);
+  if (parenSlashMatch) {
+    const [full, partA, partB] = parenSlashMatch;
+    return [partA, partB].map((part) => name.replace(full, `(${part})`));
+  }
+
   const tokens = name.split(/\s+/);
   const slashTokenIdx = tokens.findIndex((t) => t.includes("/"));
   if (slashTokenIdx === -1) return [name];

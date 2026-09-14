@@ -151,6 +151,8 @@ export default function Home() {
   const [manualName, setManualName] = useState("");
   const [manualPrice, setManualPrice] = useState("");
   const [manualCategory, setManualCategory] = useState<TreatmentCategory | null>(null);
+  const [discountPercent, setDiscountPercent] = useState<0 | 5 | 10>(0);
+  const [discountMenuOpen, setDiscountMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [panelCopied, setPanelCopied] = useState(false);
   const [includeHeader, setIncludeHeader] = useState(false);
@@ -163,6 +165,13 @@ export default function Home() {
   const [giverName, setGiverName] = useState("");
   const [showGiverPrompt, setShowGiverPrompt] = useState(false);
   const [giverPromptInput, setGiverPromptInput] = useState("");
+
+  // 지점 변경 확인/진행 상태 팝업. confirm(변경할지 물어보는 중) -> loading(불러오는 중)
+  // -> done(완료 표시 후 자동 닫힘) 순서로 진행된다.
+  const [branchSwitch, setBranchSwitch] = useState<{ target: string; phase: "confirm" | "loading" | "done" } | null>(null);
+  // 지점 변경을 취소했을 때 BranchPicker 내부에 이미 그려진 입력값을 원래
+  // 지점명으로 되돌리기 위해 key를 바꿔 강제로 다시 마운트시키는 용도.
+  const [branchPickerResetKey, setBranchPickerResetKey] = useState(0);
 
   function loadTreatments(forBranch: string) {
     return fetch(`/api/treatments?branch=${encodeURIComponent(forBranch)}`).then((res) => res.json()).then((data) => {
@@ -184,14 +193,38 @@ export default function Home() {
     if (branch) loadTreatments(branch);
   }, [branch]);
 
+  async function applyBranchChange(target: string) {
+    setBranchSwitch({ target, phase: "loading" });
+    setBranch(target);
+    localStorage.setItem(BRANCH_STORAGE_KEY, target);
+    await loadTreatments(target);
+    setBranchSwitch({ target, phase: "done" });
+    setTimeout(() => setBranchSwitch(null), 1200);
+  }
+
   function handleBranchChange(next: string) {
-    setBranch(next);
-    localStorage.setItem(BRANCH_STORAGE_KEY, next);
+    if (!next || next === branch) return;
+    // 아직 지점이 선택되지 않은 최초 선택은 "변경"이 아니므로 바로 적용한다.
+    if (!branch) {
+      applyBranchChange(next);
+      return;
+    }
+    setBranchSwitch({ target: next, phase: "confirm" });
+  }
+
+  function confirmBranchSwitch() {
+    if (!branchSwitch) return;
+    applyBranchChange(branchSwitch.target);
+  }
+
+  function cancelBranchSwitch() {
+    setBranchSwitch(null);
+    setBranchPickerResetKey((k) => k + 1);
   }
 
 
   const matcher = useMemo(() => buildMatcher(treatments, aliases), [treatments, aliases]);
-  const candidates = useMemo(() => (inputValue.trim().length >= 2 ? matcher(inputValue, 12) : []), [inputValue, matcher]);
+  const candidates = useMemo(() => (inputValue.trim().length >= 2 ? matcher(inputValue, 15) : []), [inputValue, matcher]);
 
   function selectCandidate(candidate: Treatment) {
     const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -361,6 +394,8 @@ export default function Home() {
     setTransferEnabled(false);
     setIncludeHeader(false);
     setMembershipType("VIP");
+    setDiscountPercent(0);
+    setDiscountMenuOpen(false);
   }
   function updateItemName(id: string, name: string) { setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, name } : i))); }
   function updateItemCount(id: string, count: number) {
@@ -385,8 +420,10 @@ export default function Home() {
   const existingBalance = Number(existingBalanceInput) || 0;
   const transferAmount = transferEnabled ? transferRecipients.reduce((sum, r) => sum + (Number(r.amount) || 0), 0) : 0;
   const totalPrice = selectedItems.filter((i) => i.displayed).reduce((sum, i) => sum + computeUnitPrice(i), 0);
+  const discountedTotal = discountPercent > 0 ? Math.round(totalPrice * (1 - discountPercent / 100)) : totalPrice;
+  const discountLabel = discountPercent === 10 ? "3인 동반" : discountPercent === 5 ? "2인 동반" : "";
   const totalCreditWon = paymentAmount + extraCredit + existingBalance;
-  const balance = totalCreditWon - totalPrice - transferAmount;
+  const balance = totalCreditWon - discountedTotal - transferAmount;
   const RED_DOT = " 🔸";
   const headerVisible = includeHeader && paymentAmount > 0 && extraCredit > 0;
 
@@ -398,17 +435,7 @@ export default function Home() {
     const itemLines = normalItems.map((i) => {
       const { base, n } = splitCountSuffix(i.name);
       const dot = i.count !== 1 ? RED_DOT : "";
-      let displayName = base;
-      if (i.name.includes("구독")) {
-        const oneYearLater = new Date();
-        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
-        oneYearLater.setDate(oneYearLater.getDate() - 1);
-        const yy = String(oneYearLater.getFullYear()).slice(-2);
-        const mm = String(oneYearLater.getMonth() + 1).padStart(2, "0");
-        const dd = String(oneYearLater.getDate()).padStart(2, "0");
-        displayName = `${base}(~${yy}.${mm}.${dd}) 1차`;
-      }
-      return `${displayName} ${n}-1  ${formatNumber(computeUnitPrice(i))}원${dot}`;
+      return `${base} ${n}-1  ${formatNumber(computeUnitPrice(i))}원${dot}`;
     });
     const unusedLines = unusedItems.length > 0
       ? ["=".repeat(20), ...unusedItems.map((i) => {
@@ -452,18 +479,7 @@ export default function Home() {
       // 시술명 끝의 "N회"는 "N-1" 표기로 옮겨 붙인다 (없으면 "1-1").
       const { base, n } = splitCountSuffix(i.name);
       const dot = i.count !== 1 ? RED_DOT : "";
-      let displayName = base;
-      // "구독"이 포함되면 1년 뒤 전날(1년 동안 사용 가능)과 "1차" 표기 추가
-      if (i.name.includes("구독")) {
-        const oneYearLater = new Date();
-        oneYearLater.setFullYear(oneYearLater.getFullYear() + 1);
-        oneYearLater.setDate(oneYearLater.getDate() - 1);
-        const yy = String(oneYearLater.getFullYear()).slice(-2);
-        const mm = String(oneYearLater.getMonth() + 1).padStart(2, "0");
-        const dd = String(oneYearLater.getDate()).padStart(2, "0");
-        displayName = `${base}(~${yy}.${mm}.${dd}) 1차`;
-      }
-      return `${displayName} ${n}-1  ${formatNumber(computeUnitPrice(i))}원${dot}`;
+      return `${base} ${n}-1  ${formatNumber(computeUnitPrice(i))}원${dot}`;
     });
     // 미사용 체크된 시술은 원래 이름 그대로, 맨 마지막 구분선 아래에 표시한다.
     const unusedLines = unusedItems.length > 0
@@ -473,7 +489,11 @@ export default function Home() {
           return `${displayName} ${formatNumber(computeUnitPrice(i))}원${dot} *미사용`;
         })]
       : [];
-    const totalLine = selectedItems.length > 1 ? [`총 ${formatNumber(totalPrice)}원`] : [];
+    const totalLine = selectedItems.length > 1 || discountPercent > 0
+      ? [discountPercent > 0
+          ? `총 ${formatNumber(totalPrice)}원 → ${discountLabel} ${discountPercent}% OFF ${formatNumber(discountedTotal)}원`
+          : `총 ${formatNumber(totalPrice)}원`]
+      : [];
     // A(메인페이지)의 차트에는 B의 시술 내역이 섞이지 않도록, 여기서는 요약 한 줄만 남긴다.
     // B의 시술 내역 + 총액은 팝업 안의 별도 차트(panelEditableText)로만 존재하고, 병원 시스템에는 따로 붙여넣는다.
     const transferLine = includeHeader && transferEnabled && transferRecipients.length > 0
@@ -489,7 +509,7 @@ export default function Home() {
       }
     }
     return [...(headerVisible ? [header] : []), ...itemLines, ...unusedLines, ...totalLine, ...transferLine, ...creditLines].join("\n");
-  }, [headerVisible, includeHeader, membershipType, staffName, paymentAmount, extraCredit, selectedItems, totalPrice, existingBalance, transferEnabled, transferAmount, transferRecipients, balance]);
+  }, [headerVisible, includeHeader, membershipType, staffName, paymentAmount, extraCredit, selectedItems, totalPrice, discountPercent, discountedTotal, discountLabel, existingBalance, transferEnabled, transferAmount, transferRecipients, balance]);
 
   const [editableText, setEditableText] = useState("");
   useEffect(() => { setEditableText(finalText); }, [finalText]);
@@ -516,7 +536,7 @@ export default function Home() {
             차팅 서포트
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <BranchPicker value={branch} onChange={handleBranchChange} />
+            <BranchPicker key={`${branch}-${branchPickerResetKey}`} value={branch} onChange={handleBranchChange} />
             <Link
               href="/rules?tab=category"
               aria-label="상세설정"
@@ -532,8 +552,59 @@ export default function Home() {
         </div>
       </header>
 
+      {branchSwitch && (
+        <div
+          onClick={() => { if (branchSwitch.phase === "confirm") cancelBranchSwitch(); }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.55)",
+            zIndex: 700,
+            display: "flex",
+            justifyContent: "center",
+            paddingTop: 90,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              height: "fit-content",
+              background: C.surface,
+              border: `1px solid ${C.border}`,
+              borderRadius: 12,
+              boxShadow: "0 12px 32px rgba(40,36,34,0.18)",
+              padding: "16px 22px",
+              minWidth: 260,
+              textAlign: "center",
+            }}
+          >
+            {branchSwitch.phase === "confirm" && (
+              <>
+                <p style={{ fontSize: 14, color: C.primary, marginBottom: 14 }}>
+                  지점을 {branchSwitch.target}으로 변경할까요?
+                </p>
+                <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
+                  <button onClick={cancelBranchSwitch} style={styles.btnGhost}>아니오</button>
+                  <button onClick={confirmBranchSwitch} style={styles.btnPrimary}>예</button>
+                </div>
+              </>
+            )}
+            {branchSwitch.phase === "loading" && (
+              <p style={{ fontSize: 14, color: C.primary }}>
+                {branchSwitch.target} 시술을 불러오는 중입니다...
+              </p>
+            )}
+            {branchSwitch.phase === "done" && (
+              <p style={{ fontSize: 14, color: C.primary }}>
+                연동이 완료되었습니다.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+
       {!branch && (
-        <p style={{ maxWidth: MAX_WIDTH, margin: "12px auto 0", padding: "0 20px", fontSize: 13, fontWeight: 700, color: C.primary }}>
+        <p style={{ maxWidth: MAX_WIDTH, margin: "12px auto 0", padding: "0 20px", fontSize: 13, color: C.primary }}>
           상단에서 지점을 선택해주세요.
         </p>
       )}
@@ -625,13 +696,13 @@ export default function Home() {
                           setSelectedItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, displayed: !i.displayed } : i)));
                         }}
                         style={{
-                          width: 16,
-                          height: 16,
+                          width: 13,
+                          height: 13,
                           borderRadius: "50%",
                           border: `1px solid ${C.primary}`,
                           background: "transparent",
                           color: C.primary,
-                          fontSize: 11,
+                          fontSize: 9,
                           fontWeight: "bold",
                           cursor: "pointer",
                           display: "flex",
@@ -675,6 +746,80 @@ export default function Home() {
               <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, gap: 4 }}>
                 <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>TOTAL</span>
                 <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(totalPrice)}원</span>
+              </div>
+            )}
+
+            {selectedItems.length > 0 && (
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6, position: "relative" }}>
+                <button
+                  onClick={() => setDiscountMenuOpen((v) => !v)}
+                  style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700 }}
+                >
+                  {discountPercent > 0 ? `할인적용 (${discountPercent}%)` : "할인적용"}
+                </button>
+                {discountMenuOpen && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      right: 0,
+                      marginTop: 4,
+                      zIndex: 20,
+                      background: C.surface,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 8,
+                      boxShadow: "0 8px 24px rgba(111,104,100,0.10)",
+                      overflow: "hidden",
+                      minWidth: 110,
+                    }}
+                  >
+                    {([5, 10] as const).map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => {
+                          setDiscountPercent(discountPercent === p ? 0 : p);
+                          setDiscountMenuOpen(false);
+                        }}
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          textAlign: "left",
+                          padding: "8px 12px",
+                          fontSize: 12,
+                          border: "none",
+                          background: discountPercent === p ? C.primaryLt : C.surface,
+                          color: C.primary,
+                          cursor: "pointer",
+                          fontWeight: discountPercent === p ? 700 : 400,
+                        }}
+                      >
+                        {p}% 할인
+                      </button>
+                    ))}
+                    {discountPercent > 0 && (
+                      <button
+                        onClick={() => {
+                          setDiscountPercent(0);
+                          setDiscountMenuOpen(false);
+                        }}
+                        style={{
+                          display: "block",
+                          width: "100%",
+                          textAlign: "left",
+                          padding: "8px 12px",
+                          fontSize: 12,
+                          border: "none",
+                          borderTop: `1px solid ${C.borderSoft}`,
+                          background: C.surface,
+                          color: C.sub,
+                          cursor: "pointer",
+                        }}
+                      >
+                        할인 해제
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -831,7 +976,7 @@ export default function Home() {
                 <div style={styles.divider} />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                   <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, textAlign: "right", minWidth: 88, flexShrink: 0 }}>− TOTAL</span>
-                  <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(totalPrice)}</span>
+                  <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(discountedTotal)}</span>
                   <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
                 </div>
 
@@ -909,7 +1054,7 @@ export default function Home() {
         if (!panelRecipient || panelRecipient.panelItems === null) return null;
         const panelIndex = transferRecipients.findIndex((r) => r.id === openTransferPanelId);
         const items = panelRecipient.panelItems;
-        const panelCandidates = panelRecipient.panelInput.trim().length >= 2 ? matcher(panelRecipient.panelInput, 12) : [];
+        const panelCandidates = panelRecipient.panelInput.trim().length >= 2 ? matcher(panelRecipient.panelInput, 15) : [];
         const panelTotal = panelRecalcTotal(items);
         return (
           <div
@@ -1011,8 +1156,8 @@ export default function Home() {
                             <button
                               onClick={() => panelToggleDisplayed(panelRecipient.id, item.id)}
                               style={{
-                                width: 16, height: 16, borderRadius: "50%", border: `1px solid ${C.primary}`,
-                                background: "transparent", color: C.primary, fontSize: 11, fontWeight: "bold",
+                                width: 13, height: 13, borderRadius: "50%", border: `1px solid ${C.primary}`,
+                                background: "transparent", color: C.primary, fontSize: 9, fontWeight: "bold",
                                 cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
                               }}
                               aria-label="선택결과 표시"

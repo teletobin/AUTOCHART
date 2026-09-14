@@ -77,8 +77,11 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
     let qTokens = tokenize(query);
     if (qTokens.length === 0) return [];
 
-    // 축약어/오타("포마" 등)가 입력에 통째로 들어있으면 그 토큰을 지우고
-    // 등록된 실제 검색 키워드("FORMA")의 토큰으로 바꿔 넣는다. 특정 시술
+    // 축약어/오타("포마" 등)가 입력에 통째로 들어있으면 등록된 실제 검색
+    // 키워드("FORMA")의 토큰을 추가로 더해 준다. 원래 입력한 토큰은 그대로
+    // 남겨 두는데, "컬러"처럼 별칭이면서 동시에 시술명에 그대로 등장하는
+    // 단어일 수도 있기 때문이다(지워버리면 "컬러"가 들어간 이름은 별칭
+    // 키워드에 없는 한 더 이상 검색되지 않는 문제가 생긴다). 특정 시술
     // 하나로 고정되는 게 아니라, 그 키워드를 포함하는 모든 후보가 일반
     // 검색과 똑같이 랭킹되어 함께 뜬다.
     for (const entry of aliasEntries) {
@@ -87,10 +90,10 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
         qTokens.some((q) => tokensMatch(q, at))
       );
       if (allTokensPresent) {
-        const aliasTokenSet = new Set(entry.tokens);
+        const existing = new Set(qTokens);
         qTokens = [
-          ...qTokens.filter((q) => !aliasTokenSet.has(q)),
-          ...entry.keywordTokens,
+          ...qTokens,
+          ...entry.keywordTokens.filter((k) => !existing.has(k)),
         ];
       }
     }
