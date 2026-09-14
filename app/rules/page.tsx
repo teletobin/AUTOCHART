@@ -411,7 +411,7 @@ export default function RulesPage() {
   function handleSync() {
     if (!branch) return;
     setConfirmModal({
-      message: "매일 오전 9시50분마다 홈페이지 시술 정보가 연동됩니다.\n가격 변동이 확인되어 재연동이 필요할 때만 눌러주세요.",
+      message: "매일 오전 9시마다 홈페이지 시술 정보가 연동됩니다.\n가격 변동이 확인되어 재연동이 필요할 때만 눌러주세요.",
       confirmLabel: "확인 후 연동",
       onConfirm: runSync,
     });
