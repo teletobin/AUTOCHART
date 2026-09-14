@@ -982,7 +982,15 @@ export default function Home() {
 
                 {transferEnabled && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    <span style={{ ...styles.label, textAlign: "left" }}>양도금액</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: C.primary }}>양도</span>
+                      {transferRecipients.length < 5 && (
+                        <button onClick={addTransferRecipient}
+                          style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700 }}>
+                          양수인 추가
+                        </button>
+                      )}
+                    </div>
                     {transferRecipients.map((recipient) => (
                       <div key={recipient.id} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                         <button onClick={() => setOpenTransferPanelId(recipient.id)}
@@ -995,12 +1003,6 @@ export default function Home() {
                           style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 14 }}>×</button>
                       </div>
                     ))}
-                    {transferRecipients.length < 5 && (
-                      <button onClick={addTransferRecipient}
-                        style={{ alignSelf: "flex-end", width: 32, height: 32, borderRadius: "50%", border: `1px solid ${C.border}`, background: C.surface, cursor: "pointer", fontSize: 18, fontWeight: 700, lineHeight: 1, display: "flex", alignItems: "center", justifyContent: "center", color: C.primary, padding: 0 }}>
-                        +
-                      </button>
-                    )}
                   </div>
                 )}
 
@@ -1207,10 +1209,6 @@ export default function Home() {
                         style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700 }}>
                         CLEAR
                       </button>
-                      <button onClick={() => handlePanelCopy(panelRecipient.panelEditableText)}
-                        style={{ ...styles.btnPrimary, fontSize: 11, padding: "5px 10px" }}>
-                        {panelCopied ? "복사됨 ✓" : "차트 복사"}
-                      </button>
                     </div>
                   </div>
                   <textarea
@@ -1238,8 +1236,14 @@ export default function Home() {
                       style={{ ...styles.input, flex: 1 }}
                     />
                   </div>
-                  <button onClick={() => setOpenTransferPanelId(null)} style={{ ...styles.btnPrimary, width: "100%", marginTop: 16 }}>
-                    확인 ({giverName.trim() || "___"}님 차트에 반영)
+                  <button
+                    onClick={async () => {
+                      await handlePanelCopy(panelRecipient.panelEditableText);
+                      setOpenTransferPanelId(null);
+                    }}
+                    style={{ ...styles.btnPrimary, width: "100%", marginTop: 16 }}
+                  >
+                    차트 복사 및 확인
                   </button>
                 </div>
               </div>
