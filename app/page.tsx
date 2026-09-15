@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { buildMatcher } from "@/lib/match";
-import { formatNumber, todayYYMMDD } from "@/lib/format";
+import { formatNumber, todayYYMMDD, subscriptionExpiryYYMMDD } from "@/lib/format";
 import type { Alias, Treatment } from "@/lib/types";
 import { TreatmentCategory } from "@/lib/types";
 import { CATEGORY_ORDER } from "@/lib/categoryDetection";
@@ -100,7 +100,7 @@ function CountDial({ count, onChange }: { count: number; onChange: (count: numbe
         min={1}
         value={count}
         onChange={(e) => onChange(Math.max(1, Number(e.target.value) || 1))}
-        style={{ width: 24, border: "none", padding: 0, textAlign: "right", fontSize: 13, outline: "none", background: "transparent" }}
+        style={{ width: 24, border: "none", padding: 0, textAlign: "center", fontSize: 13, outline: "none", background: "transparent" }}
       />
       <div className="flex flex-col leading-none gap-0">
         <button onClick={() => onChange(count + 1)} style={{ fontSize: 6, color: "#a89f9a", padding: "1px 0", lineHeight: 1 }} aria-label="증가">▲</button>
@@ -479,6 +479,12 @@ export default function Home() {
       // 시술명 끝의 "N회"는 "N-1" 표기로 옮겨 붙인다 (없으면 "1-1").
       const { base, n } = splitCountSuffix(i.name);
       const dot = i.count !== 1 ? RED_DOT : "";
+      // 제모 시술 중 "구독권"이 포함된 이름은 예외 규칙: 만료일을 "구독권" 옆에 붙이고,
+      // 최초 차팅일이므로 회차는 항상 "1회차 1-1"로 고정한다.
+      if (i.name.includes("제모") && i.name.includes("구독권")) {
+        const base2 = base.replace("구독권", `구독권(~${subscriptionExpiryYYMMDD()})`);
+        return `${base2} 1회차 1-1  ${formatNumber(computeUnitPrice(i))}원${dot}`;
+      }
       return `${base} ${n}-1  ${formatNumber(computeUnitPrice(i))}원${dot}`;
     });
     // 미사용 체크된 시술은 원래 이름 그대로, 맨 마지막 구분선 아래에 표시한다.
@@ -626,7 +632,7 @@ export default function Home() {
                 value={inputValue}
                 onChange={(e) => { setInputValue(e.target.value); setHighlightedIndex(0); }}
                 onKeyDown={handleKeyDown}
-                placeholder="예: 써마지 600샷 체험가"
+                placeholder="예: 슈링크 300샷 한정가"
                 style={styles.input}
               />
               {candidates.length > 0 && (
@@ -657,16 +663,16 @@ export default function Home() {
             {/* 직접 입력 */}
             <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
               <input type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="시술 직접 입력" style={{ ...styles.input, flex: 2, minWidth: 0, height: 36, boxSizing: "border-box" }} />
-              <input type="number" value={manualPrice} onChange={(e) => setManualPrice(e.target.value)} placeholder="세전 금액" style={{ ...styles.input, flex: "0 0 96px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
+              <input type="number" value={manualPrice} onChange={(e) => setManualPrice(e.target.value)} placeholder="세전 금액" style={{ ...styles.input, flex: "0 0 76px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
               <Dropdown
                 value={manualCategory ?? ""}
                 onChange={(v) => setManualCategory(v ? (v as TreatmentCategory) : null)}
-                placeholder="분류"
+                placeholder="카테고리"
                 options={CATEGORY_ORDER.map((cat) => ({ value: cat, label: cat }))}
-                style={{ flex: "0 0 140px", height: 36 }}
+                style={{ flex: "0 0 116px", height: 36 }}
               />
               <button onClick={addManualItem} disabled={!manualName.trim() || !manualPrice}
-                style={{ ...styles.btnPrimary, height: 36, boxSizing: "border-box", padding: "0 14px", fontSize: 13, opacity: (!manualName.trim() || !manualPrice) ? 0.4 : 1, flexShrink: 0 }}>
+                style={{ ...styles.btnPrimary, height: 36, boxSizing: "border-box", padding: "0 8px", fontSize: 13, opacity: (!manualName.trim() || !manualPrice) ? 0.4 : 1, flexShrink: 0 }}>
                 추가
               </button>
             </div>
@@ -1088,7 +1094,7 @@ export default function Home() {
                         else if (e.key === "ArrowUp") { e.preventDefault(); updateTransferRecipient(panelRecipient.id, { panelHighlightedIndex: Math.max(panelRecipient.panelHighlightedIndex - 1, 0) }); }
                         else if (e.key === "Enter") { e.preventDefault(); panelSelectCandidate(panelRecipient.id, panelCandidates[panelRecipient.panelHighlightedIndex]); }
                       }}
-                      placeholder="예: 써마지 600샷 체험가"
+                      placeholder="예: 슈링크 300샷 한정가"
                       style={styles.input}
                     />
                     {panelCandidates.length > 0 && (
@@ -1122,16 +1128,16 @@ export default function Home() {
                       placeholder="시술 직접 입력" style={{ ...styles.input, flex: 2, minWidth: 0, height: 36, boxSizing: "border-box" }} />
                     <input type="number" value={panelRecipient.panelManualPrice}
                       onChange={(e) => updateTransferRecipient(panelRecipient.id, { panelManualPrice: e.target.value })}
-                      placeholder="세전 금액" style={{ ...styles.input, flex: "0 0 96px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
+                      placeholder="세전 금액" style={{ ...styles.input, flex: "0 0 76px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
                     <Dropdown
                       value={panelRecipient.panelManualCategory ?? ""}
                       onChange={(v) => updateTransferRecipient(panelRecipient.id, { panelManualCategory: v ? (v as TreatmentCategory) : null })}
-                      placeholder="분류"
+                      placeholder="카테고리"
                       options={CATEGORY_ORDER.map((cat) => ({ value: cat, label: cat }))}
-                      style={{ flex: "0 0 140px", height: 36 }}
+                      style={{ flex: "0 0 116px", height: 36 }}
                     />
                     <button onClick={() => panelAddManualItem(panelRecipient.id)} disabled={!panelRecipient.panelManualName.trim() || !panelRecipient.panelManualPrice}
-                      style={{ ...styles.btnPrimary, height: 36, boxSizing: "border-box", padding: "0 14px", fontSize: 13, opacity: (!panelRecipient.panelManualName.trim() || !panelRecipient.panelManualPrice) ? 0.4 : 1, flexShrink: 0 }}>
+                      style={{ ...styles.btnPrimary, height: 36, boxSizing: "border-box", padding: "0 8px", fontSize: 13, opacity: (!panelRecipient.panelManualName.trim() || !panelRecipient.panelManualPrice) ? 0.4 : 1, flexShrink: 0 }}>
                       추가
                     </button>
                   </div>
