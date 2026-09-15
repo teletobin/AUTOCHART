@@ -156,6 +156,9 @@ export default function RulesPage() {
   const [applying, setApplying] = useState(false);
   const [applyResult, setApplyResult] = useState<ApplyResult | null>(null);
   const [applyError, setApplyError] = useState<string | null>(null);
+  const [branchApplying, setBranchApplying] = useState(false);
+  const [branchApplyResult, setBranchApplyResult] = useState<ApplyResult | null>(null);
+  const [branchApplyError, setBranchApplyError] = useState<string | null>(null);
 
   const [manualTreatments, setManualTreatments] = useState<ManualTreatment[]>([]);
   const [manualError, setManualError] = useState<string | null>(null);
@@ -316,7 +319,11 @@ export default function RulesPage() {
     setApplyResult(null);
     setApplyError(null);
     try {
-      const res = await fetch("/api/cleanup", { method: "POST" });
+      const res = await fetch("/api/cleanup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
       const data = await res.json();
       if (data.error) {
         setApplyError(data.error);
@@ -328,6 +335,31 @@ export default function RulesPage() {
       setApplyError(String(e));
     } finally {
       setApplying(false);
+    }
+  }
+
+  async function handleApplyBranch() {
+    if (!branch) return;
+    setBranchApplying(true);
+    setBranchApplyResult(null);
+    setBranchApplyError(null);
+    try {
+      const res = await fetch("/api/cleanup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ branch }),
+      });
+      const data = await res.json();
+      if (data.error) {
+        setBranchApplyError(data.error);
+      } else {
+        setBranchApplyResult(data);
+        loadCategoryTreatments(branch);
+      }
+    } catch (e) {
+      setBranchApplyError(String(e));
+    } finally {
+      setBranchApplying(false);
     }
   }
 
@@ -531,7 +563,7 @@ export default function RulesPage() {
           disabled={applying}
           style={{ ...styles.btnPrimary, opacity: applying ? 0.6 : 1 }}
         >
-          {applying ? "적용 중..." : "연동된 데이터에 적용"}
+          {applying ? "적용 중..." : "전지점 데이터에 적용"}
         </button>
         {applyResult && <span style={{ fontSize: 13, color: C.primary }}>업데이트: {applyResult.updated}건</span>}
       </div>
@@ -540,6 +572,27 @@ export default function RulesPage() {
 
       {applyResult && applyResult.errors.length > 0 && (
         <p style={{ marginTop: 10, fontSize: 13, color: C.danger }}>에러: {applyResult.errors.length}건</p>
+      )}
+    </div>
+  );
+
+  const branchApplySection = (
+    <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: `1px solid ${C.border}` }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <button
+          onClick={handleApplyBranch}
+          disabled={branchApplying || !branch}
+          style={{ ...styles.btnPrimary, opacity: branchApplying || !branch ? 0.6 : 1 }}
+        >
+          {branchApplying ? "적용 중..." : `${branch || "지점"} 데이터에 적용`}
+        </button>
+        {branchApplyResult && <span style={{ fontSize: 13, color: C.primary }}>업데이트: {branchApplyResult.updated}건</span>}
+      </div>
+
+      {branchApplyError && <p style={{ marginTop: 10, fontSize: 13, color: C.danger }}>에러: {branchApplyError}</p>}
+
+      {branchApplyResult && branchApplyResult.errors.length > 0 && (
+        <p style={{ marginTop: 10, fontSize: 13, color: C.danger }}>에러: {branchApplyResult.errors.length}건</p>
       )}
     </div>
   );
@@ -658,6 +711,15 @@ export default function RulesPage() {
             <p style={styles.cardTitle}>시술명 정리</p>
             <p style={styles.cardHint}>
               차팅에 불필요한 시술명 속의 괄호 내용(장비, 제품, 시술 설명 등)을 삭제합니다.
+              <br />
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.danger }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M12 3.5 L22 20.5 H2 Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                  <line x1="12" y1="10" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <circle cx="12" cy="18" r="1.1" fill="currentColor" />
+                </svg>
+                전 지점 데이터에 적용되므로 수정하거나 삭제하지 마세요
+              </span>
             </p>
 
             {applySection}
@@ -726,6 +788,15 @@ export default function RulesPage() {
               (오타 예: 울쎼라 → 울쎄라)
               <br />
               (한글 입력 예: 포마 → FORMA)
+              <br />
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.danger }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M12 3.5 L22 20.5 H2 Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                  <line x1="12" y1="10" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <circle cx="12" cy="18" r="1.1" fill="currentColor" />
+                </svg>
+                모든 지점의 검색 결과에 공통 적용됩니다. 수정/삭제 시 전 지점에 영향을 미치니 주의하세요
+              </span>
             </p>
 
             {aliasError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {aliasError}</p>}
@@ -801,7 +872,7 @@ export default function RulesPage() {
               (예: 국산 고순도 → 코어)
             </p>
 
-            {applySection}
+            {branchApplySection}
 
             {!branch && <p style={{ marginBottom: 8, fontSize: 13, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
             {loadError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {loadError}</p>}

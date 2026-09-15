@@ -5,8 +5,10 @@ import { applyCleanupRules, type CleanupRule } from "@/lib/cleanup";
 export const maxDuration = 60;
 
 // 현재 저장된 규칙을 treatments 테이블의 기존 데이터에 즉시 적용한다.
-export async function POST() {
+// branch가 주어지면 그 지점의 시술에만 적용한다(지점별 규칙 탭 전용, 빠르고 다른 지점은 건드리지 않음).
+export async function POST(request: Request) {
   const supabase = getSupabaseServerClient();
+  const { branch } = await request.json().catch(() => ({ branch: undefined }));
 
   const { data: rules, error: rulesError } = await supabase
     .from("cleanup_rules")
@@ -22,10 +24,9 @@ export async function POST() {
   const treatments: { id: string; branch: string; name: string }[] = [];
   const PAGE_SIZE = 1000;
   for (let from = 0; ; from += PAGE_SIZE) {
-    const { data: page, error: treatmentsError } = await supabase
-      .from("treatments")
-      .select("id, branch, name")
-      .range(from, from + PAGE_SIZE - 1);
+    let query = supabase.from("treatments").select("id, branch, name");
+    if (branch) query = query.eq("branch", branch);
+    const { data: page, error: treatmentsError } = await query.range(from, from + PAGE_SIZE - 1);
 
     if (treatmentsError) {
       return NextResponse.json({ error: treatmentsError.message }, { status: 500 });
