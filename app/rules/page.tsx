@@ -880,9 +880,9 @@ export default function RulesPage() {
             {loadError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {loadError}</p>}
 
             <div style={{ display: "flex", flexDirection: "column" as const, gap: 8 }}>
-              <div style={{ display: "flex", gap: 8, fontSize: 12, color: C.sub, fontWeight: 600 }}>
+              <div style={{ display: "flex", gap: 8, fontSize: 14, color: C.primary, fontWeight: 700 }}>
                 <div style={{ flex: 1, textAlign: "center" as const }}>홈페이지 시술명</div>
-                <div style={{ flexShrink: 0, width: 24, textAlign: "center" as const }}>→</div>
+                <div style={{ flexShrink: 0, width: 24 }} />
                 <div style={{ flex: 1, textAlign: "center" as const }}>차팅용 명칭</div>
                 <div style={{ flexShrink: 0, width: 60 }} />
               </div>
