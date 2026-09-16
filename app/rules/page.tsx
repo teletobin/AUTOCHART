@@ -58,7 +58,7 @@ const styles: Record<string, React.CSSProperties> = {
   title:     { fontSize: 17, fontWeight: 700, color: C.primary },
   logo:      { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 17, color: C.primary },
   backLink:  { fontSize: 12, color: C.sub, textDecoration: "none" },
-  tabBar:    { borderBottom: `1px solid ${C.border}`, background: C.surface, width: "100%" },
+  tabBar:    { borderBottom: `1px solid ${C.border}`, background: C.surface, width: "100%", position: "sticky" as const, top: 0, zIndex: 50 },
   tabBarInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", gap: 4, padding: "0 28px", overflowX: "auto" as const, boxSizing: "border-box" },
   main:      { width: "100%", maxWidth: "none", margin: "0", padding: "24px 28px", boxSizing: "border-box" },
   card:      { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px" },
