@@ -913,11 +913,11 @@ export default function Home() {
                               flex: 1,
                               minWidth: 0,
                               whiteSpace: "nowrap",
-                              border: `1px solid ${isSelected ? C.primary : C.border}`,
+                              border: `1px solid ${isSelected ? C.primaryLt : C.borderSoft}`,
                               borderRadius: 8,
-                              background: isSelected ? C.primary : "#fff",
-                              color: isSelected ? "#fff" : C.primary,
-                              fontWeight: isSelected ? 700 : 600,
+                              background: isSelected ? C.primaryLt : "#fff",
+                              color: isSelected ? C.primary : C.sub,
+                              fontWeight: isSelected ? 700 : 500,
                               cursor: "pointer"
                             }}
                           >
@@ -939,11 +939,11 @@ export default function Home() {
                               flex: 1,
                               minWidth: 0,
                               whiteSpace: "nowrap",
-                              border: `1px solid ${isSelected ? C.primary : C.border}`,
+                              border: `1px solid ${isSelected ? C.primaryLt : C.borderSoft}`,
                               borderRadius: 8,
-                              background: isSelected ? C.primary : "#fff",
-                              color: isSelected ? "#fff" : C.primary,
-                              fontWeight: isSelected ? 700 : 600,
+                              background: isSelected ? C.primaryLt : "#fff",
+                              color: isSelected ? C.primary : C.sub,
+                              fontWeight: isSelected ? 700 : 500,
                               cursor: "pointer"
                             }}
                           >
@@ -967,11 +967,11 @@ export default function Home() {
                             flex: 1,
                             minWidth: 0,
                             whiteSpace: "nowrap",
-                            border: `1px solid ${isSelected ? C.primary : C.border}`,
+                            border: `1px solid ${isSelected ? C.primaryLt : C.borderSoft}`,
                             borderRadius: 8,
-                            background: isSelected ? C.primary : "#fff",
-                            color: isSelected ? "#fff" : C.primary,
-                            fontWeight: isSelected ? 700 : 600,
+                            background: isSelected ? C.primaryLt : "#fff",
+                            color: isSelected ? C.primary : C.sub,
+                            fontWeight: isSelected ? 700 : 500,
                             cursor: "pointer"
                           }}
                         >
@@ -1016,7 +1016,7 @@ export default function Home() {
                     {transferRecipients.map((recipient) => (
                       <div key={recipient.id} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                         <button onClick={() => setOpenTransferPanelId(recipient.id)}
-                          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, border: `1px solid ${C.primary}`, borderRadius: 8, padding: "6px 10px", cursor: "pointer", background: C.primaryLt, color: C.primary, fontWeight: 700, fontSize: 13 }}>
+                          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, border: "none", background: "transparent", color: C.sub, fontWeight: 500, fontSize: 13, cursor: "pointer", padding: "4px 0", textDecoration: "underline", textDecorationColor: "rgba(0,0,0,0.1)" }}>
                           <span>{recipient.name || "동행인"}님께</span>
                           <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatNumber(Number(recipient.amount) || 0)}원</span>
                           <span>양도함</span>
