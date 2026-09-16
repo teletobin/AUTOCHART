@@ -879,34 +879,43 @@ export default function RulesPage() {
             {!branch && <p style={{ marginBottom: 8, fontSize: 13, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
             {loadError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {loadError}</p>}
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-              <input
-                type="text"
-                value={newBranchFind}
-                onChange={(e) => setNewBranchFind(e.target.value)}
-                placeholder="예) 독일 고순도"
-                disabled={!branch}
-                style={styles.input}
-              />
-              <input
-                type="text"
-                value={newBranchReplacement}
-                onChange={(e) => setNewBranchReplacement(e.target.value)}
-                placeholder="예) 제오민"
-                disabled={!branch}
-                style={styles.input}
-              />
-              <button
-                onClick={() => {
-                  addRule("replace", newBranchFind, newBranchReplacement, branch);
-                  setNewBranchFind("");
-                  setNewBranchReplacement("");
-                }}
-                disabled={!branch}
-                style={{ ...styles.btnPrimary, opacity: !branch ? 0.4 : 1 }}
-              >
-                추가
-              </button>
+            <div style={{ display: "flex", flexDirection: "column" as const, gap: 8 }}>
+              <div style={{ display: "flex", gap: 8, fontSize: 12, color: C.sub, fontWeight: 600 }}>
+                <div style={{ flex: 1, textAlign: "center" as const }}>홈페이지 시술명</div>
+                <div style={{ flexShrink: 0, width: 24, textAlign: "center" as const }}>→</div>
+                <div style={{ flex: 1, textAlign: "center" as const }}>차팅용 명칭</div>
+                <div style={{ flexShrink: 0, width: 60 }} />
+              </div>
+              <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+                <input
+                  type="text"
+                  value={newBranchFind}
+                  onChange={(e) => setNewBranchFind(e.target.value)}
+                  placeholder="예) 독일 고순도"
+                  disabled={!branch}
+                  style={{ ...styles.input, flex: 1 }}
+                />
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "center", color: C.sub, flexShrink: 0, width: 24 }}>→</div>
+                <input
+                  type="text"
+                  value={newBranchReplacement}
+                  onChange={(e) => setNewBranchReplacement(e.target.value)}
+                  placeholder="예) 제오민"
+                  disabled={!branch}
+                  style={{ ...styles.input, flex: 1 }}
+                />
+                <button
+                  onClick={() => {
+                    addRule("replace", newBranchFind, newBranchReplacement, branch);
+                    setNewBranchFind("");
+                    setNewBranchReplacement("");
+                  }}
+                  disabled={!branch}
+                  style={{ ...styles.btnPrimary, opacity: !branch ? 0.4 : 1 }}
+                >
+                  추가
+                </button>
+              </div>
             </div>
 
             <div style={styles.list}>
