@@ -869,7 +869,9 @@ export default function RulesPage() {
             <p style={styles.cardHint}>
               {branch || "우리 지점"}에서만 사용하는 시술명 치환 규칙을 등록해주세요.
               <br />
-              (예: 국산 고순도 → 코어, 저통증 멀티석션 인젝터 → 하이쿡스)
+              예1) 국산 고순도 → 코어
+              <br />
+              예2) 저통증 멀티석션 인젝터 → 하이쿡스
             </p>
 
             {branchApplySection}
@@ -882,7 +884,7 @@ export default function RulesPage() {
                 type="text"
                 value={newBranchFind}
                 onChange={(e) => setNewBranchFind(e.target.value)}
-                placeholder="찾을 문자열"
+                placeholder="예) 독일 고순도"
                 disabled={!branch}
                 style={styles.input}
               />
@@ -890,7 +892,7 @@ export default function RulesPage() {
                 type="text"
                 value={newBranchReplacement}
                 onChange={(e) => setNewBranchReplacement(e.target.value)}
-                placeholder="바꿀 문자열"
+                placeholder="예) 제오민"
                 disabled={!branch}
                 style={styles.input}
               />
