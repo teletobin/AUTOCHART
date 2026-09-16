@@ -869,7 +869,7 @@ export default function RulesPage() {
             <p style={styles.cardHint}>
               {branch || "우리 지점"}에서만 사용하는 시술명 치환 규칙을 등록해주세요.
               <br />
-              (예: 국산 고순도 → 코어)
+              (예: 국산 고순도 → 코어, 저통증 멀티석션 인젝터 → 하이쿡스)
             </p>
 
             {branchApplySection}
