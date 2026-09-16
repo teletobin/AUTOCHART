@@ -1017,7 +1017,7 @@ export default function Home() {
                       <div key={recipient.id} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                         <button onClick={() => setOpenTransferPanelId(recipient.id)}
                           style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, border: "none", background: "transparent", color: C.sub, fontWeight: 500, fontSize: 13, cursor: "pointer", padding: "4px 0", textDecoration: "underline", textDecorationColor: "rgba(0,0,0,0.1)" }}>
-                          <span>{recipient.name || "동행인"}님께</span>
+                          <span>{recipient.name || "OOO"}님께</span>
                           <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatNumber(Number(recipient.amount) || 0)}원</span>
                           <span>양도함</span>
                         </button>
