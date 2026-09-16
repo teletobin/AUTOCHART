@@ -120,8 +120,6 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
     }
 
     return Array.from(bestByName.values())
-      // 요청한 대로 "일치하는 글자수"가 가장 중요한 기준이고, 동점일 때만
-      // coverage/precision 점수로 순위를 가른다.
       .sort((a, b) => b.matchedChars - a.matchedChars || b.score - a.score)
       .slice(0, limit)
       .map((s) => s.t);

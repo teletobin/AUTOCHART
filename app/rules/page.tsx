@@ -1043,15 +1043,15 @@ export default function RulesPage() {
                 </p>
               </div>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                <button onClick={handleSync} disabled={syncing || !branch} style={{ ...styles.btnPrimary, opacity: syncing || !branch ? 0.6 : 1 }}>
+                <button onClick={handleSync} disabled={syncing || !branch} style={{ ...styles.btnPrimary, boxShadow: "0 2px 6px rgba(0,0,0,0.12)", opacity: syncing || !branch ? 0.6 : 1 }}>
                   {syncing ? "연동 중..." : "홈페이지 연동"}
                 </button>
                 <button
                   onClick={handleReset}
                   disabled={resetting || !branch}
-                  style={{ ...styles.btnPrimary, background: C.danger, opacity: resetting || !branch ? 0.6 : 1 }}
+                  style={{ ...styles.btnPrimary, background: C.danger, boxShadow: "0 2px 6px rgba(0,0,0,0.12)", opacity: resetting || !branch ? 0.6 : 1 }}
                 >
-                  {resetting ? "삭제 중..." : "데이터리셋"}
+                  {resetting ? "삭제 중..." : "데이터 리셋"}
                 </button>
               </div>
             </div>

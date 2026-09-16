@@ -115,7 +115,7 @@ const styles: Record<string, React.CSSProperties> = {
   header:  { borderBottom: `1px solid ${C.border}`, background: C.surface, padding: "14px 0", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
   headerInner: { maxWidth: MAX_WIDTH, margin: "0 auto", padding: "0 20px", boxSizing: "border-box" as const, display: "flex", alignItems: "center", justifyContent: "space-between" },
   logo:    { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 17, color: C.primary },
-  btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 700, cursor: "pointer" },
+  btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
   btnGhost:   { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" },
   main:    { maxWidth: MAX_WIDTH, margin: "0 auto", width: "100%", padding: "24px 20px", display: "grid", gridTemplateColumns: "1fr", gap: 16 },
   card:    { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px" },
@@ -125,7 +125,7 @@ const styles: Record<string, React.CSSProperties> = {
   hint:    { fontSize: 11, color: C.sub, marginTop: 6 },
   candidateBox: { position: "absolute" as const, zIndex: 20, marginTop: 4, width: "100%", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: "0 8px 24px rgba(111,104,100,0.10)", overflow: "hidden" },
   candidateRow: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 14px", fontSize: 13, cursor: "pointer", borderBottom: `1px solid ${C.borderSoft}` },
-  tableHead: { display: "flex", alignItems: "center", gap: 8, borderBottom: `1px solid ${C.border}`, paddingBottom: 8, fontSize: 11, color: C.sub, marginBottom: 4 },
+  tableHead: { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.border}`, paddingBottom: 8, fontSize: 11, color: C.sub, marginBottom: 4 },
   tableRow:  { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.borderSoft}`, padding: "8px 0", fontSize: 13 },
   totalRow:  { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, fontWeight: 700, fontSize: 14 },
   textarea:  { width: "100%", resize: "none" as const, border: `1px solid ${C.border}`, borderRadius: 10, background: C.bg, padding: "12px 14px", fontSize: 13, color: C.primary, outline: "none", lineHeight: 1.8, boxSizing: "border-box" as const },
@@ -163,8 +163,10 @@ export default function Home() {
   // 양도자(회원권 보유 고객, A) 이름은 여러 양도차트에서 하나로 통일해서 써야 하므로
   // 팝업마다 따로 두지 않고 여기서 한 곳에서만 관리한다.
   const [giverName, setGiverName] = useState("");
+  const [giverBirthdate, setGiverBirthdate] = useState("");
   const [showGiverPrompt, setShowGiverPrompt] = useState(false);
   const [giverPromptInput, setGiverPromptInput] = useState("");
+  const [giverPromptBirthdate, setGiverPromptBirthdate] = useState("");
 
   // 지점 변경 확인/진행 상태 팝업. confirm(변경할지 물어보는 중) -> loading(불러오는 중)
   // -> done(완료 표시 후 자동 닫힘) 순서로 진행된다.
@@ -224,7 +226,7 @@ export default function Home() {
 
 
   const matcher = useMemo(() => buildMatcher(treatments, aliases), [treatments, aliases]);
-  const candidates = useMemo(() => (inputValue.trim().length >= 2 ? matcher(inputValue, 15) : []), [inputValue, matcher]);
+  const candidates = useMemo(() => (inputValue.trim().length >= 2 ? matcher(inputValue, 20) : []), [inputValue, matcher]);
 
   function selectCandidate(candidate: Treatment) {
     const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -256,6 +258,7 @@ export default function Home() {
     if (!turningOn) { setOpenTransferPanelId(null); return; }
     if (!giverName.trim()) {
       setGiverPromptInput("");
+      setGiverPromptBirthdate("");
       setShowGiverPrompt(true);
       return;
     }
@@ -271,14 +274,16 @@ export default function Home() {
     }
   }
   function confirmGiverPrompt() {
-    if (!giverPromptInput.trim()) return;
+    if (!giverPromptInput.trim() || !giverPromptBirthdate.trim()) return;
     setGiverName(giverPromptInput.trim());
+    setGiverBirthdate(giverPromptBirthdate.trim());
     setShowGiverPrompt(false);
     openFirstOrNewRecipientPanel();
   }
   function addTransferRecipient() {
     if (!giverName.trim()) {
       setGiverPromptInput("");
+      setGiverPromptBirthdate("");
       setShowGiverPrompt(true);
       return;
     }
@@ -391,6 +396,7 @@ export default function Home() {
     setTransferRecipients([]);
     setOpenTransferPanelId(null);
     setGiverName("");
+    setGiverBirthdate("");
     setTransferEnabled(false);
     setIncludeHeader(false);
     setMembershipType("VIP");
@@ -428,7 +434,7 @@ export default function Home() {
   const headerVisible = includeHeader && paymentAmount > 0 && extraCredit > 0;
 
   // 동행인 팝업 안에서 보여줄 미니 차트 텍스트 (시술 목록 + TOTAL + 양도받음 문구)
-  function buildPanelText(items: SelectedItem[], giverName: string): string {
+  function buildPanelText(items: SelectedItem[], giverName: string, giverBirthdate: string): string {
     const displayedItems = items.filter((i) => i.displayed);
     const normalItems = displayedItems.filter((i) => !i.unused);
     const unusedItems = displayedItems.filter((i) => i.unused);
@@ -439,23 +445,28 @@ export default function Home() {
     });
     const unusedLines = unusedItems.length > 0
       ? ["=".repeat(20), ...unusedItems.map((i) => {
-          const displayName = i.name.replace(/\s+/g, " ").trim();
+          const { base, n } = splitCountSuffix(i.name);
+          const displayName = base.replace(/\s+/g, " ").trim();
           const dot = i.count !== 1 ? RED_DOT : "";
-          return `${displayName} ${formatNumber(computeUnitPrice(i))}원${dot} *미사용`;
+          const countDisplay = n === "1" ? " 1회" : ` ${n}회`;
+          return `${displayName}${countDisplay} ${formatNumber(computeUnitPrice(i))}원${dot} *미시술`;
         })]
       : [];
     const total = panelRecalcTotal(items);
     const totalLine = displayedItems.length > 1 ? [`총 ${formatNumber(total)}원`] : [];
-    const bottomLine = `ㄴ ${giverName.trim() || "___"}님께 양도받음`;
+    const birthdateFormatted = giverBirthdate.trim()
+      ? `${giverBirthdate.slice(0, 2)}.${giverBirthdate.slice(2, 4)}.${giverBirthdate.slice(4, 6)}`
+      : "__.__.__ ";
+    const bottomLine = `ㄴ ${giverName.trim() || "___"}(${birthdateFormatted})님께 총 ${formatNumber(total)}원 양도받음`;
     return [...itemLines, ...unusedLines, ...totalLine, bottomLine].join("\n");
   }
 
   const openPanelRecipient = transferRecipients.find((r) => r.id === openTransferPanelId) ?? null;
   const panelGeneratedText = useMemo(() => {
     if (!openPanelRecipient || openPanelRecipient.panelItems === null) return "";
-    return buildPanelText(openPanelRecipient.panelItems, giverName);
+    return buildPanelText(openPanelRecipient.panelItems, giverName, giverBirthdate);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openPanelRecipient?.panelItems, giverName]);
+  }, [openPanelRecipient?.panelItems, giverName, giverBirthdate]);
 
   useEffect(() => {
     if (openTransferPanelId && panelGeneratedText) {
@@ -487,12 +498,14 @@ export default function Home() {
       }
       return `${base} ${n}-1  ${formatNumber(computeUnitPrice(i))}원${dot}`;
     });
-    // 미사용 체크된 시술은 원래 이름 그대로, 맨 마지막 구분선 아래에 표시한다.
+    // 미시술 체크된 시술은 원래 이름 그대로, 맨 마지막 구분선 아래에 표시한다.
     const unusedLines = unusedItems.length > 0
       ? ["=".repeat(20), ...unusedItems.map((i) => {
-          const displayName = i.name.replace(/\s+/g, " ").trim();
+          const { base, n } = splitCountSuffix(i.name);
+          const displayName = base.replace(/\s+/g, " ").trim();
           const dot = i.count !== 1 ? RED_DOT : "";
-          return `${displayName} ${formatNumber(computeUnitPrice(i))}원${dot} *미사용`;
+          const countDisplay = n === "1" ? " 1회" : ` ${n}회`;
+          return `${displayName}${countDisplay} ${formatNumber(computeUnitPrice(i))}원${dot} *미시술`;
         })]
       : [];
     const totalLine = selectedItems.length > 1 || discountPercent > 0
@@ -685,12 +698,12 @@ export default function Home() {
                 <>
                   <div style={styles.tableHead}>
                     <span style={{ width: 16 }} />
-                    <span style={{ width: 24, textAlign: "center" }} />
+                    <span style={{ width: 20, textAlign: "center" }} />
                     <span style={{ flex: 1, textAlign: "center" }}>시술명</span>
-                    <span style={{ width: 58, textAlign: "center" }}>단가</span>
-                    <span style={{ width: 40, textAlign: "center" }}>수량</span>
-                    <span style={{ width: 76, textAlign: "center" }}>합계</span>
-                    <span style={{ width: 24, textAlign: "center", whiteSpace: "nowrap" }}>미사용</span>
+                    <span style={{ width: 60, textAlign: "center" }}>단가</span>
+                    <span style={{ width: 50, textAlign: "center" }}>수량</span>
+                    <span style={{ width: 80, textAlign: "center" }}>합계</span>
+                    <span style={{ width: 24, textAlign: "left", whiteSpace: "nowrap" }}>미시술</span>
                   </div>
                   {selectedItems.map((item) => (
                     <div key={item.id} style={styles.tableRow}>
@@ -726,11 +739,11 @@ export default function Home() {
                         className=""
                         style={{ flex: 1, minWidth: 120, border: `1px solid transparent`, borderRadius: 6, padding: "2px 4px", background: "transparent", fontSize: 13, color: C.primary, lineHeight: 1.5 } as React.CSSProperties}
                       />
-                      <span style={{ width: 58, textAlign: "center", fontVariantNumeric: "tabular-nums", color: C.primary, fontSize: 13 }}>{formatNumber(item.basePrice)}</span>
-                      <div style={{ width: 40, display: "flex", justifyContent: "center" }}>
+                      <span style={{ width: 60, textAlign: "center", fontVariantNumeric: "tabular-nums", color: C.primary, fontSize: 13 }}>{formatNumber(item.basePrice)}</span>
+                      <div style={{ width: 50, display: "flex", justifyContent: "center" }}>
                         <CountDial count={item.count} onChange={(count) => updateItemCount(item.id, count)} />
                       </div>
-                      <span style={{ width: 76, textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 13 }}>{formatNumber(computeUnitPrice(item))}</span>
+                      <span style={{ width: 80, textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 13 }}>{formatNumber(computeUnitPrice(item))}</span>
                       <div style={{ width: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <input
                           type="checkbox"
@@ -739,7 +752,7 @@ export default function Home() {
                             setSelectedItems((prev) => prev.map((i) => (i.id === item.id ? { ...i, unused: !i.unused } : i)));
                           }}
                           style={{ accentColor: C.primary, cursor: "pointer" }}
-                          aria-label="미사용"
+                          aria-label="미시술"
                         />
                       </div>
                     </div>
@@ -835,7 +848,7 @@ export default function Home() {
             <div style={styles.titleRow}>
               <p style={{ ...styles.cardTitle, marginBottom: 0 }}>차트 생성</p>
               <button onClick={clearAllItems} disabled={selectedItems.length === 0}
-                style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700, opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
+                style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
                 CLEAR
               </button>
             </div>
@@ -847,19 +860,22 @@ export default function Home() {
             />
 
             <button onClick={handleCopy} disabled={selectedItems.length === 0}
-              style={{ ...styles.btnPrimary, width: "100%", marginTop: 10, padding: "10px", opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
+              style={{ ...styles.btnPrimary, width: "100%", marginTop: 10, height: 36, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.12)", opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
               {copied ? "복사됨 ✓" : "최종 차트 복사"}
             </button>
 
             {/* 회원권 / 양도 토글 */}
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              {(["회원권", "양도"] as const).map((label) => {
+            <div style={{ display: "flex", gap: 6, marginTop: 12, background: C.borderSoft, borderRadius: 10, padding: 6, height: 36 }}>
+              {(["회원권", "양도"] as const).map((label, idx) => {
                 const checked = label === "회원권" ? includeHeader : transferEnabled;
                 const toggle = label === "회원권" ? () => setIncludeHeader((v) => !v) : handleToggleTransfer;
                 return (
-                  <button key={label} onClick={toggle} style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8, border: `1px solid ${checked ? C.primary : C.border}`, borderRadius: 8, padding: "8px 12px", cursor: "pointer", background: checked ? C.primaryLt : "#fff", fontSize: 13, fontWeight: 600, color: C.primary }}>
-                    {label}
-                  </button>
+                  <div key={label} style={{ flex: 1, display: "flex", alignItems: "center" }}>
+                    {idx > 0 && <div style={{ width: "1px", height: "20px", background: "rgba(0,0,0,0.08)", opacity: checked ? 0 : 1, transition: "opacity 0.2s ease" }} />}
+                    <button onClick={toggle} style={{ flex: 1, padding: "0 18px", border: "none", borderRadius: checked ? 6 : 0, fontSize: 13, fontWeight: 600, cursor: "pointer", background: checked ? "#fff" : "transparent", color: checked ? C.primary : C.sub, transition: "all 0.2s ease", boxShadow: checked ? "0 2px 4px rgba(0,0,0,0.1)" : "none", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                      {label}
+                    </button>
+                  </div>
                 );
               })}
             </div>
@@ -1035,7 +1051,7 @@ export default function Home() {
           >
             <p style={{ fontSize: 15, fontWeight: 700, color: C.primary, marginBottom: 6 }}>회원권 보유 고객(양도인)</p>
             <p style={{ fontSize: 12, color: C.sub, marginBottom: 14, lineHeight: 1.5 }}>
-              회원권을 보유한 고객(양도인) 이름을 입력해주세요.
+              회원권을 보유한 고객(양도인) 이름과 생년월일(6자리)을 입력해주세요.
             </p>
             <input
               type="text"
@@ -1044,12 +1060,21 @@ export default function Home() {
               onChange={(e) => setGiverPromptInput(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") confirmGiverPrompt(); }}
               placeholder="양도인 이름"
+              style={{ ...styles.input, marginBottom: 10 }}
+            />
+            <input
+              type="text"
+              value={giverPromptBirthdate}
+              onChange={(e) => setGiverPromptBirthdate(e.target.value.slice(0, 6))}
+              onKeyDown={(e) => { if (e.key === "Enter") confirmGiverPrompt(); }}
+              placeholder="생년월일 (예: 950101)"
+              maxLength={6}
               style={styles.input}
             />
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 16 }}>
               <button onClick={() => setShowGiverPrompt(false)} style={styles.btnGhost}>취소</button>
-              <button onClick={confirmGiverPrompt} disabled={!giverPromptInput.trim()}
-                style={{ ...styles.btnPrimary, opacity: !giverPromptInput.trim() ? 0.4 : 1 }}>
+              <button onClick={confirmGiverPrompt} disabled={!giverPromptInput.trim() || !giverPromptBirthdate.trim()}
+                style={{ ...styles.btnPrimary, opacity: (!giverPromptInput.trim() || !giverPromptBirthdate.trim()) ? 0.4 : 1 }}>
                 확인
               </button>
             </div>
@@ -1062,7 +1087,7 @@ export default function Home() {
         if (!panelRecipient || panelRecipient.panelItems === null) return null;
         const panelIndex = transferRecipients.findIndex((r) => r.id === openTransferPanelId);
         const items = panelRecipient.panelItems;
-        const panelCandidates = panelRecipient.panelInput.trim().length >= 2 ? matcher(panelRecipient.panelInput, 15) : [];
+        const panelCandidates = panelRecipient.panelInput.trim().length >= 2 ? matcher(panelRecipient.panelInput, 20) : [];
         const panelTotal = panelRecalcTotal(items);
         return (
           <div
@@ -1149,12 +1174,12 @@ export default function Home() {
                       <>
                         <div style={styles.tableHead}>
                           <span style={{ width: 16 }} />
-                          <span style={{ width: 24, textAlign: "center" }} />
+                          <span style={{ width: 20, textAlign: "center" }} />
                           <span style={{ flex: 1, textAlign: "center" }}>시술명</span>
-                          <span style={{ width: 58, textAlign: "center" }}>단가</span>
-                          <span style={{ width: 40, textAlign: "center" }}>수량</span>
-                          <span style={{ width: 76, textAlign: "center" }}>합계</span>
-                          <span style={{ width: 24, textAlign: "center", whiteSpace: "nowrap" }}>미사용</span>
+                          <span style={{ width: 60, textAlign: "center" }}>단가</span>
+                          <span style={{ width: 50, textAlign: "center" }}>수량</span>
+                          <span style={{ width: 80, textAlign: "center" }}>합계</span>
+                          <span style={{ width: 24, textAlign: "left", whiteSpace: "nowrap" }}>미시술</span>
                         </div>
                         {items.map((item) => (
                           <div key={item.id} style={styles.tableRow}>
@@ -1178,18 +1203,18 @@ export default function Home() {
                               className=""
                               style={{ flex: 1, minWidth: 120, border: `1px solid transparent`, borderRadius: 6, padding: "2px 4px", background: "transparent", fontSize: 13, color: C.primary, lineHeight: 1.5 } as React.CSSProperties}
                             />
-                            <span style={{ width: 58, textAlign: "center", fontVariantNumeric: "tabular-nums", color: C.primary, fontSize: 13 }}>{formatNumber(item.basePrice)}</span>
-                            <div style={{ width: 40, display: "flex", justifyContent: "center" }}>
+                            <span style={{ width: 60, textAlign: "center", fontVariantNumeric: "tabular-nums", color: C.primary, fontSize: 13 }}>{formatNumber(item.basePrice)}</span>
+                            <div style={{ width: 50, display: "flex", justifyContent: "center" }}>
                               <CountDial count={item.count} onChange={(count) => panelUpdateCount(panelRecipient.id, item.id, count)} />
                             </div>
-                            <span style={{ width: 76, textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 13 }}>{formatNumber(computeUnitPrice(item))}</span>
+                            <span style={{ width: 80, textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 13 }}>{formatNumber(computeUnitPrice(item))}</span>
                             <div style={{ width: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
                               <input
                                 type="checkbox"
                                 checked={item.unused}
                                 onChange={() => panelToggleUnused(panelRecipient.id, item.id)}
                                 style={{ accentColor: C.primary, cursor: "pointer" }}
-                                aria-label="미사용"
+                                aria-label="미시술"
                               />
                             </div>
                           </div>
