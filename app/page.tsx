@@ -676,7 +676,7 @@ export default function Home() {
             {/* 직접 입력 */}
             <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
               <input type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="시술 직접 입력" style={{ ...styles.input, flex: 2, minWidth: 0, height: 36, boxSizing: "border-box" }} />
-              <input type="number" value={manualPrice} onChange={(e) => setManualPrice(e.target.value)} placeholder="세전 금액" style={{ ...styles.input, flex: "0 0 76px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
+              <input type="text" value={manualPrice ? Number(manualPrice).toLocaleString() : ""} onChange={(e) => setManualPrice(e.target.value.replace(/[^0-9]/g, ''))} placeholder="세전 금액" style={{ ...styles.input, flex: "0 0 76px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
               <Dropdown
                 value={manualCategory ?? ""}
                 onChange={(v) => setManualCategory(v ? (v as TreatmentCategory) : null)}
@@ -990,7 +990,7 @@ export default function Home() {
                 ].map(({ label, val, set }) => (
                   <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                     <span style={styles.label}>{label}</span>
-                    <input type="number" value={val} onChange={(e) => set(e.target.value)} style={styles.numInput} />
+                    <input type="text" value={val ? Number(val).toLocaleString() : ""} onChange={(e) => set(e.target.value.replace(/[^0-9]/g, ''))} style={styles.numInput} />
                     <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
                   </div>
                 ))}
@@ -1151,8 +1151,8 @@ export default function Home() {
                     <input type="text" value={panelRecipient.panelManualName}
                       onChange={(e) => updateTransferRecipient(panelRecipient.id, { panelManualName: e.target.value })}
                       placeholder="시술 직접 입력" style={{ ...styles.input, flex: 2, minWidth: 0, height: 36, boxSizing: "border-box" }} />
-                    <input type="number" value={panelRecipient.panelManualPrice}
-                      onChange={(e) => updateTransferRecipient(panelRecipient.id, { panelManualPrice: e.target.value })}
+                    <input type="text" value={panelRecipient.panelManualPrice ? Number(panelRecipient.panelManualPrice).toLocaleString() : ""}
+                      onChange={(e) => updateTransferRecipient(panelRecipient.id, { panelManualPrice: e.target.value.replace(/[^0-9]/g, '') })}
                       placeholder="세전 금액" style={{ ...styles.input, flex: "0 0 76px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
                     <Dropdown
                       value={panelRecipient.panelManualCategory ?? ""}
