@@ -1009,7 +1009,7 @@ export default function Home() {
                       {transferRecipients.length < 5 && (
                         <button onClick={addTransferRecipient}
                           style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700 }}>
-                          양수인 추가
+                          양도차트 추가
                         </button>
                       )}
                     </div>
