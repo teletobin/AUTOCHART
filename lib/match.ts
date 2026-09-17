@@ -120,27 +120,12 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
       }
     }
 
-    // 단순 검색어(토큰 1개)면 홈페이지 스크래핑 순서(section → 원래 순서) 따르기
+    // 단순 검색어(토큰 1개)면 홈페이지 스크래핑 순서(index) 따르기
     if (originalTokenCount === 1) {
-      const SECTION_ORDER = [
-        "주름보톡스", "사각턱보톡스", "특수부위", "바디보톡스",
-        "다한증보톡스", "스킨보톡스", "두피탈모", "기타"
-      ];
-      const sectionIndex = (section: string): number => {
-        const idx = SECTION_ORDER.findIndex(s => section.includes(s));
-        return idx === -1 ? SECTION_ORDER.length : idx;
-      };
-      const results = Array.from(bestByName.values())
-        .sort((a, b) => {
-          const aIdx = sectionIndex(a.t.section || "");
-          const bIdx = sectionIndex(b.t.section || "");
-          if (aIdx !== bIdx) return aIdx - bIdx;
-          return a.index - b.index;
-        })
+      return Array.from(bestByName.values())
+        .sort((a, b) => a.index - b.index)
         .slice(0, limit)
         .map((s) => s.t);
-      console.log(`[match] originalTokenCount=1, query="${query}"\nMatched ${Array.from(bestByName.values()).length} items, returned ${results.length}.\nFirst 3:\n${results.slice(0, 3).map(r => `  ${r.name} (section="${r.section || "N/A"}")`).join("\n")}`);
-      return results;
     }
     // 복합 검색(토큰 2개+)은 매칭도 + 정확도 기반 정렬
     return Array.from(bestByName.values())
