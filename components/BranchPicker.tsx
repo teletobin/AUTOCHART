@@ -4,6 +4,25 @@ import { useEffect, useRef, useState } from "react";
 import { ALL_BRANCHES } from "@/lib/branches";
 import { C } from "@/lib/theme";
 
+// 한글 초성을 영문으로 변환 (영타 검색용)
+function getKoreanInitial(korean: string): string {
+  const initials = "ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ";
+  const initialToEnglish: Record<string, string> = {
+    "ㄱ": "g", "ㄴ": "n", "ㄷ": "d", "ㄹ": "l", "ㅁ": "m",
+    "ㅂ": "b", "ㅅ": "s", "ㅇ": "", "ㅈ": "j", "ㅊ": "c",
+    "ㅋ": "k", "ㅌ": "t", "ㅍ": "p", "ㅎ": "h"
+  };
+  return korean.split("").map((char) => {
+    const code = char.charCodeAt(0);
+    if (code >= 0xAC00 && code <= 0xD7A3) {
+      const index = Math.floor((code - 0xAC00) / 588);
+      const initial = initials[index];
+      return initialToEnglish[initial] || initial;
+    }
+    return char;
+  }).join("");
+}
+
 const SEARCH_WIDTH = 130;
 const MIN_PICKED_WIDTH = 64;
 
@@ -45,8 +64,14 @@ export default function BranchPicker({
     return () => document.removeEventListener("click", onDocClick);
   }, []);
 
-  const q = query.trim().toLowerCase();
-  const matches = ALL_BRANCHES.filter((b) => !q || b.toLowerCase().includes(q));
+  const q = query.trim().toLowerCase().replace(/\s/g, "");
+  const qInitial = getKoreanInitial(q);
+  const matches = ALL_BRANCHES.filter((b) => {
+    if (!q) return true;
+    const normalized = b.toLowerCase().replace(/\s/g, "");
+    const bInitial = getKoreanInitial(b).toLowerCase();
+    return normalized.includes(q) || bInitial.includes(qInitial);
+  });
   const width = value && !open ? pickedWidth : SEARCH_WIDTH;
 
   function pick(b: string) {
