@@ -155,7 +155,7 @@ const styles: Record<string, React.CSSProperties> = {
   btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
   btnGhost:   { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" },
   main:    { maxWidth: MAX_WIDTH, margin: "0 auto", width: "100%", padding: "24px 20px", display: "grid", gridTemplateColumns: "1fr", gap: 16 },
-  card:    { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px" },
+  card:    { background: C.surface, borderRadius: 14, padding: "20px 22px" },
   cardTitle: { fontSize: 14, fontWeight: 700, color: C.sub, marginBottom: 14, letterSpacing: "0.04em" },
   titleRow: { display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 34, marginBottom: 14 },
   input:   { width: "100%", border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
@@ -881,7 +881,7 @@ export default function Home() {
           </div>
 
           {/* ── 우: 선택 결과 ── */}
-          <div style={styles.card}>
+          <div style={{ ...styles.card, boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08)" }}>
             <div style={styles.titleRow}>
               <p style={{ ...styles.cardTitle, marginBottom: 0 }}>차트 생성</p>
               <button onClick={clearAllItems} disabled={selectedItems.length === 0}
