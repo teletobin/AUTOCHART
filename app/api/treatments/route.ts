@@ -12,9 +12,9 @@ export async function GET(request: Request) {
 
   const { data, error } = await supabase
     .from("treatments")
-    .select("id, name, price, category, section")
+    .select("id, name, price, category, section, scraped_at")
     .eq("branch", branch)
-    .order("id", { ascending: true });
+    .order("scraped_at", { ascending: true });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
