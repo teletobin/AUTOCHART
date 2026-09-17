@@ -7,7 +7,7 @@ export async function GET() {
   const { data, error } = await supabase
     .from("aliases")
     .select("id, alias, keyword")
-    .order("alias", { ascending: true });
+    .order("id", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

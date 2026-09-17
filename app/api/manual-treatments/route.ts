@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     .select("id, name, price, category")
     .eq("branch", branch)
     .eq("is_manual", true)
-    .order("name", { ascending: true });
+    .order("id", { ascending: false });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

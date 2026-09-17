@@ -202,7 +202,7 @@ export default function RulesPage() {
         } else {
           setLoadError(null);
           setTableMissing(false);
-          setRules((data.rules ?? []).reverse());
+          setRules(data.rules ?? []);
         }
       })
       .catch((e) => setLoadError(String(e)));
@@ -216,7 +216,7 @@ export default function RulesPage() {
         if (data.error) setManualError(data.error);
         else {
           setManualError(null);
-          setManualTreatments((data.treatments ?? []).reverse());
+          setManualTreatments(data.treatments ?? []);
         }
       })
       .catch((e) => setManualError(String(e)));
@@ -230,7 +230,7 @@ export default function RulesPage() {
         if (data.error) setCategoryError(data.error);
         else {
           setCategoryError(null);
-          setCategoryTreatments((data.treatments ?? []).reverse());
+          setCategoryTreatments(data.treatments ?? []);
         }
       })
       .catch((e) => setCategoryError(String(e)));
@@ -243,7 +243,7 @@ export default function RulesPage() {
         if (data.error) setAliasError(data.error);
         else {
           setAliasError(null);
-          setAliases((data.aliases ?? []).reverse());
+          setAliases(data.aliases ?? []);
         }
       })
       .catch((e) => setAliasError(String(e)));
