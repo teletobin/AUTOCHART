@@ -6,18 +6,21 @@ export type CleanupRule = {
   branch?: string | null;
 };
 
-// "+" 앞뒤 공백을 없애고("A + B" → "A+B"), "A N회+B N회"처럼 양쪽 회차가
-// 같으면 하나로 합친다("A 1회+B 1회" → "A+B", "A 3회+B 3회" → "A+B 3회").
+// "+" 앞뒤 공백을 없애고("A + B" → "A+B"), 회차가 모두 같으면 뒤로 옮긴다.
+// "A 1회+B 1회" → "A+B 1회", "A 3회+B 3회+C 3회" → "A+B+C 3회"
 function tidyPlusSegments(name: string): string {
   let result = name.replace(/\s*\+\s*/g, "+");
 
-  const m = result.match(/^(.*?)(\d+)회\+(.*?)\2회(.*)$/);
-  if (m) {
-    const [, before, n, middle, after] = m;
-    result =
-      n === "1"
-        ? `${before.trim()}+${middle.trim()}${after}`
-        : `${before.trim()}+${middle.trim()} ${n}회${after}`;
+  const countMatches = result.match(/(\d+)회/g) ?? [];
+  if (countMatches.length > 0) {
+    const counts = countMatches.map((m) => m.match(/(\d+)/)![1]);
+    const uniqueCounts = new Set(counts);
+
+    if (uniqueCounts.size === 1) {
+      const count = counts[0];
+      const cleaned = result.replace(/\s*\d+\s*회\s*([+])?/g, (match, plus) => plus || "");
+      result = `${cleaned} ${count}회`;
+    }
   }
 
   return result.replace(/\s+/g, " ").trim();
