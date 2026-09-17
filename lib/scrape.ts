@@ -125,7 +125,8 @@ async function scrapeOnePage(
 
       if (!rawName || !priceText) return;
 
-      const name = applyCleanupRules(rawName, cleanupRules);
+      let name = applyCleanupRules(rawName, cleanupRules);
+      name = name.replace(/염증주사\s+개당/g, "염증주사(TA)");
       const price = parseInt(priceText.replace(/[^0-9]/g, ""), 10);
 
       if (name.length < 5 || !price || price <= 0) return;

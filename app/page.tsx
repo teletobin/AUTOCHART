@@ -43,14 +43,38 @@ type TransferRecipient = {
   panelEditableText: string;
 };
 
-// 시술명 끝에 붙은 "N회"를 분리한다. 없으면 1회로 취급.
+// 시술명의 "N회"를 분리한다. 없으면 1회로 취급.
+// 1. 끝에 N회가 있으면 분리
+// 2. 괄호 안에 N회가 있고 안전하면 분리해서 뒤로 이동
+// 3. 여러 회차가 섞여있으면 안전상 그대로 두기
 function splitCountSuffix(name: string): { base: string; n: string } {
-  const m = name.match(/(\d+)\s*회\s*$/);
-  if (!m) return { base: name.replace(/\s+/g, " ").trim(), n: "1" };
-  return {
-    base: name.slice(0, m.index).replace(/\s+/g, " ").trim(),
-    n: m[1],
-  };
+  const endMatch = name.match(/(\d+)\s*회\s*$/);
+  if (endMatch) {
+    return {
+      base: name.slice(0, endMatch.index).replace(/\s+/g, " ").trim(),
+      n: endMatch[1],
+    };
+  }
+
+  const parenMatch = name.match(/^(.*?)\(([^()]*?(\d+)\s*회[^()]*?)\)(.*)$/);
+  if (parenMatch) {
+    const [, before, insideParen, , after] = parenMatch;
+    const counts = insideParen.match(/(\d+)\s*회/g) ?? [];
+    const countValues = counts.map((c) => {
+      const m = c.match(/(\d+)/);
+      return m ? m[1] : "";
+    }).filter((c) => c);
+    const uniqueCounts = new Set(countValues);
+
+    if (counts.length === 1 || (counts.length > 0 && uniqueCounts.size === 1)) {
+      const countVal = countValues[0];
+      const cleanedParen = insideParen.replace(/\s*\d+\s*회\s*/, "").trim();
+      const base = `${before.trim()}(${cleanedParen})${after}`.replace(/\s+/g, " ").trim();
+      return { base, n: countVal };
+    }
+  }
+
+  return { base: name.replace(/\s+/g, " ").trim(), n: "1" };
 }
 
 function AutoGrowInput({

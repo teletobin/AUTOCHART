@@ -202,7 +202,7 @@ export default function RulesPage() {
         } else {
           setLoadError(null);
           setTableMissing(false);
-          setRules(data.rules ?? []);
+          setRules((data.rules ?? []).reverse());
         }
       })
       .catch((e) => setLoadError(String(e)));
@@ -216,7 +216,7 @@ export default function RulesPage() {
         if (data.error) setManualError(data.error);
         else {
           setManualError(null);
-          setManualTreatments(data.treatments ?? []);
+          setManualTreatments((data.treatments ?? []).reverse());
         }
       })
       .catch((e) => setManualError(String(e)));
@@ -230,7 +230,7 @@ export default function RulesPage() {
         if (data.error) setCategoryError(data.error);
         else {
           setCategoryError(null);
-          setCategoryTreatments(data.treatments ?? []);
+          setCategoryTreatments((data.treatments ?? []).reverse());
         }
       })
       .catch((e) => setCategoryError(String(e)));
@@ -243,7 +243,7 @@ export default function RulesPage() {
         if (data.error) setAliasError(data.error);
         else {
           setAliasError(null);
-          setAliases(data.aliases ?? []);
+          setAliases((data.aliases ?? []).reverse());
         }
       })
       .catch((e) => setAliasError(String(e)));
@@ -872,6 +872,8 @@ export default function RulesPage() {
               예1) 국산 고순도 → 코어
               <br />
               예2) 저통증 멀티석션 인젝터 → 하이쿡스
+              <br />
+              예3) 이중턱 개선 주사 → 브이올렛
             </p>
 
             {branchApplySection}
