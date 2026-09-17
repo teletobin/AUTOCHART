@@ -671,7 +671,7 @@ export default function Home() {
         <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 5}}>
 
           {/* ── 좌: 시술 입력 ── */}
-          <div style={styles.card}>
+          <div style={{ ...styles.card, boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08)" }}>
             <div style={styles.titleRow}>
               <p style={{ ...styles.cardTitle, marginBottom: 0 }}>시술 검색</p>
             </div>
