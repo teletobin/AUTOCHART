@@ -14,7 +14,6 @@ export async function GET(request: Request) {
     .from("treatments")
     .select("id, name, price, category, section")
     .eq("branch", branch)
-    .order("section", { ascending: true })
     .order("id", { ascending: true });
 
   if (error) {
