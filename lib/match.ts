@@ -131,9 +131,13 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
         .slice(0, limit)
         .map((s) => s.t);
     }
-    // 복합 검색(토큰 2개+)은 매칭도 + 정확도 기반 정렬
+    // 복합 검색(토큰 2개+)은 매칭도 > 정확도 > 스크래핑 순서
     return Array.from(bestByName.values())
-      .sort((a, b) => b.matchedChars - a.matchedChars || b.score - a.score)
+      .sort((a, b) => {
+        if (b.matchedChars !== a.matchedChars) return b.matchedChars - a.matchedChars;
+        if (b.score !== a.score) return b.score - a.score;
+        return a.index - b.index;
+      })
       .slice(0, limit)
       .map((s) => s.t);
   };
