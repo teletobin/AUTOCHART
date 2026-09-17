@@ -452,6 +452,12 @@ export default function Home() {
     setManualName(""); setManualPrice(""); setManualCategory(null);
   }
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Escape") {
+      e.preventDefault();
+      setInputValue("");
+      setHighlightedIndex(0);
+      return;
+    }
     if (candidates.length === 0) return;
     if (e.key === "ArrowDown") { e.preventDefault(); setHighlightedIndex((i) => Math.min(i + 1, candidates.length - 1)); }
     else if (e.key === "ArrowUp") { e.preventDefault(); setHighlightedIndex((i) => Math.max(i - 1, 0)); }
@@ -682,6 +688,7 @@ export default function Home() {
                 value={inputValue}
                 onChange={(e) => { setInputValue(e.target.value); setHighlightedIndex(0); }}
                 onKeyDown={handleKeyDown}
+                onBlur={() => { setInputValue(""); setHighlightedIndex(0); }}
                 placeholder="예: 슈링크 300샷 한정가"
                 style={styles.input}
               />
