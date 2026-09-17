@@ -1103,10 +1103,12 @@ export default function RulesPage() {
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, marginBottom: 16 }}>
               {CATEGORY_ORDER.map((cat) => {
-                const q = categorySearch.trim().toLowerCase();
+                const q = categorySearch.trim().toLowerCase().replace(/\s/g, "");
                 const items = categoryTreatments.filter((t) => {
                   if (t.category !== cat) return false;
-                  return q === "" || t.name.toLowerCase().includes(q);
+                  if (q === "") return true;
+                  const normalized = t.name.toLowerCase().replace(/\s/g, "");
+                  return normalized.includes(q);
                 });
                 return (
                   <div
@@ -1165,8 +1167,10 @@ export default function RulesPage() {
                   categoryTreatments
                     .filter((t) => {
                       if (t.category) return false;
-                      const q = categorySearch.trim().toLowerCase();
-                      return q === "" || t.name.toLowerCase().includes(q);
+                      const q = categorySearch.trim().toLowerCase().replace(/\s/g, "");
+                      if (q === "") return true;
+                      const normalized = t.name.toLowerCase().replace(/\s/g, "");
+                      return normalized.includes(q);
                     })
                     .map((t) => (
                       <label
