@@ -14,7 +14,8 @@ export async function GET(request: Request) {
     .from("treatments")
     .select("id, name, price, category, section")
     .eq("branch", branch)
-    .order("name", { ascending: true });
+    .order("section", { ascending: true })
+    .order("id", { ascending: true });
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
