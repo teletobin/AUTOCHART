@@ -584,6 +584,7 @@ export default function Home() {
 
   return (
     <div style={styles.wrap}>
+      {/* 2026. Designed & Developed by EUNBIN GA */}
       {/* 헤더 */}
       <header style={styles.header}>
         <div style={styles.headerInner}>
