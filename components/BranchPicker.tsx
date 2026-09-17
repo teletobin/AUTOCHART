@@ -6,10 +6,10 @@ import { C } from "@/lib/theme";
 
 // 한글 초성을 영문으로 변환 (영타 검색용)
 function getKoreanInitial(korean: string): string {
-  const initials = "ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ";
+  const initials = "ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅄㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ";
   const initialToEnglish: Record<string, string> = {
-    "ㄱ": "g", "ㄴ": "n", "ㄷ": "d", "ㄹ": "l", "ㅁ": "m",
-    "ㅂ": "b", "ㅅ": "s", "ㅇ": "", "ㅈ": "j", "ㅊ": "c",
+    "ㄱ": "g", "ㄲ": "g", "ㄴ": "n", "ㄷ": "d", "ㄸ": "d", "ㄹ": "l", "ㅁ": "m",
+    "ㅂ": "b", "ㅃ": "b", "ㅄ": "b", "ㅅ": "s", "ㅆ": "s", "ㅇ": "", "ㅈ": "j", "ㅉ": "j", "ㅊ": "c",
     "ㅋ": "k", "ㅌ": "t", "ㅍ": "p", "ㅎ": "h"
   };
   return korean.split("").map((char) => {
