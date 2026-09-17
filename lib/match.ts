@@ -120,10 +120,14 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
       }
     }
 
-    // 단순 검색어(토큰 1개)면 홈페이지 스크래핑 순서(index) 따르기
+    // 단순 검색어(토큰 1개)면 정확도 우선, 같으면 스크래핑 순서
     if (originalTokenCount === 1) {
       return Array.from(bestByName.values())
-        .sort((a, b) => a.index - b.index)
+        .sort((a, b) => {
+          if (b.matchedChars !== a.matchedChars) return b.matchedChars - a.matchedChars;
+          if (b.score !== a.score) return b.score - a.score;
+          return a.index - b.index;
+        })
         .slice(0, limit)
         .map((s) => s.t);
     }
