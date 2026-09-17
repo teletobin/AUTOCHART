@@ -130,7 +130,7 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
         const idx = SECTION_ORDER.findIndex(s => section.includes(s));
         return idx === -1 ? SECTION_ORDER.length : idx;
       };
-      return Array.from(bestByName.values())
+      const results = Array.from(bestByName.values())
         .sort((a, b) => {
           const aIdx = sectionIndex(a.t.section || "");
           const bIdx = sectionIndex(b.t.section || "");
@@ -139,6 +139,8 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
         })
         .slice(0, limit)
         .map((s) => s.t);
+      console.log(`[match] originalTokenCount=1, query="${query}"\nMatched ${Array.from(bestByName.values()).length} items, returned ${results.length}.\nFirst 3:\n${results.slice(0, 3).map(r => `  ${r.name} (section="${r.section || "N/A"}")`).join("\n")}`);
+      return results;
     }
     // 복합 검색(토큰 2개+)은 매칭도 + 정확도 기반 정렬
     return Array.from(bestByName.values())
