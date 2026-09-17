@@ -44,10 +44,23 @@ type TransferRecipient = {
 };
 
 // 시술명의 "N회"를 분리한다. 없으면 1회로 취급.
-// 1. 끝에 N회가 있으면 분리
-// 2. 괄호 안에 N회가 있고 안전하면 분리해서 뒤로 이동
-// 3. 여러 회차가 섞여있으면 안전상 그대로 두기
+// 1. "N회" 뒤에 텍스트가 있으면 뒤로 이동 (예: "20회 한정가" → base + " 한정가", n="20")
+// 2. 끝에만 N회가 있으면 분리 (예: "20회" → base, n="20")
+// 3. 괄호 안에 N회가 있고 안전하면 분리해서 뒤로 이동
+// 4. 여러 회차가 섞여있으면 안전상 그대로 두기
 function splitCountSuffix(name: string): { base: string; n: string } {
+  // "base N회 suffix" 패턴 (N회 뒤에 다른 텍스트가 있는 경우)
+  const middleMatch = name.match(/^(.+?)\s+(\d+)\s*회(?:\s+(.+))?$/);
+  if (middleMatch && middleMatch[3]) {
+    const base = middleMatch[1];
+    const n = middleMatch[2];
+    const suffix = middleMatch[3];
+    return {
+      base: `${base} ${suffix}`.replace(/\s+/g, " ").trim(),
+      n,
+    };
+  }
+
   const endMatch = name.match(/(\d+)\s*회\s*$/);
   if (endMatch) {
     return {
