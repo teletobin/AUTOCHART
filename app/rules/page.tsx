@@ -713,7 +713,16 @@ export default function RulesPage() {
       >
         {tab === "exclude" && (
           <section style={styles.card}>
-            <p style={styles.cardTitle}>시술명 정리</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>시술명 정리</p>
+              <input
+                type="text"
+                value={excludeSearch}
+                onChange={(e) => setExcludeSearch(e.target.value)}
+                placeholder="검색..."
+                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 12, padding: "6px 10px" }}
+              />
+            </div>
             <p style={styles.cardHint}>
               차팅에 불필요한 시술명 속의 괄호 내용(장비, 제품, 시술 설명 등)을 삭제합니다.
               <br />
@@ -754,16 +763,6 @@ export default function RulesPage() {
               </button>
             </div>
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-              <input
-                type="text"
-                value={excludeSearch}
-                onChange={(e) => setExcludeSearch(e.target.value)}
-                placeholder="검색..."
-                style={{ ...styles.input, flex: 1 }}
-              />
-            </div>
-
             <div style={styles.list}>
               {excludeRules.length === 0 && <p style={styles.empty}>등록된 제외 문구가 없습니다.</p>}
               {excludeRules.filter((r) => r.pattern.includes(excludeSearch)).map((r) =>
@@ -794,7 +793,16 @@ export default function RulesPage() {
 
         {tab === "alias" && (
           <section style={styles.card}>
-            <p style={styles.cardTitle}>검색어 매칭</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>검색어 매칭</p>
+              <input
+                type="text"
+                value={aliasSearch}
+                onChange={(e) => setAliasSearch(e.target.value)}
+                placeholder="검색..."
+                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 12, padding: "6px 10px" }}
+              />
+            </div>
             <p style={styles.cardHint}>
               시술검색창에 줄임말, 오타, 한글로 입력해도 원하는 시술이 검색되도록 합니다.
               <br />
@@ -841,16 +849,6 @@ export default function RulesPage() {
               </button>
             </div>
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-              <input
-                type="text"
-                value={aliasSearch}
-                onChange={(e) => setAliasSearch(e.target.value)}
-                placeholder="검색..."
-                style={{ ...styles.input, flex: 1 }}
-              />
-            </div>
-
             <div style={styles.list}>
               {aliases.length === 0 && <p style={styles.empty}>등록된 축약어가 없습니다.</p>}
               {aliases.filter((a) => a.alias.includes(aliasSearch) || a.keyword.includes(aliasSearch)).map((a) =>
@@ -890,7 +888,16 @@ export default function RulesPage() {
 
         {tab === "branchRules" && (
           <section style={styles.card}>
-            <p style={styles.cardTitle}>지점별 규칙</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>지점별 규칙</p>
+              <input
+                type="text"
+                value={branchRulesSearch}
+                onChange={(e) => setBranchRulesSearch(e.target.value)}
+                placeholder="검색..."
+                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 12, padding: "6px 10px" }}
+              />
+            </div>
             <p style={styles.cardHint}>
               {branch || "우리 지점"}에서만 사용하는 시술명 치환 규칙을 등록해주세요.
               <br />
@@ -945,16 +952,6 @@ export default function RulesPage() {
               </div>
             </div>
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-              <input
-                type="text"
-                value={branchRulesSearch}
-                onChange={(e) => setBranchRulesSearch(e.target.value)}
-                placeholder="검색..."
-                style={{ ...styles.input, flex: 1 }}
-              />
-            </div>
-
             <div style={styles.list}>
               {branch && branchRules.length === 0 && <p style={styles.empty}>등록된 지점별 규칙이 없습니다.</p>}
               {branchRules.filter((r) => r.pattern.includes(branchRulesSearch) || (r.replacement?.includes(branchRulesSearch) ?? false)).map((r) =>
@@ -993,7 +990,16 @@ export default function RulesPage() {
 
         {tab === "manual" && (
           <section style={styles.card}>
-            <p style={styles.cardTitle}>지점별 시술 추가</p>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>지점별 시술 추가</p>
+              <input
+                type="text"
+                value={manualSearch}
+                onChange={(e) => setManualSearch(e.target.value)}
+                placeholder="검색..."
+                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 12, padding: "6px 10px" }}
+              />
+            </div>
             <p style={styles.cardHint}>
               홈페이지에는 없는 {branch || "우리 지점"}만의 시술을 추가해 주세요.
               <br />
@@ -1032,16 +1038,6 @@ export default function RulesPage() {
               >
                 추가
               </button>
-            </div>
-
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
-              <input
-                type="text"
-                value={manualSearch}
-                onChange={(e) => setManualSearch(e.target.value)}
-                placeholder="검색..."
-                style={{ ...styles.input, flex: 1 }}
-              />
             </div>
 
             <div style={styles.list}>
