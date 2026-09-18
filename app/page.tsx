@@ -520,8 +520,7 @@ export default function Home() {
   const panelGeneratedText = useMemo(() => {
     if (!openPanelRecipient || openPanelRecipient.panelItems === null) return "";
     return buildPanelText(openPanelRecipient.panelItems, giverName, giverBirthdate, openPanelRecipient.panelDiscountPercent);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openPanelRecipient?.panelItems, openPanelRecipient?.panelDiscountPercent, giverName, giverBirthdate]);
+  }, [openPanelRecipient, giverName, giverBirthdate]);
 
   useEffect(() => {
     if (openTransferPanelId && panelGeneratedText) {
