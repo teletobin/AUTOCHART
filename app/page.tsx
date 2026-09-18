@@ -503,9 +503,10 @@ export default function Home() {
       : [];
     const subtotal = panelRecalcTotal(items);
     const total = discount > 0 ? Math.round(subtotal * (1 - discount / 100)) : subtotal;
+    const discountLabel = discount === 10 ? "3인 동반" : discount === 5 ? "2인 동반" : "";
     const totalLine = displayedItems.length > 1
       ? [discount > 0
-          ? `총 ${formatNumber(subtotal)}원 → ${discount}% OFF ${formatNumber(total)}원`
+          ? `→ ${discountLabel} ${discount}% OFF ${formatNumber(total)}원`
           : `총 ${formatNumber(total)}원`]
       : [];
     const birthdateFormatted = giverBirthdate.trim()
