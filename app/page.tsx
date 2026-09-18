@@ -721,20 +721,20 @@ export default function Home() {
                   <div
                     style={{
                       position: "absolute",
-                      top: "100%",
-                      left: 0,
-                      marginTop: 8,
-                      width: 240,
+                      top: 0,
+                      left: "100%",
+                      marginLeft: 8,
+                      width: "max-content",
                       background: C.surface,
                       border: `1px solid ${C.border}`,
-                      borderRadius: 10,
-                      padding: 12,
-                      fontSize: 12,
+                      borderRadius: 8,
+                      padding: "8px 10px",
+                      fontSize: 11,
                       color: C.primary,
-                      lineHeight: 1.6,
+                      lineHeight: 1.5,
                       boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
                       zIndex: 50,
-                      whiteSpace: "normal",
+                      whiteSpace: "nowrap",
                     }}
                   >
                     "온다 6만", "얼전 스보 제오민", "겨제 5회" 같이 편하게 입력해도 검색됩니다.
@@ -993,14 +993,15 @@ export default function Home() {
                       whiteSpace: "normal",
                     }}
                   >
-                    <div style={{ display: "flex", gap: 8 }}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+                    <div style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color: C.danger, marginTop: 1.5 }}>
                         <path d="M12 3.5 L22 20.5 H2 Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
                         <line x1="12" y1="10" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                         <circle cx="12" cy="18" r="1.1" fill="currentColor" />
                       </svg>
                       <div>
-                        좌측에서 시술 추가를 완료한 다음 부위, 고객 요청 사항 등을 입력해주세요.<br />새 시술을 추가하거나 수량을 바꾸면 입력한 메모가 초기화됩니다!
+                        좌측에서 시술 추가를 완료한 다음 부위, 고객 요청 사항 등을 입력해주세요.<br />
+                        <span style={{ color: C.danger }}>새 시술을 추가하거나 수량을 바꾸면 입력한 메모가 초기화됩니다!</span>
                       </div>
                     </div>
                   </div>
