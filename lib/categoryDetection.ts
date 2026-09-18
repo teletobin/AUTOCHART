@@ -114,7 +114,8 @@ export function detectTreatmentCategory(
       clean.includes("점빼기") ||
       clean.includes("ipl") ||
       clean.includes("토닝") ||
-      clean.includes("레이저")
+      clean.includes("레이저") ||
+      clean.includes("포텐자")
     ) {
       return TreatmentCategory.레이저;
     }
@@ -128,7 +129,8 @@ export function detectTreatmentCategory(
       clean.includes("슈링크") ||
       clean.includes("리프팅") ||
       clean.includes("온다") ||
-      clean.includes("덴서티")
+      clean.includes("덴서티") ||
+      clean.includes("인모드")
     ) {
       return TreatmentCategory.리프팅;
     }
@@ -155,9 +157,7 @@ export function detectTreatmentCategory(
     if (
       clean.includes("아쿠아필") ||
       clean.includes("엔바이론") ||
-      clean.includes("이온자임") ||
-      clean.includes("인모드") ||
-      clean.includes("포텐자")
+      clean.includes("이온자임")
     ) {
       return TreatmentCategory.피부관리;
     }
