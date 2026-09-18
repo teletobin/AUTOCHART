@@ -1247,7 +1247,7 @@ export default function Home() {
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              style={{ width: "min(1000px, 96vw)", maxHeight: "90vh", overflowY: "auto", background: C.bg, borderRadius: 18, boxShadow: "0 24px 64px rgba(0,0,0,0.35)", padding: 24 }}
+              style={{ width: "min(1000px, 96vw)", maxHeight: "95vh", overflowY: "auto", background: C.bg, borderRadius: 18, boxShadow: "0 24px 64px rgba(0,0,0,0.35)", padding: 24 }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
                 <span style={{ fontSize: 16, fontWeight: 700, color: C.primary }}>양도차트 {panelIndex + 1}</span>
