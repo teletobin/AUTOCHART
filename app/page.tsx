@@ -893,8 +893,9 @@ export default function Home() {
                       border: `1px solid ${C.border}`,
                       borderRadius: 8,
                       boxShadow: "0 8px 24px rgba(111,104,100,0.10)",
-                      overflow: "hidden",
-                      minWidth: 110,
+                      display: "flex",
+                      gap: 4,
+                      padding: 6,
                     }}
                   >
                     {([5, 10] as const).map((p) => (
@@ -905,43 +906,40 @@ export default function Home() {
                           setDiscountMenuOpen(false);
                         }}
                         style={{
-                          display: "block",
-                          width: "100%",
-                          textAlign: "left",
-                          padding: "8px 12px",
+                          padding: "6px 12px",
                           fontSize: 12,
-                          border: "none",
+                          border: `1px solid ${C.border}`,
+                          borderRadius: 6,
                           background: discountPercent === p ? C.primaryLt : C.surface,
                           color: C.primary,
                           cursor: "pointer",
                           fontWeight: discountPercent === p ? 700 : 400,
+                          whiteSpace: "nowrap",
+                          flex: 1,
                         }}
                       >
-                        {p}% 할인
+                        {p}%
                       </button>
                     ))}
-                    {discountPercent > 0 && (
-                      <button
-                        onClick={() => {
-                          setDiscountPercent(0);
-                          setDiscountMenuOpen(false);
-                        }}
-                        style={{
-                          display: "block",
-                          width: "100%",
-                          textAlign: "left",
-                          padding: "8px 12px",
-                          fontSize: 12,
-                          border: "none",
-                          borderTop: `1px solid ${C.borderSoft}`,
-                          background: C.surface,
-                          color: C.sub,
-                          cursor: "pointer",
-                        }}
-                      >
-                        할인 해제
-                      </button>
-                    )}
+                    <button
+                      onClick={() => {
+                        setDiscountPercent(0);
+                        setDiscountMenuOpen(false);
+                      }}
+                      style={{
+                        padding: "6px 12px",
+                        fontSize: 12,
+                        border: `1px solid ${C.border}`,
+                        borderRadius: 6,
+                        background: C.surface,
+                        color: C.sub,
+                        cursor: "pointer",
+                        whiteSpace: "nowrap",
+                        flex: 1,
+                      }}
+                    >
+                      해제
+                    </button>
                   </div>
                 )}
               </div>
@@ -1403,8 +1401,9 @@ export default function Home() {
                               border: `1px solid ${C.border}`,
                               borderRadius: 8,
                               boxShadow: "0 8px 24px rgba(111,104,100,0.10)",
-                              overflow: "hidden",
-                              minWidth: 110,
+                              display: "flex",
+                              gap: 4,
+                              padding: 6,
                             }}
                           >
                             {([5, 10] as const).map((p) => (
@@ -1415,19 +1414,19 @@ export default function Home() {
                                   setPanelDiscountMenuOpen(false);
                                 }}
                                 style={{
-                                  display: "block",
-                                  width: "100%",
-                                  textAlign: "left",
-                                  padding: "8px 12px",
+                                  padding: "6px 12px",
                                   fontSize: 12,
-                                  border: "none",
-                                  borderTop: `1px solid ${C.borderSoft}`,
-                                  background: C.surface,
-                                  color: C.sub,
+                                  border: `1px solid ${C.border}`,
+                                  borderRadius: 6,
+                                  background: panelRecipient.panelDiscountPercent === p ? C.primaryLt : C.surface,
+                                  color: C.primary,
                                   cursor: "pointer",
+                                  fontWeight: panelRecipient.panelDiscountPercent === p ? 700 : 400,
+                                  whiteSpace: "nowrap",
+                                  flex: 1,
                                 }}
                               >
-                                {p}% 할인
+                                {p}%
                               </button>
                             ))}
                             <button
@@ -1436,19 +1435,18 @@ export default function Home() {
                                 setPanelDiscountMenuOpen(false);
                               }}
                               style={{
-                                display: "block",
-                                width: "100%",
-                                textAlign: "left",
-                                padding: "8px 12px",
+                                padding: "6px 12px",
                                 fontSize: 12,
-                                border: "none",
-                                borderTop: `1px solid ${C.borderSoft}`,
+                                border: `1px solid ${C.border}`,
+                                borderRadius: 6,
                                 background: C.surface,
                                 color: C.sub,
                                 cursor: "pointer",
+                                whiteSpace: "nowrap",
+                                flex: 1,
                               }}
                             >
-                              할인 해제
+                              해제
                             </button>
                           </div>
                         )}
