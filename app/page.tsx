@@ -993,7 +993,16 @@ export default function Home() {
                       whiteSpace: "normal",
                     }}
                   >
-                    좌측에서 시술 추가를 완료한 다음 부위, 고객 요청 사항 등을 입력해주세요.<br />새 시술을 추가하거나 수량을 바꾸면 입력한 메모가 초기화됩니다!
+                    <div style={{ display: "flex", gap: 8 }}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+                        <path d="M12 3.5 L22 20.5 H2 Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                        <line x1="12" y1="10" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                        <circle cx="12" cy="18" r="1.1" fill="currentColor" />
+                      </svg>
+                      <div>
+                        좌측에서 시술 추가를 완료한 다음 부위, 고객 요청 사항 등을 입력해주세요.<br />새 시술을 추가하거나 수량을 바꾸면 입력한 메모가 초기화됩니다!
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
