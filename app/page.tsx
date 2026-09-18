@@ -702,13 +702,17 @@ export default function Home() {
                   style={{
                     background: "transparent",
                     border: `1px solid ${C.border}`,
-                    borderRadius: 8,
+                    borderRadius: 16,
                     fontSize: 11,
                     color: C.sub,
                     cursor: "help",
                     fontWeight: 600,
-                    padding: "4px 8px",
+                    padding: "2px 6px",
                     marginLeft: 4,
+                    height: 22,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
                   TIP!
@@ -955,13 +959,17 @@ export default function Home() {
                   style={{
                     background: "transparent",
                     border: `1px solid ${C.border}`,
-                    borderRadius: 8,
+                    borderRadius: 16,
                     fontSize: 11,
                     color: C.sub,
                     cursor: "help",
                     fontWeight: 600,
-                    padding: "4px 8px",
+                    padding: "2px 6px",
                     marginLeft: 4,
+                    height: 22,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
                   }}
                 >
                   TIP!
@@ -986,7 +994,7 @@ export default function Home() {
                       whiteSpace: "normal",
                     }}
                   >
-                    좌측에서 시술을 다 추가한 후에 이곳에서 부위, 고객 요청 사항 등을 입력해주세요. (새 시술을 추가하거나 수량을 바꾸면 입력한 메모가 초기화됩니다)
+                    좌측에서 시술 추가를 완료한 다음 부위, 고객 요청 사항 등을 입력해주세요.<br />새 시술을 추가하거나 수량을 바꾸면 입력한 메모가 초기화됩니다!
                   </div>
                 )}
               </div>
