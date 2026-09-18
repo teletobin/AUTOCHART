@@ -1006,7 +1006,7 @@ export default function Home() {
             <textarea
               value={editableText}
               onChange={(e) => setEditableText(e.target.value)}
-              style={{ ...styles.textarea, height: Math.max(220, editableText.split("\n").length * 24 + 40) }}
+              style={{ ...styles.textarea, overflowY: "hidden", height: Math.max(220, editableText.split("\n").length * 24 + 50) }}
             />
 
             <button onClick={handleCopy} disabled={selectedItems.length === 0}
@@ -1471,7 +1471,7 @@ export default function Home() {
                   <textarea
                     value={panelRecipient.panelEditableText}
                     onChange={(e) => updateTransferRecipient(panelRecipient.id, { panelEditableText: e.target.value })}
-                    style={{ ...styles.textarea, height: Math.max(160, panelRecipient.panelEditableText.split("\n").length * 24 + 40) }}
+                    style={{ ...styles.textarea, overflowY: "hidden", height: Math.max(160, panelRecipient.panelEditableText.split("\n").length * 24 + 50) }}
                   />
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: C.primary, flexShrink: 0, width: 50 }}>양도인 :</span>
