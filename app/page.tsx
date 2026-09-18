@@ -34,6 +34,7 @@ type TransferRecipient = {
   id: string;
   name: string; // 양수인(받는 사람) 이름
   amount: string;
+  panelDiscountPercent: 0 | 5 | 10;
   panelItems: SelectedItem[] | null;
   panelInput: string;
   panelHighlightedIndex: number;
@@ -206,6 +207,7 @@ export default function Home() {
   const [giverPromptBirthdate, setGiverPromptBirthdate] = useState("");
   const [showSearchTip, setShowSearchTip] = useState(false);
   const [showChartTip, setShowChartTip] = useState(false);
+  const [panelDiscountMenuOpen, setPanelDiscountMenuOpen] = useState(false);
 
   // 지점 변경 확인/진행 상태 팝업. confirm(변경할지 물어보는 중) -> loading(불러오는 중)
   // -> done(완료 표시 후 자동 닫힘) 순서로 진행된다.
@@ -279,6 +281,7 @@ export default function Home() {
       id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
       name: "",
       amount: "0",
+      panelDiscountPercent: 0,
       panelItems: [],
       panelInput: "",
       panelHighlightedIndex: 0,
@@ -416,6 +419,7 @@ export default function Home() {
       return {
         ...r,
         amount: "0",
+        panelDiscountPercent: 0,
         panelItems: [],
         panelInput: "",
         panelHighlightedIndex: 0,
@@ -479,7 +483,7 @@ export default function Home() {
   const headerVisible = includeHeader && paymentAmount > 0 && extraCredit > 0;
 
   // 동행인 팝업 안에서 보여줄 미니 차트 텍스트 (시술 목록 + TOTAL + 양도받음 문구)
-  function buildPanelText(items: SelectedItem[], giverName: string, giverBirthdate: string): string {
+  function buildPanelText(items: SelectedItem[], giverName: string, giverBirthdate: string, discount: 0 | 5 | 10 = 0): string {
     const displayedItems = items.filter((i) => i.displayed);
     const normalItems = displayedItems.filter((i) => !i.unused);
     const unusedItems = displayedItems.filter((i) => i.unused);
@@ -497,8 +501,13 @@ export default function Home() {
           return `${displayName}${countDisplay} ${formatNumber(computeUnitPrice(i))}원${dot} *미시술`;
         })]
       : [];
-    const total = panelRecalcTotal(items);
-    const totalLine = displayedItems.length > 1 ? [`총 ${formatNumber(total)}원`] : [];
+    const subtotal = panelRecalcTotal(items);
+    const total = discount > 0 ? Math.round(subtotal * (1 - discount / 100)) : subtotal;
+    const totalLine = displayedItems.length > 1
+      ? [discount > 0
+          ? `총 ${formatNumber(subtotal)}원 → ${discount}% OFF ${formatNumber(total)}원`
+          : `총 ${formatNumber(total)}원`]
+      : [];
     const birthdateFormatted = giverBirthdate.trim()
       ? `${giverBirthdate.slice(0, 2)}.${giverBirthdate.slice(2, 4)}.${giverBirthdate.slice(4, 6)}`
       : "__.__.__ ";
@@ -509,15 +518,19 @@ export default function Home() {
   const openPanelRecipient = transferRecipients.find((r) => r.id === openTransferPanelId) ?? null;
   const panelGeneratedText = useMemo(() => {
     if (!openPanelRecipient || openPanelRecipient.panelItems === null) return "";
-    return buildPanelText(openPanelRecipient.panelItems, giverName, giverBirthdate);
+    return buildPanelText(openPanelRecipient.panelItems, giverName, giverBirthdate, openPanelRecipient.panelDiscountPercent);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [openPanelRecipient?.panelItems, giverName, giverBirthdate]);
+  }, [openPanelRecipient?.panelItems, openPanelRecipient?.panelDiscountPercent, giverName, giverBirthdate]);
 
   useEffect(() => {
     if (openTransferPanelId && panelGeneratedText) {
       updateTransferRecipient(openTransferPanelId, { panelEditableText: panelGeneratedText });
     }
   }, [panelGeneratedText, openTransferPanelId]);
+
+  useEffect(() => {
+    if (!openTransferPanelId) setPanelDiscountMenuOpen(false);
+  }, [openTransferPanelId]);
 
   const finalText = useMemo(() => {
     const staffDisplay = staffName.trim() ? `${staffName.trim()}S` : "";
@@ -688,13 +701,19 @@ export default function Home() {
                   onMouseLeave={() => setShowSearchTip(false)}
                   style={{
                     background: "none",
-                    border: "none",
-                    fontSize: 12,
+                    border: `1px solid ${C.sub}`,
+                    borderRadius: "50%",
+                    width: 22,
+                    height: 22,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 10,
                     color: C.sub,
                     cursor: "help",
-                    padding: "2px 4px",
                     fontWeight: 700,
                     marginTop: 2,
+                    padding: 0,
                   }}
                 >
                   TIP!
@@ -940,13 +959,19 @@ export default function Home() {
                   onMouseLeave={() => setShowChartTip(false)}
                   style={{
                     background: "none",
-                    border: "none",
-                    fontSize: 12,
+                    border: `1px solid ${C.sub}`,
+                    borderRadius: "50%",
+                    width: 22,
+                    height: 22,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 10,
                     color: C.sub,
                     cursor: "help",
-                    padding: "2px 4px",
                     fontWeight: 700,
                     marginTop: 2,
+                    padding: 0,
                   }}
                 >
                   TIP!
@@ -1352,10 +1377,85 @@ export default function Home() {
                   </div>
 
                   {items.length > 0 && (
-                    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, gap: 4 }}>
-                      <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>TOTAL</span>
-                      <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(panelTotal)}원</span>
-                    </div>
+                    <>
+                      <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, gap: 4 }}>
+                        <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>TOTAL</span>
+                        <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 13, fontWeight: 700, color: C.primary }}>
+                          {panelRecipient.panelDiscountPercent > 0
+                            ? `${formatNumber(panelTotal)}원 → ${panelRecipient.panelDiscountPercent}% OFF ${formatNumber(Math.round(panelTotal * (1 - panelRecipient.panelDiscountPercent / 100)))}원`
+                            : `${formatNumber(panelTotal)}원`}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6, position: "relative" }}>
+                        <button
+                          onClick={() => setPanelDiscountMenuOpen((v) => !v)}
+                          style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700 }}
+                        >
+                          {panelRecipient.panelDiscountPercent > 0 ? `할인적용 (${panelRecipient.panelDiscountPercent}%)` : "할인적용"}
+                        </button>
+                        {panelDiscountMenuOpen && (
+                          <div
+                            style={{
+                              position: "absolute",
+                              top: "100%",
+                              right: 0,
+                              marginTop: 4,
+                              zIndex: 20,
+                              background: C.surface,
+                              border: `1px solid ${C.border}`,
+                              borderRadius: 8,
+                              boxShadow: "0 8px 24px rgba(111,104,100,0.10)",
+                              overflow: "hidden",
+                              minWidth: 110,
+                            }}
+                          >
+                            {([5, 10] as const).map((p) => (
+                              <button
+                                key={p}
+                                onClick={() => {
+                                  updateTransferRecipient(panelRecipient.id, { panelDiscountPercent: panelRecipient.panelDiscountPercent === p ? 0 : p });
+                                  setPanelDiscountMenuOpen(false);
+                                }}
+                                style={{
+                                  display: "block",
+                                  width: "100%",
+                                  textAlign: "left",
+                                  padding: "8px 12px",
+                                  fontSize: 12,
+                                  border: "none",
+                                  borderTop: `1px solid ${C.borderSoft}`,
+                                  background: C.surface,
+                                  color: C.sub,
+                                  cursor: "pointer",
+                                }}
+                              >
+                                {p}% 할인
+                              </button>
+                            ))}
+                            <button
+                              onClick={() => {
+                                updateTransferRecipient(panelRecipient.id, { panelDiscountPercent: 0 });
+                                setPanelDiscountMenuOpen(false);
+                              }}
+                              style={{
+                                display: "block",
+                                width: "100%",
+                                textAlign: "left",
+                                padding: "8px 12px",
+                                fontSize: 12,
+                                border: "none",
+                                borderTop: `1px solid ${C.borderSoft}`,
+                                background: C.surface,
+                                color: C.sub,
+                                cursor: "pointer",
+                              }}
+                            >
+                              할인 해제
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
 

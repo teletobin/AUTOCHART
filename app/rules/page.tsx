@@ -754,13 +754,15 @@ export default function RulesPage() {
               </button>
             </div>
 
-            <input
-              type="text"
-              value={excludeSearch}
-              onChange={(e) => setExcludeSearch(e.target.value)}
-              placeholder="검색..."
-              style={{ ...styles.input, marginBottom: 12 }}
-            />
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <input
+                type="text"
+                value={excludeSearch}
+                onChange={(e) => setExcludeSearch(e.target.value)}
+                placeholder="검색..."
+                style={{ ...styles.input, flex: 1 }}
+              />
+            </div>
 
             <div style={styles.list}>
               {excludeRules.length === 0 && <p style={styles.empty}>등록된 제외 문구가 없습니다.</p>}
@@ -839,13 +841,15 @@ export default function RulesPage() {
               </button>
             </div>
 
-            <input
-              type="text"
-              value={aliasSearch}
-              onChange={(e) => setAliasSearch(e.target.value)}
-              placeholder="검색..."
-              style={{ ...styles.input, marginBottom: 12 }}
-            />
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <input
+                type="text"
+                value={aliasSearch}
+                onChange={(e) => setAliasSearch(e.target.value)}
+                placeholder="검색..."
+                style={{ ...styles.input, flex: 1 }}
+              />
+            </div>
 
             <div style={styles.list}>
               {aliases.length === 0 && <p style={styles.empty}>등록된 축약어가 없습니다.</p>}
@@ -941,13 +945,15 @@ export default function RulesPage() {
               </div>
             </div>
 
-            <input
-              type="text"
-              value={branchRulesSearch}
-              onChange={(e) => setBranchRulesSearch(e.target.value)}
-              placeholder="검색..."
-              style={{ ...styles.input, marginBottom: 12 }}
-            />
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <input
+                type="text"
+                value={branchRulesSearch}
+                onChange={(e) => setBranchRulesSearch(e.target.value)}
+                placeholder="검색..."
+                style={{ ...styles.input, flex: 1 }}
+              />
+            </div>
 
             <div style={styles.list}>
               {branch && branchRules.length === 0 && <p style={styles.empty}>등록된 지점별 규칙이 없습니다.</p>}
@@ -1028,13 +1034,15 @@ export default function RulesPage() {
               </button>
             </div>
 
-            <input
-              type="text"
-              value={manualSearch}
-              onChange={(e) => setManualSearch(e.target.value)}
-              placeholder="검색..."
-              style={{ ...styles.input, marginBottom: 12 }}
-            />
+            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+              <input
+                type="text"
+                value={manualSearch}
+                onChange={(e) => setManualSearch(e.target.value)}
+                placeholder="검색..."
+                style={{ ...styles.input, flex: 1 }}
+              />
+            </div>
 
             <div style={styles.list}>
               {manualTreatments.length === 0 && <p style={styles.empty}>직접 추가한 시술이 없습니다.</p>}
