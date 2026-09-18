@@ -906,14 +906,14 @@ export default function Home() {
                           setDiscountMenuOpen(false);
                         }}
                         style={{
-                          padding: "6px 12px",
-                          fontSize: 12,
+                          padding: "4px 8px",
+                          fontSize: 10,
                           border: `1px solid ${C.border}`,
-                          borderRadius: 6,
-                          background: discountPercent === p ? C.primaryLt : C.surface,
+                          borderRadius: 8,
+                          background: discountPercent === p ? C.primaryLt : "transparent",
                           color: C.primary,
                           cursor: "pointer",
-                          fontWeight: discountPercent === p ? 700 : 400,
+                          fontWeight: 700,
                           whiteSpace: "nowrap",
                           flex: 1,
                         }}
@@ -927,13 +927,14 @@ export default function Home() {
                         setDiscountMenuOpen(false);
                       }}
                       style={{
-                        padding: "6px 12px",
-                        fontSize: 12,
+                        padding: "4px 8px",
+                        fontSize: 10,
                         border: `1px solid ${C.border}`,
-                        borderRadius: 6,
-                        background: C.surface,
+                        borderRadius: 8,
+                        background: "transparent",
                         color: C.sub,
                         cursor: "pointer",
+                        fontWeight: 700,
                         whiteSpace: "nowrap",
                         flex: 1,
                       }}
@@ -1414,14 +1415,14 @@ export default function Home() {
                                   setPanelDiscountMenuOpen(false);
                                 }}
                                 style={{
-                                  padding: "6px 12px",
-                                  fontSize: 12,
+                                  padding: "4px 8px",
+                                  fontSize: 10,
                                   border: `1px solid ${C.border}`,
-                                  borderRadius: 6,
-                                  background: panelRecipient.panelDiscountPercent === p ? C.primaryLt : C.surface,
+                                  borderRadius: 8,
+                                  background: panelRecipient.panelDiscountPercent === p ? C.primaryLt : "transparent",
                                   color: C.primary,
                                   cursor: "pointer",
-                                  fontWeight: panelRecipient.panelDiscountPercent === p ? 700 : 400,
+                                  fontWeight: 700,
                                   whiteSpace: "nowrap",
                                   flex: 1,
                                 }}
@@ -1435,13 +1436,14 @@ export default function Home() {
                                 setPanelDiscountMenuOpen(false);
                               }}
                               style={{
-                                padding: "6px 12px",
-                                fontSize: 12,
+                                padding: "4px 8px",
+                                fontSize: 10,
                                 border: `1px solid ${C.border}`,
-                                borderRadius: 6,
-                                background: C.surface,
+                                borderRadius: 8,
+                                background: "transparent",
                                 color: C.sub,
                                 cursor: "pointer",
+                                fontWeight: 700,
                                 whiteSpace: "nowrap",
                                 flex: 1,
                               }}
