@@ -700,20 +700,15 @@ export default function Home() {
                   onMouseEnter={() => setShowSearchTip(true)}
                   onMouseLeave={() => setShowSearchTip(false)}
                   style={{
-                    background: "none",
-                    border: `1px solid ${C.sub}`,
-                    borderRadius: "50%",
-                    width: 22,
-                    height: 22,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 10,
+                    background: "transparent",
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 8,
+                    fontSize: 11,
                     color: C.sub,
                     cursor: "help",
-                    fontWeight: 700,
-                    marginTop: 2,
-                    padding: 0,
+                    fontWeight: 600,
+                    padding: "4px 8px",
+                    marginLeft: 4,
                   }}
                 >
                   TIP!
@@ -958,20 +953,15 @@ export default function Home() {
                   onMouseEnter={() => setShowChartTip(true)}
                   onMouseLeave={() => setShowChartTip(false)}
                   style={{
-                    background: "none",
-                    border: `1px solid ${C.sub}`,
-                    borderRadius: "50%",
-                    width: 22,
-                    height: 22,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: 10,
+                    background: "transparent",
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 8,
+                    fontSize: 11,
                     color: C.sub,
                     cursor: "help",
-                    fontWeight: 700,
-                    marginTop: 2,
-                    padding: 0,
+                    fontWeight: 600,
+                    padding: "4px 8px",
+                    marginLeft: 4,
                   }}
                 >
                   TIP!
