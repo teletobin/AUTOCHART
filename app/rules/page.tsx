@@ -186,11 +186,16 @@ export default function RulesPage() {
 
   const [aliases, setAliases] = useState<Alias[]>([]);
   const [aliasError, setAliasError] = useState<string | null>(null);
+  const [aliasSearch, setAliasSearch] = useState("");
   const [newAliasText, setNewAliasText] = useState("");
   const [newAliasKeyword, setNewAliasKeyword] = useState("");
   const [editingAliasId, setEditingAliasId] = useState<string | null>(null);
   const [editAliasText, setEditAliasText] = useState("");
   const [editAliasKeyword, setEditAliasKeyword] = useState("");
+
+  const [excludeSearch, setExcludeSearch] = useState("");
+  const [branchRulesSearch, setBranchRulesSearch] = useState("");
+  const [manualSearch, setManualSearch] = useState("");
 
   function loadRules() {
     fetch("/api/rules")
@@ -749,9 +754,17 @@ export default function RulesPage() {
               </button>
             </div>
 
+            <input
+              type="text"
+              value={excludeSearch}
+              onChange={(e) => setExcludeSearch(e.target.value)}
+              placeholder="검색..."
+              style={{ ...styles.input, marginBottom: 12 }}
+            />
+
             <div style={styles.list}>
               {excludeRules.length === 0 && <p style={styles.empty}>등록된 제외 문구가 없습니다.</p>}
-              {excludeRules.map((r) =>
+              {excludeRules.filter((r) => r.pattern.includes(excludeSearch)).map((r) =>
                 editingRuleId === r.id ? (
                   <div key={r.id} style={styles.rowEdit}>
                     <input
@@ -826,9 +839,17 @@ export default function RulesPage() {
               </button>
             </div>
 
+            <input
+              type="text"
+              value={aliasSearch}
+              onChange={(e) => setAliasSearch(e.target.value)}
+              placeholder="검색..."
+              style={{ ...styles.input, marginBottom: 12 }}
+            />
+
             <div style={styles.list}>
               {aliases.length === 0 && <p style={styles.empty}>등록된 축약어가 없습니다.</p>}
-              {aliases.map((a) =>
+              {aliases.filter((a) => a.alias.includes(aliasSearch) || a.keyword.includes(aliasSearch)).map((a) =>
                 editingAliasId === a.id ? (
                   <div key={a.id} style={styles.rowEdit}>
                     <input
@@ -885,7 +906,7 @@ export default function RulesPage() {
               <div style={{ display: "flex", gap: 8, fontSize: 14, color: C.primary, fontWeight: 400 }}>
                 <div style={{ flex: 1, textAlign: "center" as const }}>홈페이지 시술명</div>
                 <div style={{ flexShrink: 0, width: 24 }} />
-                <div style={{ flex: 1, textAlign: "center" as const }}>차팅용 명칭</div>
+                <div style={{ flex: 1, textAlign: "center" as const }}>차팅용(검색용)명칭</div>
                 <div style={{ flexShrink: 0, width: 60 }} />
               </div>
               <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
@@ -920,9 +941,17 @@ export default function RulesPage() {
               </div>
             </div>
 
+            <input
+              type="text"
+              value={branchRulesSearch}
+              onChange={(e) => setBranchRulesSearch(e.target.value)}
+              placeholder="검색..."
+              style={{ ...styles.input, marginBottom: 12 }}
+            />
+
             <div style={styles.list}>
               {branch && branchRules.length === 0 && <p style={styles.empty}>등록된 지점별 규칙이 없습니다.</p>}
-              {branchRules.map((r) =>
+              {branchRules.filter((r) => r.pattern.includes(branchRulesSearch) || (r.replacement?.includes(branchRulesSearch) ?? false)).map((r) =>
                 editingRuleId === r.id ? (
                   <div key={r.id} style={styles.rowEdit}>
                     <input
@@ -999,9 +1028,17 @@ export default function RulesPage() {
               </button>
             </div>
 
+            <input
+              type="text"
+              value={manualSearch}
+              onChange={(e) => setManualSearch(e.target.value)}
+              placeholder="검색..."
+              style={{ ...styles.input, marginBottom: 12 }}
+            />
+
             <div style={styles.list}>
               {manualTreatments.length === 0 && <p style={styles.empty}>직접 추가한 시술이 없습니다.</p>}
-              {manualTreatments.map((t) =>
+              {manualTreatments.filter((t) => t.name.includes(manualSearch)).map((t) =>
                 editingManualId === t.id ? (
                   <div key={t.id} style={styles.rowEdit}>
                     <input

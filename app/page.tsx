@@ -204,6 +204,8 @@ export default function Home() {
   const [showGiverPrompt, setShowGiverPrompt] = useState(false);
   const [giverPromptInput, setGiverPromptInput] = useState("");
   const [giverPromptBirthdate, setGiverPromptBirthdate] = useState("");
+  const [showSearchTip, setShowSearchTip] = useState(false);
+  const [showChartTip, setShowChartTip] = useState(false);
 
   // 지점 변경 확인/진행 상태 팝업. confirm(변경할지 물어보는 중) -> loading(불러오는 중)
   // -> done(완료 표시 후 자동 닫힘) 순서로 진행된다.
@@ -679,7 +681,48 @@ export default function Home() {
           {/* ── 좌: 시술 입력 ── */}
           <div style={{ ...styles.card, boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08)" }}>
             <div style={styles.titleRow}>
-              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>시술 검색</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, position: "relative" }}>
+                <p style={{ ...styles.cardTitle, marginBottom: 0 }}>시술 검색</p>
+                <button
+                  onMouseEnter={() => setShowSearchTip(true)}
+                  onMouseLeave={() => setShowSearchTip(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: 12,
+                    color: C.sub,
+                    cursor: "help",
+                    padding: "2px 4px",
+                    fontWeight: 700,
+                    marginTop: 2,
+                  }}
+                >
+                  TIP!
+                </button>
+                {showSearchTip && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      marginTop: 8,
+                      width: 240,
+                      background: C.surface,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 10,
+                      padding: 12,
+                      fontSize: 12,
+                      color: C.primary,
+                      lineHeight: 1.6,
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                      zIndex: 50,
+                      whiteSpace: "normal",
+                    }}
+                  >
+                    "온다 6만", "얼전 스보 제오민", "겨제 5회" 같이 편하게 입력해도 검색됩니다.
+                  </div>
+                )}
+              </div>
             </div>
 
             <div style={{ position: "relative" }}>
@@ -890,7 +933,48 @@ export default function Home() {
           {/* ── 우: 선택 결과 ── */}
           <div style={{ ...styles.card, boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08)" }}>
             <div style={styles.titleRow}>
-              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>차트 생성</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 6, position: "relative" }}>
+                <p style={{ ...styles.cardTitle, marginBottom: 0 }}>차트 생성</p>
+                <button
+                  onMouseEnter={() => setShowChartTip(true)}
+                  onMouseLeave={() => setShowChartTip(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    fontSize: 12,
+                    color: C.sub,
+                    cursor: "help",
+                    padding: "2px 4px",
+                    fontWeight: 700,
+                    marginTop: 2,
+                  }}
+                >
+                  TIP!
+                </button>
+                {showChartTip && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      marginTop: 8,
+                      width: 280,
+                      background: C.surface,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 10,
+                      padding: 12,
+                      fontSize: 12,
+                      color: C.primary,
+                      lineHeight: 1.6,
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                      zIndex: 50,
+                      whiteSpace: "normal",
+                    }}
+                  >
+                    좌측에서 시술을 다 추가한 후에 이곳에서 부위, 고객 요청 사항 등을 입력해주세요. (새 시술을 추가하거나 수량을 바꾸면 입력한 메모가 초기화됩니다)
+                  </div>
+                )}
+              </div>
               <button onClick={clearAllItems} disabled={selectedItems.length === 0}
                 style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
                 CLEAR
