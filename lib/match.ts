@@ -64,7 +64,7 @@ function scoreAgainst(qTokens: string[], indexed: Indexed[]): Scored[] {
 }
 
 export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
-  const indexed = treatments.map((t, index) => ({ t, tokens: tokenize(t.name), index }));
+  const indexed = treatments.map((t, index) => ({ t, tokens: tokenize(t.name + " " + (t.section ?? "")), index }));
   const aliasEntries = aliases
     .filter((a) => a.alias && a.keyword)
     .map((a) => ({
