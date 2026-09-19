@@ -107,6 +107,7 @@ async function scrapeOnePage(
   // 실제 사이트는 섹션 제목을 h2~h6가 아니라 <div class="title"><p class="t01">...</p></div>
   // 형태로 렌더링하므로 p.t01도 함께 섹션 타이틀 후보로 추적한다.
   let currentSection = "";
+  const sectionOrderMap = new Map<string, number>();
   $("h2, h3, h4, h5, h6, p.t01, ul.slist > li").each((_, el) => {
     const tag = $(el).prop("tagName")?.toLowerCase();
     const isSectionTitle = ["h2", "h3", "h4", "h5", "h6"].includes(tag || "") || (tag === "p" && $(el).hasClass("t01"));
@@ -115,6 +116,9 @@ async function scrapeOnePage(
       const text = $(el).text().trim();
       if (text && text.length > 0 && text.length < 100) {
         currentSection = text;
+        if (!sectionOrderMap.has(currentSection)) {
+          sectionOrderMap.set(currentSection, 0);
+        }
       }
       return;
     }
@@ -135,8 +139,12 @@ async function scrapeOnePage(
       // 슬래시가 있으면 각각으로 분리해서 추가
       const expandedNames = expandSlashTreatments(name);
       for (const expandedName of expandedNames) {
+        const sectionKey = currentSection || "";
+        const order = sectionOrderMap.get(sectionKey) ?? 0;
+        sectionOrderMap.set(sectionKey, order + 1);
+
         if (currentSection) {
-          console.log(`[SECTION] 시술: ${expandedName}, 섹션: ${currentSection}`);
+          console.log(`[SECTION] 시술: ${expandedName}, 섹션: ${currentSection}, 순서: ${order}`);
         }
         treatments.push({
           branch,
@@ -147,6 +155,7 @@ async function scrapeOnePage(
           scraped_at: new Date().toISOString(),
           is_manual: false,
           section: currentSection || undefined,
+          order,
         });
       }
     }
