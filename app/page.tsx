@@ -934,7 +934,7 @@ export default function Home() {
 
             {/* 직접 입력 */}
             <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
-              <input type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="시술 직접 입력" style={{ ...styles.input, flex: 2, minWidth: 0, height: 36, boxSizing: "border-box" }} />
+              <input type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="시술 직접 입력 (예: 얼굴 CO2 5개)" style={{ ...styles.input, flex: 2, minWidth: 0, height: 36, boxSizing: "border-box" }} />
               <input type="text" value={manualPrice ? Number(manualPrice).toLocaleString() : ""} onChange={(e) => setManualPrice(e.target.value.replace(/[^0-9]/g, ''))} placeholder="세전 금액" style={{ ...styles.input, flex: "0 0 76px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
               <Dropdown
                 value={manualCategory ?? ""}
@@ -1502,7 +1502,7 @@ export default function Home() {
                   <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
                     <input type="text" value={panelRecipient.panelManualName}
                       onChange={(e) => updateTransferRecipient(panelRecipient.id, { panelManualName: e.target.value })}
-                      placeholder="시술 직접 입력" style={{ ...styles.input, flex: 2, minWidth: 0, height: 36, boxSizing: "border-box" }} />
+                      placeholder="시술 직접 입력 (예: 얼굴 CO2 5개)" style={{ ...styles.input, flex: 2, minWidth: 0, height: 36, boxSizing: "border-box" }} />
                     <input type="text" value={panelRecipient.panelManualPrice ? Number(panelRecipient.panelManualPrice).toLocaleString() : ""}
                       onChange={(e) => updateTransferRecipient(panelRecipient.id, { panelManualPrice: e.target.value.replace(/[^0-9]/g, '') })}
                       placeholder="세전 금액" style={{ ...styles.input, flex: "0 0 76px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
