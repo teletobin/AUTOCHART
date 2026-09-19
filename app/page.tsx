@@ -927,8 +927,8 @@ export default function Home() {
                             </button>
                             {idx < boosterCombos.length - 1 && (
                               <div style={{
-                                height: idx < 5 ? "1.5px" : "1px",
-                                borderTop: idx < 5 ? "1.5px solid #ddd" : "1px dashed #ddd",
+                                height: "1px",
+                                borderTop: idx < 5 ? "1px dashed #aaa" : "1px dashed #ddd",
                                 margin: "3px 0",
                                 background: "transparent"
                               }} />
