@@ -1093,7 +1093,7 @@ export default function RulesPage() {
                   <p style={styles.cardTitle}>시술별 카테고리</p>
                   {categoryTreatments.filter(t => !t.category).length > 0 && (
                     <p style={{ fontSize: 12, color: C.danger, margin: 0 }}>
-                      (미분류 시술: {categoryTreatments.filter(t => !t.category).length}건 있습니다, 카테고리를 지정해주세요)
+                      (미분류 시술: {categoryTreatments.filter(t => !t.category).length}건 있습니다. 카테고리를 지정해주세요)
                     </p>
                   )}
                 </div>
