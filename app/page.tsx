@@ -904,7 +904,7 @@ export default function Home() {
                   )}
                   {boosterCombos.length > 0 && (
                     <div style={{ marginTop: 8, maxHeight: 350, overflowY: "auto" }}>
-                      {boosterCombos.map((combo) => {
+                      {boosterCombos.map((combo, idx) => {
                         const label = formatComboLabel(combo);
                         return (
                           <button
@@ -917,6 +917,7 @@ export default function Home() {
                               color: "#555",
                               alignItems: "flex-start",
                               fontSize: 11,
+                              borderBottom: idx < boosterCombos.length - 1 ? "1px dashed rgba(0, 0, 0, 0.08)" : "none",
                             }}
                           >
                             <span style={{ flex: 1, whiteSpace: "normal", wordBreak: "keep-all", lineHeight: 1.4 }}>{label}</span>
