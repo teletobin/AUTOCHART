@@ -912,12 +912,16 @@ export default function Home() {
                             onClick={() => selectBoosterCombo(combo)}
                             style={{
                               ...styles.candidateRow,
-                              width: "100%", border: "none", textAlign: "left",
+                              width: "100%", textAlign: "left",
                               background: C.surface,
                               color: "#555",
                               alignItems: "flex-start",
                               fontSize: 11,
-                              borderBottom: idx < boosterCombos.length - 1 ? "1px dashed rgba(0, 0, 0, 0.12)" : "none",
+                              border: "none",
+                              borderTop: "none",
+                              borderLeft: "none",
+                              borderRight: "none",
+                              borderBottom: idx < boosterCombos.length - 1 ? "1px dashed #ddd" : "none",
                               marginBottom: idx < boosterCombos.length - 1 ? 6 : 0,
                               paddingBottom: idx < boosterCombos.length - 1 ? 6 : 9,
                               paddingTop: 9,
