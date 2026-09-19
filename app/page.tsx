@@ -933,7 +933,7 @@ export default function Home() {
             <p style={styles.hint}>방향키로 후보 선택 후 Enter로 추가 · 수량은 아래 목록에서 조절</p>
 
             {/* 직접 입력 */}
-            <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+            <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
               <input type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="시술 직접 입력 (예: 얼굴 CO2 5개)" style={{ ...styles.input, flex: 2, minWidth: 0, height: 36, boxSizing: "border-box" }} />
               <input type="text" value={manualPrice ? Number(manualPrice).toLocaleString() : ""} onChange={(e) => setManualPrice(e.target.value.replace(/[^0-9]/g, ''))} placeholder="세전 금액" style={{ ...styles.input, flex: "0 0 76px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
               <Dropdown
@@ -1499,7 +1499,7 @@ export default function Home() {
 
                   <p style={styles.hint}>방향키로 후보 선택 후 Enter로 추가 · 수량은 아래 목록에서 조절</p>
 
-                  <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                  <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
                     <input type="text" value={panelRecipient.panelManualName}
                       onChange={(e) => updateTransferRecipient(panelRecipient.id, { panelManualName: e.target.value })}
                       placeholder="시술 직접 입력 (예: 얼굴 CO2 5개)" style={{ ...styles.input, flex: 2, minWidth: 0, height: 36, boxSizing: "border-box" }} />
