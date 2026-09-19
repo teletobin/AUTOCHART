@@ -1149,6 +1149,48 @@ export default function RulesPage() {
               </button>
             </div>
 
+            <div style={{ marginTop: 14, marginBottom: 16 }}>
+              <p style={{ fontSize: 12, fontWeight: 700, color: C.primary, marginBottom: 10 }}>
+                미분류 시술 ({categoryTreatments.filter(t => !t.category).length})
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: "50vh", overflowY: "auto" }}>
+                {categoryTreatments.filter(t => !t.category).length === 0 ? (
+                  <p style={{ fontSize: 11, color: C.sub }}>없음</p>
+                ) : (
+                  categoryTreatments
+                    .filter((t) => {
+                      if (t.category) return false;
+                      const q = categorySearch.trim().toLowerCase().replace(/\s/g, "");
+                      if (q === "") return true;
+                      const normalized = t.name.toLowerCase().replace(/\s/g, "");
+                      return normalized.includes(q);
+                    })
+                    .map((t) => (
+                      <label
+                        key={t.id}
+                        style={{ display: "flex", gap: 6, alignItems: "flex-start", border: `1px dashed ${C.sub}`, borderRadius: 6, padding: "6px 8px", fontSize: 11, lineHeight: 1.3, cursor: "pointer", background: "#fdfcfb" }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={selectedForBulk.has(t.id!)}
+                          onChange={(e) => {
+                            const newSet = new Set(selectedForBulk);
+                            if (e.target.checked) newSet.add(t.id!);
+                            else newSet.delete(t.id!);
+                            setSelectedForBulk(newSet);
+                          }}
+                          style={{ marginTop: 2, cursor: "pointer", flexShrink: 0 }}
+                        />
+                        <span style={{ flex: 1, wordBreak: "break-word" as const, minWidth: 0 }}>
+                          <span style={{ display: "block", color: C.primary }}>{t.name}</span>
+                          <span style={{ display: "block", color: C.sub, fontVariantNumeric: "tabular-nums", fontSize: 10 }}>{formatNumber(t.price)}원</span>
+                        </span>
+                      </label>
+                    ))
+                )}
+              </div>
+            </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 10, marginBottom: 16 }}>
               {CATEGORY_ORDER.map((cat) => {
                 const q = categorySearch.trim().toLowerCase().replace(/\s/g, "");
@@ -1204,47 +1246,6 @@ export default function RulesPage() {
               })}
             </div>
 
-            <div style={{ borderTop: `2px solid ${C.border}`, paddingTop: 14 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: C.primary, marginBottom: 10 }}>
-                미분류 시술 ({categoryTreatments.filter(t => !t.category).length})
-              </p>
-              <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: "50vh", overflowY: "auto" }}>
-                {categoryTreatments.filter(t => !t.category).length === 0 ? (
-                  <p style={{ fontSize: 11, color: C.sub }}>없음</p>
-                ) : (
-                  categoryTreatments
-                    .filter((t) => {
-                      if (t.category) return false;
-                      const q = categorySearch.trim().toLowerCase().replace(/\s/g, "");
-                      if (q === "") return true;
-                      const normalized = t.name.toLowerCase().replace(/\s/g, "");
-                      return normalized.includes(q);
-                    })
-                    .map((t) => (
-                      <label
-                        key={t.id}
-                        style={{ display: "flex", gap: 6, alignItems: "flex-start", border: `1px dashed ${C.sub}`, borderRadius: 6, padding: "6px 8px", fontSize: 11, lineHeight: 1.3, cursor: "pointer", background: "#fdfcfb" }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={selectedForBulk.has(t.id!)}
-                          onChange={(e) => {
-                            const newSet = new Set(selectedForBulk);
-                            if (e.target.checked) newSet.add(t.id!);
-                            else newSet.delete(t.id!);
-                            setSelectedForBulk(newSet);
-                          }}
-                          style={{ marginTop: 2, cursor: "pointer", flexShrink: 0 }}
-                        />
-                        <span style={{ flex: 1, wordBreak: "break-word" as const, minWidth: 0 }}>
-                          <span style={{ display: "block", color: C.primary }}>{t.name}</span>
-                          <span style={{ display: "block", color: C.sub, fontVariantNumeric: "tabular-nums", fontSize: 10 }}>{formatNumber(t.price)}원</span>
-                        </span>
-                      </label>
-                    ))
-                )}
-              </div>
-            </div>
           </section>
         )}
 
