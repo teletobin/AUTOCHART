@@ -35,13 +35,13 @@ function overlapLength(a: string, b: string): number {
   return Math.min(a.length, b.length);
 }
 
-type Indexed = { t: Treatment; tokens: string[]; order: number };
-type Scored = { t: Treatment; matchedChars: number; score: number; order: number };
+type Indexed = { t: Treatment; tokens: string[]; index: number };
+type Scored = { t: Treatment; matchedChars: number; score: number; index: number };
 
 function scoreAgainst(qTokens: string[], indexed: Indexed[]): Scored[] {
   if (qTokens.length === 0) return [];
 
-  return indexed.map(({ t, tokens: nameTokens, order }) => {
+  return indexed.map(({ t, tokens: nameTokens, index }) => {
     let matched = 0;
     let matchedChars = 0;
     for (const q of qTokens) {
@@ -51,7 +51,7 @@ function scoreAgainst(qTokens: string[], indexed: Indexed[]): Scored[] {
         matchedChars += overlapLength(q, hit);
       }
     }
-    if (matched === 0) return { t, matchedChars: 0, score: 0, order };
+    if (matched === 0) return { t, matchedChars: 0, score: 0, index };
 
     // coverage: 입력한 키워드 중 몇 개가 후보 이름에 있는가
     const coverage = matched / qTokens.length;
@@ -59,12 +59,12 @@ function scoreAgainst(qTokens: string[], indexed: Indexed[]): Scored[] {
     const precision = matched / nameTokens.length;
     const score = coverage * 0.7 + precision * 0.3;
 
-    return { t, matchedChars, score, order };
+    return { t, matchedChars, score, index };
   });
 }
 
 export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
-  const indexed = treatments.map((t) => ({ t, tokens: tokenize(t.name + " " + (t.section ?? "").replace(/\s/g, "")), order: t.order ?? Infinity }));
+  const indexed = treatments.map((t, index) => ({ t, tokens: tokenize(t.name + " " + (t.section ?? "").replace(/\s/g, "")), index }));
   const aliasEntries = aliases
     .filter((a) => a.alias && a.keyword)
     .map((a) => ({
@@ -120,23 +120,23 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
       }
     }
 
-    // 단순 검색어(토큰 1개)면 정확도 우선, 같으면 섹션별 홈페이지 순서
+    // 단순 검색어(토큰 1개)면 정확도 우선, 같으면 스크래핑 순서
     if (originalTokenCount === 1) {
       return Array.from(bestByName.values())
         .sort((a, b) => {
           if (b.matchedChars !== a.matchedChars) return b.matchedChars - a.matchedChars;
           if (b.score !== a.score) return b.score - a.score;
-          return a.order - b.order;
+          return a.index - b.index;
         })
         .slice(0, limit)
         .map((s) => s.t);
     }
-    // 복합 검색(토큰 2개+)은 매칭도 > 정확도 > 섹션별 홈페이지 순서
+    // 복합 검색(토큰 2개+)은 매칭도 > 정확도 > 스크래핑 순서
     return Array.from(bestByName.values())
       .sort((a, b) => {
         if (b.matchedChars !== a.matchedChars) return b.matchedChars - a.matchedChars;
         if (b.score !== a.score) return b.score - a.score;
-        return a.order - b.order;
+        return a.index - b.index;
       })
       .slice(0, limit)
       .map((s) => s.t);
