@@ -40,13 +40,13 @@ function overlapLength(a: string, b: string): number {
 // 시술과 매칭 점수가 동점이 되기 쉽다. 이런 항목은 항상 후순위로 민다.
 const OPTION_ITEM_PATTERN = /^옵션\s*\d+\s*\)/;
 
-type Indexed = { t: Treatment; nameTokens: string[]; sectionTokens: string[]; order: number; isOption: boolean };
-type Scored = { t: Treatment; nameMatchedChars: number; matchedChars: number; score: number; order: number; exactPhrase: boolean; isOption: boolean };
+type Indexed = { t: Treatment; nameTokens: string[]; sectionTokens: string[]; sectionNoSpace: string; order: number; isOption: boolean };
+type Scored = { t: Treatment; nameMatchedChars: number; matchedChars: number; score: number; order: number; exactPhrase: boolean; isOption: boolean; ownSection: boolean };
 
 function scoreAgainst(qTokens: string[], indexed: Indexed[], queryNoSpace: string): Scored[] {
   if (qTokens.length === 0) return [];
 
-  return indexed.map(({ t, nameTokens, sectionTokens, order, isOption }) => {
+  return indexed.map(({ t, nameTokens, sectionTokens, sectionNoSpace, order, isOption }) => {
     let matched = 0;
     let matchedChars = 0;
     let nameMatchedChars = 0;
@@ -69,7 +69,7 @@ function scoreAgainst(qTokens: string[], indexed: Indexed[], queryNoSpace: strin
         matchedChars += overlapLength(q, sectionHit);
       }
     }
-    if (matched === 0) return { t, nameMatchedChars: 0, matchedChars: 0, score: 0, order, exactPhrase: false, isOption };
+    if (matched === 0) return { t, nameMatchedChars: 0, matchedChars: 0, score: 0, order, exactPhrase: false, isOption, ownSection: false };
 
     const totalTokens = nameTokens.length + sectionTokens.length;
     // coverage: 입력한 키워드 중 몇 개가 후보 이름에 있는가
@@ -87,7 +87,14 @@ function scoreAgainst(qTokens: string[], indexed: Indexed[], queryNoSpace: strin
     const nameNoSpace = t.name.toLowerCase().replace(/\s/g, "");
     const exactPhrase = queryNoSpace.length > 0 && nameNoSpace.includes(queryNoSpace);
 
-    return { t, nameMatchedChars, matchedChars, score, order, exactPhrase, isOption };
+    // "리쥬란힐러"를 검색했을 때, 실제로 "리쥬란힐러" 섹션에 진열된 시술이
+    // 이름에 "리쥬란힐러"가 우연히 들어간 다른 섹션의 패키지 상품(예: 다른
+    // 프로모션 섹션의 "리쥬란힐러 2cc 체험가")보다 항상 먼저 오게 한다.
+    // 그렇지 않으면 매칭 점수가 같아졌을 때 서로 다른 섹션의 order끼리
+    // 비교되어 뒤섞인다.
+    const ownSection = queryNoSpace.length > 0 && sectionNoSpace.includes(queryNoSpace);
+
+    return { t, nameMatchedChars, matchedChars, score, order, exactPhrase, isOption, ownSection };
   });
 }
 
@@ -98,6 +105,7 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
     t,
     nameTokens: tokenize(t.name),
     sectionTokens: tokenize((t.section ?? "").replace(/\s/g, "")),
+    sectionNoSpace: (t.section ?? "").toLowerCase().replace(/\s/g, ""),
     order: t.order ?? i,
     isOption: OPTION_ITEM_PATTERN.test(t.name),
   }));
@@ -151,22 +159,27 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
       const existing = bestByName.get(r.t.name);
       if (
         !existing ||
-        (r.exactPhrase && !existing.exactPhrase) ||
-        (r.exactPhrase === existing.exactPhrase && r.nameMatchedChars > existing.nameMatchedChars) ||
-        (r.exactPhrase === existing.exactPhrase && r.nameMatchedChars === existing.nameMatchedChars && r.matchedChars > existing.matchedChars) ||
-        (r.exactPhrase === existing.exactPhrase && r.nameMatchedChars === existing.nameMatchedChars && r.matchedChars === existing.matchedChars && r.score > existing.score)
+        (r.ownSection && !existing.ownSection) ||
+        (r.ownSection === existing.ownSection && r.exactPhrase && !existing.exactPhrase) ||
+        (r.ownSection === existing.ownSection && r.exactPhrase === existing.exactPhrase && r.nameMatchedChars > existing.nameMatchedChars) ||
+        (r.ownSection === existing.ownSection && r.exactPhrase === existing.exactPhrase && r.nameMatchedChars === existing.nameMatchedChars && r.matchedChars > existing.matchedChars) ||
+        (r.ownSection === existing.ownSection && r.exactPhrase === existing.exactPhrase && r.nameMatchedChars === existing.nameMatchedChars && r.matchedChars === existing.matchedChars && r.score > existing.score)
       ) {
         bestByName.set(r.t.name, r);
       }
     }
 
-    // 입력한 문구가 이름에 통째로(공백 무시) 들어있는 시술을 최우선으로 하고,
-    // "옵션1) OO추가"처럼 다른 대표 시술에 곁들이는 부가 옵션은 항상 뒤로
-    // 민다. 그 다음으로 이름 자체에서 매칭된 시술이 섹션명에서만 매칭된
-    // 시술(예: "내맘" 검색 시 "내 맘대로 피부관리" 섹션의 하위 옵션들)보다
-    // 먼저 오도록, 그 다음으로 전체 매칭도 > 정확도 > 섹션별 홈페이지
-    // 순서로 정렬한다.
+    // 검색어와 일치하는 섹션에 실제로 진열된 시술을 최우선으로 한다(예:
+    // "리쥬란힐러"를 검색했을 때, 이름에 "리쥬란힐러"가 우연히 들어간 다른
+    // 프로모션 섹션의 패키지 상품보다 "리쥬란힐러" 섹션 자체의 시술이 먼저
+    // 오게). 그 다음 입력한 문구가 이름에 통째로(공백 무시) 들어있는 시술을
+    // 우선하고, "옵션1) OO추가"처럼 다른 대표 시술에 곁들이는 부가 옵션은
+    // 항상 뒤로 민다. 그 다음으로 이름 자체에서 매칭된 시술이 섹션명에서만
+    // 매칭된 시술(예: "내맘" 검색 시 "내 맘대로 피부관리" 섹션의 하위
+    // 옵션들)보다 먼저 오도록, 그 다음으로 전체 매칭도 > 정확도 > 섹션별
+    // 홈페이지 순서로 정렬한다.
     const sortFn = (a: Scored, b: Scored) => {
+      if (a.ownSection !== b.ownSection) return a.ownSection ? -1 : 1;
       if (a.exactPhrase !== b.exactPhrase) return a.exactPhrase ? -1 : 1;
       if (a.isOption !== b.isOption) return a.isOption ? 1 : -1;
       if (b.nameMatchedChars !== a.nameMatchedChars) return b.nameMatchedChars - a.nameMatchedChars;
