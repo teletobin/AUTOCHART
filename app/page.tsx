@@ -925,7 +925,14 @@ export default function Home() {
                               <span style={{ flex: 1, whiteSpace: "normal", wordBreak: "keep-all", lineHeight: 1.4 }}>{label}</span>
                               <span style={{ marginLeft: 12, flexShrink: 0, fontVariantNumeric: "tabular-nums", color: C.sub }}>{formatNumber(combo.totalPrice)}원</span>
                             </button>
-                            {idx < boosterCombos.length - 1 && <div style={{ height: "1px", background: "#ddd", margin: "3px 0" }} />}
+                            {idx < boosterCombos.length - 1 && (
+                              <div style={{
+                                height: idx < 5 ? "1.5px" : "1px",
+                                borderTop: idx < 5 ? "1.5px solid #ddd" : "1px dashed #ddd",
+                                margin: "3px 0",
+                                background: "transparent"
+                              }} />
+                            )}
                           </div>
                         );
                       })}
