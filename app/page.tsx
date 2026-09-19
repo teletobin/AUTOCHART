@@ -239,6 +239,9 @@ export default function Home() {
   async function applyBranchChange(target: string) {
     setBranchSwitch({ target, phase: "loading" });
     setBranch(target);
+    setInputValue("");
+    setHighlightedIndex(0);
+    setSelectedItems([]);
     localStorage.setItem(BRANCH_STORAGE_KEY, target);
     await loadTreatments(target);
     setBranchSwitch({ target, phase: "done" });
