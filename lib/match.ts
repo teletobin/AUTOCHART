@@ -180,6 +180,17 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
     // 홈페이지 순서로 정렬한다.
     const sortFn = (a: Scored, b: Scored) => {
       if (a.ownSection !== b.ownSection) return a.ownSection ? -1 : 1;
+      // 검색어가 곧 섹션 이름 자체인 경우("덴서티" 검색 시 "덴서티 리프팅"
+      // 섹션 전체), 그 섹션에 속한 시술끼리는 정확도 점수를 비교하지 않고
+      // 옵션 여부만 가린 뒤 바로 홈페이지 순서(order)로 정렬한다. 정확도
+      // 점수는 "회차 표기가 없어 이름이 짧은 시술"(예: "덴서티 알파 300샷")을
+      // "1회/2회가 붙어 이름이 긴 시술"보다 근소하게 더 높게 쳐주기 때문에,
+      // 그걸로 order보다 먼저 비교해버리면 같은 섹션 안인데도 순서가
+      // 뒤섞인다.
+      if (a.ownSection && b.ownSection) {
+        if (a.isOption !== b.isOption) return a.isOption ? 1 : -1;
+        return a.order - b.order;
+      }
       if (a.exactPhrase !== b.exactPhrase) return a.exactPhrase ? -1 : 1;
       if (a.isOption !== b.isOption) return a.isOption ? 1 : -1;
       if (b.nameMatchedChars !== a.nameMatchedChars) return b.nameMatchedChars - a.nameMatchedChars;
