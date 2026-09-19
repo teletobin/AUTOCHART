@@ -9,6 +9,7 @@ import { TreatmentCategory } from "@/lib/types";
 import { CATEGORY_ORDER } from "@/lib/categoryDetection";
 import { C, MAX_WIDTH } from "@/lib/theme";
 import { BRANCH_STORAGE_KEY } from "@/lib/branches";
+import { mergeGeneratedText } from "@/lib/mergeText";
 import BranchPicker from "@/components/BranchPicker";
 import Dropdown from "@/components/Dropdown";
 
@@ -592,7 +593,14 @@ export default function Home() {
   }, [headerVisible, includeHeader, membershipType, staffName, paymentAmount, extraCredit, selectedItems, totalPrice, discountPercent, discountedTotal, discountLabel, existingBalance, transferEnabled, transferAmount, transferRecipients, balance]);
 
   const [editableText, setEditableText] = useState("");
-  useEffect(() => { setEditableText(finalText); }, [finalText]);
+  const prevFinalTextRef = useRef("");
+  useEffect(() => {
+    setEditableText((prev) => {
+      const merged = mergeGeneratedText(prevFinalTextRef.current, prev, finalText);
+      prevFinalTextRef.current = finalText;
+      return merged;
+    });
+  }, [finalText]);
 
   async function handleCopy() {
     const cleaned = editableText.split(RED_DOT).join("");
@@ -997,14 +1005,14 @@ export default function Home() {
                     }}
                   >
                     <div>
-                      좌측에서 시술 추가를 완료한 다음 부위, 고객 요청 사항 등을 입력해주세요.<br />
+                      좌측에서 시술을 검색하거나 직접 추가한 후 부위, 총 용량 등 상세차팅 메모를 작성해주세요.<br />
                       <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 8 }}>
                         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color: C.danger, marginTop: 0.5 }}>
                           <path d="M12 3.5 L22 20.5 H2 Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
                           <line x1="12" y1="10" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                           <circle cx="12" cy="18" r="1.1" fill="currentColor" />
                         </svg>
-                        <span style={{ color: C.danger }}>새 시술 추가, 수량 변경 또는 회원권 금액을 변경하면 입력한 메모가 사라집니다.</span>
+                        <span style={{ color: C.danger }}>차트 맨 뒤에 덧붙인 메모는 유지되지만, 생성된 목록 중간을 직접 고친 내용은 새 시술 추가·수량 변경·회원권 금액 변경 시 사라집니다.</span>
                       </div>
                     </div>
                   </div>
