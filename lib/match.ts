@@ -35,13 +35,13 @@ function overlapLength(a: string, b: string): number {
   return Math.min(a.length, b.length);
 }
 
-type Indexed = { t: Treatment; tokens: string[]; index: number };
-type Scored = { t: Treatment; matchedChars: number; score: number; index: number };
+type Indexed = { t: Treatment; tokens: string[]; order: number };
+type Scored = { t: Treatment; matchedChars: number; score: number; order: number };
 
 function scoreAgainst(qTokens: string[], indexed: Indexed[]): Scored[] {
   if (qTokens.length === 0) return [];
 
-  return indexed.map(({ t, tokens: nameTokens, index }) => {
+  return indexed.map(({ t, tokens: nameTokens, order }) => {
     let matched = 0;
     let matchedChars = 0;
     for (const q of qTokens) {
@@ -51,7 +51,7 @@ function scoreAgainst(qTokens: string[], indexed: Indexed[]): Scored[] {
         matchedChars += overlapLength(q, hit);
       }
     }
-    if (matched === 0) return { t, matchedChars: 0, score: 0, index };
+    if (matched === 0) return { t, matchedChars: 0, score: 0, order };
 
     // coverage: 입력한 키워드 중 몇 개가 후보 이름에 있는가
     const coverage = matched / qTokens.length;
@@ -59,12 +59,14 @@ function scoreAgainst(qTokens: string[], indexed: Indexed[]): Scored[] {
     const precision = matched / nameTokens.length;
     const score = coverage * 0.7 + precision * 0.3;
 
-    return { t, matchedChars, score, index };
+    return { t, matchedChars, score, order };
   });
 }
 
 export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
-  const indexed = treatments.map((t, index) => ({ t, tokens: tokenize(t.name + " " + (t.section ?? "").replace(/\s/g, "")), index }));
+  // order 필드가 없는 시술(DB 마이그레이션 전, 또는 수동 추가분)은 배열에
+  // 담긴 순서(스크래핑/조회 순서)를 그대로 폴백으로 사용한다.
+  const indexed = treatments.map((t, i) => ({ t, tokens: tokenize(t.name + " " + (t.section ?? "").replace(/\s/g, "")), order: t.order ?? i }));
   const aliasEntries = aliases
     .filter((a) => a.alias && a.keyword)
     .map((a) => ({
@@ -120,23 +122,23 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
       }
     }
 
-    // 단순 검색어(토큰 1개)면 정확도 우선, 같으면 스크래핑 순서
+    // 단순 검색어(토큰 1개)면 정확도 우선, 같으면 섹션별 홈페이지 순서
     if (originalTokenCount === 1) {
       return Array.from(bestByName.values())
         .sort((a, b) => {
           if (b.matchedChars !== a.matchedChars) return b.matchedChars - a.matchedChars;
           if (b.score !== a.score) return b.score - a.score;
-          return a.index - b.index;
+          return a.order - b.order;
         })
         .slice(0, limit)
         .map((s) => s.t);
     }
-    // 복합 검색(토큰 2개+)은 매칭도 > 정확도 > 스크래핑 순서
+    // 복합 검색(토큰 2개+)은 매칭도 > 정확도 > 섹션별 홈페이지 순서
     return Array.from(bestByName.values())
       .sort((a, b) => {
         if (b.matchedChars !== a.matchedChars) return b.matchedChars - a.matchedChars;
         if (b.score !== a.score) return b.score - a.score;
-        return a.index - b.index;
+        return a.order - b.order;
       })
       .slice(0, limit)
       .map((s) => s.t);

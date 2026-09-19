@@ -65,13 +65,27 @@ export default function BranchPicker({
   }, []);
 
   const q = query.trim().toLowerCase().replace(/\s/g, "");
-  const qInitial = getKoreanInitial(q);
-  const matches = ALL_BRANCHES.filter((b) => {
-    if (!q) return true;
-    const normalized = b.toLowerCase().replace(/\s/g, "");
-    const bInitial = getKoreanInitial(b).toLowerCase();
-    return normalized.includes(q) || bInitial.includes(qInitial);
-  });
+  // 완성된 한글(가~힣)을 하나라도 입력했으면 실제 글자 검색이 목적이므로
+  // 초성 매치(영타 검색용)는 쓰지 않는다. 안 그러면 "부산"을 쳤는데 초성이
+  // 우연히 같은 "발산점"까지 후보로 뜨는 문제가 생긴다. 초성 매치는 자판이
+  // 한글로 안 바뀐 채 로마자를 그대로 친 경우("bsj")에만 쓴다.
+  const hasHangulSyllable = /[가-힣]/.test(q);
+  const qInitial = hasHangulSyllable ? "" : getKoreanInitial(q);
+  const matches = !q
+    ? ALL_BRANCHES
+    : ALL_BRANCHES
+        .map((b) => {
+          const normalized = b.toLowerCase().replace(/\s/g, "");
+          const textMatch = normalized.includes(q);
+          const initialMatch = !hasHangulSyllable && getKoreanInitial(b).toLowerCase().includes(qInitial);
+          if (!textMatch && !initialMatch) return null;
+          // 0: 이름이 검색어로 시작 1: 이름에 검색어 포함 2: 초성만 일치
+          const rank = normalized.startsWith(q) ? 0 : textMatch ? 1 : 2;
+          return { b, rank };
+        })
+        .filter((x): x is { b: string; rank: number } => x !== null)
+        .sort((a, b) => a.rank - b.rank)
+        .map((x) => x.b);
   const width = value && !open ? pickedWidth : SEARCH_WIDTH;
 
   function pick(b: string) {

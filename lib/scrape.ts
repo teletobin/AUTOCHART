@@ -63,6 +63,7 @@ type ScrapedTreatment = {
   scraped_at: string;
   is_manual: boolean;
   section?: string;
+  order?: number;
 };
 
 // axios/네트워크 에러 코드를 사용자에게 보여줄 한국어 메시지로 변환한다.
@@ -107,6 +108,7 @@ async function scrapeOnePage(
   // 실제 사이트는 섹션 제목을 h2~h6가 아니라 <div class="title"><p class="t01">...</p></div>
   // 형태로 렌더링하므로 p.t01도 함께 섹션 타이틀 후보로 추적한다.
   let currentSection = "";
+  const sectionOrderMap = new Map<string, number>();
   $("h2, h3, h4, h5, h6, p.t01, ul.slist > li").each((_, el) => {
     const tag = $(el).prop("tagName")?.toLowerCase();
     const isSectionTitle = ["h2", "h3", "h4", "h5", "h6"].includes(tag || "") || (tag === "p" && $(el).hasClass("t01"));
@@ -135,8 +137,12 @@ async function scrapeOnePage(
       // 슬래시가 있으면 각각으로 분리해서 추가
       const expandedNames = expandSlashTreatments(name);
       for (const expandedName of expandedNames) {
+        const sectionKey = currentSection || "";
+        const order = sectionOrderMap.get(sectionKey) ?? 0;
+        sectionOrderMap.set(sectionKey, order + 1);
+
         if (currentSection) {
-          console.log(`[SECTION] 시술: ${expandedName}, 섹션: ${currentSection}`);
+          console.log(`[SECTION] 시술: ${expandedName}, 섹션: ${currentSection}, 순서: ${order}`);
         }
         treatments.push({
           branch,
@@ -147,6 +153,7 @@ async function scrapeOnePage(
           scraped_at: new Date().toISOString(),
           is_manual: false,
           section: currentSection || undefined,
+          order,
         });
       }
     }
@@ -224,9 +231,25 @@ export async function runScrapeAndSync(branch: string, presetRules?: CleanupRule
     throw new Error(`삭제 실패: ${deleteError.message}`);
   }
 
-  const { error: upsertError } = await supabase
+  let { error: upsertError } = await supabase
     .from("treatments")
     .upsert(deduped, { onConflict: "branch,name" });
+
+  // DB에 order 컬럼 마이그레이션이 아직 적용되지 않은 환경에서는 order
+  // 필드를 빼고 한 번 더 시도해 스크래핑 자체는 실패하지 않도록 한다.
+  // PostgREST는 컬럼 미존재를 상황에 따라 42703(column does not exist) 또는
+  // PGRST204(스키마 캐시에 없음)로 보고하므로 둘 다 잡는다. 이 경우 검색
+  // 결과는 order 폴백(배열 순서)으로 동작한다.
+  if (
+    upsertError?.message.toLowerCase().includes("order") &&
+    (upsertError.code === "42703" || upsertError.code === "PGRST204")
+  ) {
+    const withoutOrder = deduped.map(({ order: _order, ...rest }) => rest);
+    const retry = await supabase
+      .from("treatments")
+      .upsert(withoutOrder, { onConflict: "branch,name" });
+    upsertError = retry.error;
+  }
 
   if (upsertError) {
     throw new Error(`저장 실패: ${upsertError.message}`);

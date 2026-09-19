@@ -14,6 +14,7 @@ export type Treatment = {
   category?: TreatmentCategory;
   section?: string;
   scraped_at?: string;
+  order?: number;
 };
 
 // alias(오타/줄임말) → keyword(실제로 검색할 문자열) 치환 사전.

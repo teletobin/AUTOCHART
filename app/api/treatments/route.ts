@@ -10,11 +10,29 @@ export async function GET(request: Request) {
 
   const supabase = getSupabaseServerClient();
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from("treatments")
-    .select("id, name, price, category, section, scraped_at")
+    .select("id, name, price, category, section, scraped_at, order")
     .eq("branch", branch)
-    .order("scraped_at", { ascending: true });
+    .order("section", { ascending: true })
+    .order("order", { ascending: true });
+
+  // DB에 order 컬럼 마이그레이션이 아직 적용되지 않은 환경에서는 order 없이
+  // 재조회한다. PostgREST는 컬럼 미존재를 상황에 따라 42703(column does not
+  // exist) 또는 PGRST204(스키마 캐시에 없음)로 보고하므로 둘 다 잡는다.
+  // 검색 정렬은 lib/match.ts의 배열 순서 폴백으로 동작한다.
+  if (
+    error?.message.toLowerCase().includes("order") &&
+    (error.code === "42703" || error.code === "PGRST204")
+  ) {
+    const retry = await supabase
+      .from("treatments")
+      .select("id, name, price, category, section, scraped_at")
+      .eq("branch", branch)
+      .order("scraped_at", { ascending: true });
+    data = retry.data;
+    error = retry.error;
+  }
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
