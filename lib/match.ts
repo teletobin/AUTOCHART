@@ -35,13 +35,18 @@ function overlapLength(a: string, b: string): number {
   return Math.min(a.length, b.length);
 }
 
-type Indexed = { t: Treatment; nameTokens: string[]; sectionTokens: string[]; order: number };
-type Scored = { t: Treatment; nameMatchedChars: number; matchedChars: number; score: number; order: number; exactPhrase: boolean };
+// "옵션1) 자갈턱보톡스추가 1회"처럼 다른 대표 시술에 곁들이는 추가 옵션은
+// 이름 자체에 검색어가 그대로 들어있는 경우가 많아(...보톡스추가) 대표
+// 시술과 매칭 점수가 동점이 되기 쉽다. 이런 항목은 항상 후순위로 민다.
+const OPTION_ITEM_PATTERN = /^옵션\s*\d+\s*\)/;
+
+type Indexed = { t: Treatment; nameTokens: string[]; sectionTokens: string[]; order: number; isOption: boolean };
+type Scored = { t: Treatment; nameMatchedChars: number; matchedChars: number; score: number; order: number; exactPhrase: boolean; isOption: boolean };
 
 function scoreAgainst(qTokens: string[], indexed: Indexed[], queryNoSpace: string): Scored[] {
   if (qTokens.length === 0) return [];
 
-  return indexed.map(({ t, nameTokens, sectionTokens, order }) => {
+  return indexed.map(({ t, nameTokens, sectionTokens, order, isOption }) => {
     let matched = 0;
     let matchedChars = 0;
     let nameMatchedChars = 0;
@@ -64,7 +69,7 @@ function scoreAgainst(qTokens: string[], indexed: Indexed[], queryNoSpace: strin
         matchedChars += overlapLength(q, sectionHit);
       }
     }
-    if (matched === 0) return { t, nameMatchedChars: 0, matchedChars: 0, score: 0, order, exactPhrase: false };
+    if (matched === 0) return { t, nameMatchedChars: 0, matchedChars: 0, score: 0, order, exactPhrase: false, isOption };
 
     const totalTokens = nameTokens.length + sectionTokens.length;
     // coverage: 입력한 키워드 중 몇 개가 후보 이름에 있는가
@@ -82,7 +87,7 @@ function scoreAgainst(qTokens: string[], indexed: Indexed[], queryNoSpace: strin
     const nameNoSpace = t.name.toLowerCase().replace(/\s/g, "");
     const exactPhrase = queryNoSpace.length > 0 && nameNoSpace.includes(queryNoSpace);
 
-    return { t, nameMatchedChars, matchedChars, score, order, exactPhrase };
+    return { t, nameMatchedChars, matchedChars, score, order, exactPhrase, isOption };
   });
 }
 
@@ -94,6 +99,7 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
     nameTokens: tokenize(t.name),
     sectionTokens: tokenize((t.section ?? "").replace(/\s/g, "")),
     order: t.order ?? i,
+    isOption: OPTION_ITEM_PATTERN.test(t.name),
   }));
   const aliasEntries = aliases
     .filter((a) => a.alias && a.keyword)
@@ -155,11 +161,14 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
     }
 
     // 입력한 문구가 이름에 통째로(공백 무시) 들어있는 시술을 최우선으로 하고,
-    // 그 다음으로 이름 자체에서 매칭된 시술이 섹션명에서만 매칭된 시술(예:
-    // "내맘" 검색 시 "내 맘대로 피부관리" 섹션의 하위 옵션들)보다 먼저 오도록,
-    // 그 다음으로 전체 매칭도 > 정확도 > 섹션별 홈페이지 순서로 정렬한다.
+    // "옵션1) OO추가"처럼 다른 대표 시술에 곁들이는 부가 옵션은 항상 뒤로
+    // 민다. 그 다음으로 이름 자체에서 매칭된 시술이 섹션명에서만 매칭된
+    // 시술(예: "내맘" 검색 시 "내 맘대로 피부관리" 섹션의 하위 옵션들)보다
+    // 먼저 오도록, 그 다음으로 전체 매칭도 > 정확도 > 섹션별 홈페이지
+    // 순서로 정렬한다.
     const sortFn = (a: Scored, b: Scored) => {
       if (a.exactPhrase !== b.exactPhrase) return a.exactPhrase ? -1 : 1;
+      if (a.isOption !== b.isOption) return a.isOption ? 1 : -1;
       if (b.nameMatchedChars !== a.nameMatchedChars) return b.nameMatchedChars - a.nameMatchedChars;
       if (b.matchedChars !== a.matchedChars) return b.matchedChars - a.matchedChars;
       if (b.score !== a.score) return b.score - a.score;
