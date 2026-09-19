@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       .select("id, name, price, category, section, scraped_at")
       .eq("branch", branch)
       .order("scraped_at", { ascending: true });
-    data = retry.data;
+    data = retry.data?.map((row) => ({ ...row, order: null })) ?? null;
     error = retry.error;
   }
 

@@ -35,38 +35,66 @@ function overlapLength(a: string, b: string): number {
   return Math.min(a.length, b.length);
 }
 
-type Indexed = { t: Treatment; tokens: string[]; order: number };
-type Scored = { t: Treatment; matchedChars: number; score: number; order: number };
+type Indexed = { t: Treatment; nameTokens: string[]; sectionTokens: string[]; order: number };
+type Scored = { t: Treatment; nameMatchedChars: number; matchedChars: number; score: number; order: number; exactPhrase: boolean };
 
-function scoreAgainst(qTokens: string[], indexed: Indexed[]): Scored[] {
+function scoreAgainst(qTokens: string[], indexed: Indexed[], queryNoSpace: string): Scored[] {
   if (qTokens.length === 0) return [];
 
-  return indexed.map(({ t, tokens: nameTokens, order }) => {
+  return indexed.map(({ t, nameTokens, sectionTokens, order }) => {
     let matched = 0;
     let matchedChars = 0;
+    let nameMatchedChars = 0;
     for (const q of qTokens) {
-      const hit = nameTokens.find((n) => tokensMatch(n, q));
-      if (hit) {
+      // 시술명 자체에서 먼저 찾고, 없을 때만 섹션명("내맘" 검색 시 그 섹션의
+      // 하위 시술이 뜨게 하는 기능)에서 찾는다. "슈링크 유니버스"를 검색했을
+      // 때 실제 이름에 그 문구가 들어간 시술이, 섹션명만 우연히 같은 다른
+      // 옵션 상품보다 항상 위로 오게 하려면 이 둘을 구분해야 한다.
+      const nameHit = nameTokens.find((n) => tokensMatch(n, q));
+      if (nameHit) {
         matched++;
-        matchedChars += overlapLength(q, hit);
+        const overlap = overlapLength(q, nameHit);
+        matchedChars += overlap;
+        nameMatchedChars += overlap;
+        continue;
+      }
+      const sectionHit = sectionTokens.find((n) => tokensMatch(n, q));
+      if (sectionHit) {
+        matched++;
+        matchedChars += overlapLength(q, sectionHit);
       }
     }
-    if (matched === 0) return { t, matchedChars: 0, score: 0, order };
+    if (matched === 0) return { t, nameMatchedChars: 0, matchedChars: 0, score: 0, order, exactPhrase: false };
 
+    const totalTokens = nameTokens.length + sectionTokens.length;
     // coverage: 입력한 키워드 중 몇 개가 후보 이름에 있는가
     const coverage = matched / qTokens.length;
     // precision: 후보 이름 중 몇 개가 입력 키워드와 겹치는가 (동점 시 더 짧고 정확한 이름 선호)
-    const precision = matched / nameTokens.length;
+    const precision = matched / totalTokens;
     const score = coverage * 0.7 + precision * 0.3;
 
-    return { t, matchedChars, score, order };
+    // "리쥬란HB플러스"처럼 검색어를 붙여 쓰면 토큰 하나가 되어 "리쥬란"
+    // 같은 짧은 이름 토큰에도 부분일치로 걸려버린다(긴 쿼리 토큰이 짧은
+    // 이름 토큰을 포함하는 역방향 매치). 그 경우 매칭 글자수는 크게 잡히지만
+    // 실제로는 "HB", "플러스" 부분이 무시된 헐거운 매치이므로, 입력한 문구가
+    // 이름에 통째로(공백 무시) 들어있는지를 최우선 신호로 따로 잡아
+    // 이런 헐거운 매치보다 항상 위로 오게 한다.
+    const nameNoSpace = t.name.toLowerCase().replace(/\s/g, "");
+    const exactPhrase = queryNoSpace.length > 0 && nameNoSpace.includes(queryNoSpace);
+
+    return { t, nameMatchedChars, matchedChars, score, order, exactPhrase };
   });
 }
 
 export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
   // order 필드가 없는 시술(DB 마이그레이션 전, 또는 수동 추가분)은 배열에
   // 담긴 순서(스크래핑/조회 순서)를 그대로 폴백으로 사용한다.
-  const indexed = treatments.map((t, i) => ({ t, tokens: tokenize(t.name + " " + (t.section ?? "").replace(/\s/g, "")), order: t.order ?? i }));
+  const indexed = treatments.map((t, i) => ({
+    t,
+    nameTokens: tokenize(t.name),
+    sectionTokens: tokenize((t.section ?? "").replace(/\s/g, "")),
+    order: t.order ?? i,
+  }));
   const aliasEntries = aliases
     .filter((a) => a.alias && a.keyword)
     .map((a) => ({
@@ -78,7 +106,6 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
     const query = cleanForMatch(rawLine);
     let qTokens = tokenize(query);
     if (qTokens.length === 0) return [];
-    const originalTokenCount = qTokens.length;
 
     // 축약어/오타("포마" 등)가 입력에 통째로 들어있으면 등록된 실제 검색
     // 키워드("FORMA")의 토큰을 추가로 더해 준다. 원래 입력한 토큰은 그대로
@@ -106,8 +133,11 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
     const converted = qwertyToHangul(query);
     const qTokensConverted = converted !== query ? tokenize(converted) : [];
 
-    const resultsA = scoreAgainst(qTokens, indexed);
-    const resultsB = scoreAgainst(qTokensConverted, indexed);
+    const queryNoSpace = query.toLowerCase().replace(/\s/g, "");
+    const convertedNoSpace = converted.toLowerCase().replace(/\s/g, "");
+
+    const resultsA = scoreAgainst(qTokens, indexed, queryNoSpace);
+    const resultsB = scoreAgainst(qTokensConverted, indexed, convertedNoSpace);
 
     const bestByName = new Map<string, Scored>();
     for (const r of [...resultsA, ...resultsB]) {
@@ -115,31 +145,29 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
       const existing = bestByName.get(r.t.name);
       if (
         !existing ||
-        r.matchedChars > existing.matchedChars ||
-        (r.matchedChars === existing.matchedChars && r.score > existing.score)
+        (r.exactPhrase && !existing.exactPhrase) ||
+        (r.exactPhrase === existing.exactPhrase && r.nameMatchedChars > existing.nameMatchedChars) ||
+        (r.exactPhrase === existing.exactPhrase && r.nameMatchedChars === existing.nameMatchedChars && r.matchedChars > existing.matchedChars) ||
+        (r.exactPhrase === existing.exactPhrase && r.nameMatchedChars === existing.nameMatchedChars && r.matchedChars === existing.matchedChars && r.score > existing.score)
       ) {
         bestByName.set(r.t.name, r);
       }
     }
 
-    // 단순 검색어(토큰 1개)면 정확도 우선, 같으면 섹션별 홈페이지 순서
-    if (originalTokenCount === 1) {
-      return Array.from(bestByName.values())
-        .sort((a, b) => {
-          if (b.matchedChars !== a.matchedChars) return b.matchedChars - a.matchedChars;
-          if (b.score !== a.score) return b.score - a.score;
-          return a.order - b.order;
-        })
-        .slice(0, limit)
-        .map((s) => s.t);
-    }
-    // 복합 검색(토큰 2개+)은 매칭도 > 정확도 > 섹션별 홈페이지 순서
+    // 입력한 문구가 이름에 통째로(공백 무시) 들어있는 시술을 최우선으로 하고,
+    // 그 다음으로 이름 자체에서 매칭된 시술이 섹션명에서만 매칭된 시술(예:
+    // "내맘" 검색 시 "내 맘대로 피부관리" 섹션의 하위 옵션들)보다 먼저 오도록,
+    // 그 다음으로 전체 매칭도 > 정확도 > 섹션별 홈페이지 순서로 정렬한다.
+    const sortFn = (a: Scored, b: Scored) => {
+      if (a.exactPhrase !== b.exactPhrase) return a.exactPhrase ? -1 : 1;
+      if (b.nameMatchedChars !== a.nameMatchedChars) return b.nameMatchedChars - a.nameMatchedChars;
+      if (b.matchedChars !== a.matchedChars) return b.matchedChars - a.matchedChars;
+      if (b.score !== a.score) return b.score - a.score;
+      return a.order - b.order;
+    };
+
     return Array.from(bestByName.values())
-      .sort((a, b) => {
-        if (b.matchedChars !== a.matchedChars) return b.matchedChars - a.matchedChars;
-        if (b.score !== a.score) return b.score - a.score;
-        return a.order - b.order;
-      })
+      .sort(sortFn)
       .slice(0, limit)
       .map((s) => s.t);
   };

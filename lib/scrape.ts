@@ -186,10 +186,16 @@ export async function runScrapeAndSync(branch: string, presetRules?: CleanupRule
   const treatments: ScrapedTreatment[] = pageResults.flat();
 
   // 같은 시술명이 여러 섹션에 중복 노출되는 경우가 있어 branch+name 기준으로
-  // 중복 제거 (마지막에 나온 값으로 덮어씀) 하지 않으면 upsert가 실패함
+  // 중복 제거하지 않으면 upsert가 실패함. 어느 섹션 값이 대표로 남을지는
+  // 홈페이지에 먼저 등장한(=CATEGORY_FIELDS 순서상 앞선 탭, 같은 탭 안에서는
+  // 먼저 스크래핑된) 섹션을 우선한다 — 나중 값으로 덮어쓰면 섹션마다 order가
+  // 제각각이라 엉뚱한 섹션의 순서 번호가 남아 정렬이 뒤죽박죽될 수 있다.
   const dedupedMap = new Map<string, ScrapedTreatment>();
   for (const t of treatments) {
-    dedupedMap.set(`${t.branch}|${t.name}`, t);
+    const key = `${t.branch}|${t.name}`;
+    if (!dedupedMap.has(key)) {
+      dedupedMap.set(key, t);
+    }
   }
   const deduped = Array.from(dedupedMap.values());
 

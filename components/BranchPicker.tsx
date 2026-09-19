@@ -71,10 +71,10 @@ export default function BranchPicker({
   // 한글로 안 바뀐 채 로마자를 그대로 친 경우("bsj")에만 쓴다.
   const hasHangulSyllable = /[가-힣]/.test(q);
   const qInitial = hasHangulSyllable ? "" : getKoreanInitial(q);
-  const matches = !q
-    ? ALL_BRANCHES
+  const matches: string[] = !q
+    ? [...ALL_BRANCHES]
     : ALL_BRANCHES
-        .map((b) => {
+        .map((b): { b: string; rank: number } | null => {
           const normalized = b.toLowerCase().replace(/\s/g, "");
           const textMatch = normalized.includes(q);
           const initialMatch = !hasHangulSyllable && getKoreanInitial(b).toLowerCase().includes(qInitial);
