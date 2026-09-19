@@ -1005,15 +1005,7 @@ export default function Home() {
                     }}
                   >
                     <div>
-                      좌측에서 시술을 검색하거나 직접 추가한 후 부위, 총 용량 등 상세차팅 메모를 작성해주세요.<br />
-                      <div style={{ display: "flex", gap: 8, alignItems: "flex-start", marginTop: 8 }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0, color: C.danger, marginTop: 0.5 }}>
-                          <path d="M12 3.5 L22 20.5 H2 Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-                          <line x1="12" y1="10" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                          <circle cx="12" cy="18" r="1.1" fill="currentColor" />
-                        </svg>
-                        <span style={{ color: C.danger }}>차트 맨 뒤에 덧붙인 메모는 유지되지만, 생성된 목록 중간을 직접 고친 내용은 새 시술 추가·수량 변경·회원권 금액 변경 시 사라집니다.</span>
-                      </div>
+                      좌측에서 시술을 검색하거나 직접 추가한 후 부위, 총 용량 등 상세차팅 메모를 작성해주세요.
                     </div>
                   </div>
                 )}
