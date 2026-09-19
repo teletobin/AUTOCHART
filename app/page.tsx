@@ -759,7 +759,7 @@ export default function Home() {
                     <button
                       key={c.name}
                       onMouseEnter={() => setHighlightedIndex(idx)}
-                      onClick={() => selectCandidate(c)}
+                      onMouseDown={(e) => { e.preventDefault(); selectCandidate(c); }}
                       style={{
                         ...styles.candidateRow,
                         background: idx === highlightedIndex ? C.primaryLt : C.surface,
