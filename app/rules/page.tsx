@@ -1089,7 +1089,14 @@ export default function RulesPage() {
           <section style={styles.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
               <div>
-                <p style={styles.cardTitle}>시술별 카테고리</p>
+                <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                  <p style={styles.cardTitle}>시술별 카테고리</p>
+                  {categoryTreatments.filter(t => !t.category).length > 0 && (
+                    <p style={{ fontSize: 12, color: C.danger, margin: 0 }}>
+                      (미분류 시술: {categoryTreatments.filter(t => !t.category).length}건 있습니다, 카테고리를 지정해주세요)
+                    </p>
+                  )}
+                </div>
                 <p style={styles.cardHint}>
                   각 카테고리 순서대로 차트를 출력합니다.
                   <br />
