@@ -921,7 +921,7 @@ export default function Home() {
                               borderTop: "none",
                               borderLeft: "none",
                               borderRight: "none",
-                              borderBottom: idx < boosterCombos.length - 1 ? "1px dashed #ddd" : "none",
+                              borderBottom: idx < boosterCombos.length - 1 ? "1px dashed #999" : "none",
                               marginBottom: idx < boosterCombos.length - 1 ? 6 : 0,
                               paddingBottom: idx < boosterCombos.length - 1 ? 6 : 9,
                               paddingTop: 9,
