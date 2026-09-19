@@ -930,7 +930,7 @@ export default function Home() {
               )}
             </div>
 
-            <p style={styles.hint}>방향키로 후보 선택 후 Enter로 추가 · 수량은 아래 목록에서 조절</p>
+            <p style={{ ...styles.hint, whiteSpace: "pre-line" }}>{"키보드 방향키 + Enter로 추가하거나 마우스로 선택 가능해요.\n수량을 변경하는 경우 우측에 생성된 차트도 수정해주세요."}</p>
 
             {/* 직접 입력 */}
             <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
@@ -1497,7 +1497,7 @@ export default function Home() {
                     )}
                   </div>
 
-                  <p style={styles.hint}>방향키로 후보 선택 후 Enter로 추가 · 수량은 아래 목록에서 조절</p>
+                  <p style={{ ...styles.hint, whiteSpace: "pre-line" }}>{"키보드 방향키 + Enter로 추가하거나 마우스로 선택 가능해요.\n수량을 변경하는 경우 우측에 생성된 차트도 수정해주세요."}</p>
 
                   <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
                     <input type="text" value={panelRecipient.panelManualName}
