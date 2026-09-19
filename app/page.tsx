@@ -907,29 +907,26 @@ export default function Home() {
                       {boosterCombos.map((combo, idx) => {
                         const label = formatComboLabel(combo);
                         return (
-                          <button
-                            key={label}
-                            onClick={() => selectBoosterCombo(combo)}
-                            style={{
-                              ...styles.candidateRow,
-                              width: "100%", textAlign: "left",
-                              background: C.surface,
-                              color: "#555",
-                              alignItems: "flex-start",
-                              fontSize: 11,
-                              border: "none",
-                              borderTop: "none",
-                              borderLeft: "none",
-                              borderRight: "none",
-                              borderBottom: idx < boosterCombos.length - 1 ? "1px dashed #999" : "none",
-                              marginBottom: idx < boosterCombos.length - 1 ? 6 : 0,
-                              paddingBottom: idx < boosterCombos.length - 1 ? 6 : 9,
-                              paddingTop: 9,
-                            }}
-                          >
-                            <span style={{ flex: 1, whiteSpace: "normal", wordBreak: "keep-all", lineHeight: 1.4 }}>{label}</span>
-                            <span style={{ marginLeft: 12, flexShrink: 0, fontVariantNumeric: "tabular-nums", color: C.sub }}>{formatNumber(combo.totalPrice)}원</span>
-                          </button>
+                          <div key={label}>
+                            <button
+                              onClick={() => selectBoosterCombo(combo)}
+                              style={{
+                                ...styles.candidateRow,
+                                width: "100%", textAlign: "left",
+                                background: C.surface,
+                                color: "#555",
+                                alignItems: "flex-start",
+                                fontSize: 11,
+                                border: "none",
+                                paddingBottom: 9,
+                                paddingTop: 9,
+                              }}
+                            >
+                              <span style={{ flex: 1, whiteSpace: "normal", wordBreak: "keep-all", lineHeight: 1.4 }}>{label}</span>
+                              <span style={{ marginLeft: 12, flexShrink: 0, fontVariantNumeric: "tabular-nums", color: C.sub }}>{formatNumber(combo.totalPrice)}원</span>
+                            </button>
+                            {idx < boosterCombos.length - 1 && <div style={{ height: "1px", background: "#ddd", margin: "6px 0" }} />}
+                          </div>
                         );
                       })}
                     </div>
