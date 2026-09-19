@@ -897,7 +897,7 @@ export default function Home() {
                   />
                   <p style={{ ...styles.hint, marginTop: 6, marginBottom: 0, whiteSpace: "pre-line", textAlign: "center" }}>
                     <span style={{ color: C.danger }}>부스터 시술명과 용량을 입력하면 여러 조합 중 선택할 수 있습니다. (예: 리쥬란힐러 6cc)</span>
-                    {"\n* 체험가 또는 한정가는 중복으로 조합하지 않습니다.\n* 체험가/한정가 적용 가능 여부를 미리 체크해 주세요."}
+                    {"\n* 체험가 또는 한정가 적용 가능 여부를 미리 체크해 주세요."}
                   </p>
                   {boosterRequest && boosterCombos.length === 0 && (
                     <p style={{ ...styles.hint, marginTop: 8, marginBottom: 0, color: C.danger }}>조합을 만들 수 있는 시술을 찾지 못했습니다.</p>
