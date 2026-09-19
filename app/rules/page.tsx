@@ -1179,7 +1179,7 @@ export default function RulesPage() {
                             else newSet.delete(t.id!);
                             setSelectedForBulk(newSet);
                           }}
-                          style={{ marginTop: 2, cursor: "pointer", flexShrink: 0 }}
+                          style={{ marginTop: 2, cursor: "pointer", flexShrink: 0, accentColor: C.primary }}
                         />
                         <span style={{ flex: 1, wordBreak: "break-word" as const, minWidth: 0 }}>
                           <span style={{ display: "block", color: C.primary }}>{t.name}</span>
@@ -1232,7 +1232,7 @@ export default function RulesPage() {
                               else newSet.delete(t.id!);
                               setSelectedForBulk(newSet);
                             }}
-                            style={{ marginTop: 2, cursor: "pointer", flexShrink: 0 }}
+                            style={{ marginTop: 2, cursor: "pointer", flexShrink: 0, accentColor: C.primary }}
                           />
                           <span style={{ flex: 1, wordBreak: "break-word" as const, minWidth: 0 }}>
                             <span style={{ display: "block", color: C.primary }}>{t.name}</span>
