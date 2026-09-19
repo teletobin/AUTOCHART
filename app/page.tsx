@@ -10,6 +10,7 @@ import { CATEGORY_ORDER } from "@/lib/categoryDetection";
 import { C, MAX_WIDTH } from "@/lib/theme";
 import { BRANCH_STORAGE_KEY } from "@/lib/branches";
 import { mergeGeneratedText } from "@/lib/mergeText";
+import { findCcCombos, formatComboLabel, mergedComboName, sameTreatmentFamily, type CcCombo } from "@/lib/ccCombo";
 import BranchPicker from "@/components/BranchPicker";
 import Dropdown from "@/components/Dropdown";
 
@@ -208,6 +209,7 @@ export default function Home() {
   const [giverPromptBirthdate, setGiverPromptBirthdate] = useState("");
   const [showSearchTip, setShowSearchTip] = useState(false);
   const [showChartTip, setShowChartTip] = useState(false);
+  const [showClearTip, setShowClearTip] = useState(false);
   const [panelDiscountMenuOpen, setPanelDiscountMenuOpen] = useState(false);
 
   // 지점 변경 확인/진행 상태 팝업. confirm(변경할지 물어보는 중) -> loading(불러오는 중)
@@ -277,6 +279,60 @@ export default function Home() {
     const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
     setSelectedItems((prev) => [...prev, { id, name: candidate.name, basePrice: candidate.price, count: 1, unused: false, displayed: true, category: candidate.category }]);
     setInputValue(""); setHighlightedIndex(0);
+  }
+
+  // 부스터 조합 팝업: "리쥬란HB 6cc"처럼 입력하면, 검색된 후보 중 "동일 시술명(섹션)"인
+  // 것들끼리만 묶어서 목표 cc를 채우는 조합을 가격 오름차순으로 보여준다. 섹션이 다르면
+  // (예: 리쥬란힐러 vs 리쥬란스킨부스터 vs 리쥬란HB플러스) 절대 서로 섞이지 않는다.
+  const [boosterOpen, setBoosterOpen] = useState(false);
+  const [boosterQuery, setBoosterQuery] = useState("");
+  const boosterRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!boosterOpen) return;
+    function onOutsideClick(e: MouseEvent) {
+      if (boosterRef.current && !boosterRef.current.contains(e.target as Node)) setBoosterOpen(false);
+    }
+    document.addEventListener("mousedown", onOutsideClick);
+    return () => document.removeEventListener("mousedown", onOutsideClick);
+  }, [boosterOpen]);
+  const boosterRequest = useMemo(() => {
+    const m = boosterQuery.match(/^(.+?)\s*(\d+(?:\.\d+)?)\s*cc\s*$/i);
+    if (!m) return null;
+    const baseQuery = m[1].trim();
+    const target = Number(m[2]);
+    if (baseQuery.length < 2 || !(target > 0)) return null;
+    return { baseQuery, target };
+  }, [boosterQuery]);
+  const boosterCombos = useMemo(() => {
+    if (!boosterRequest) return [];
+    // 매칭 상위 30개만 보면 같은 시술명의 다른 변형(예: 무할인 1cc 1회)이 순위 밖으로
+    // 밀려 조합 후보에서 아예 빠질 수 있어, 넉넉히 크게 가져온다.
+    const matched = matcher(boosterRequest.baseQuery, 200);
+    if (matched.length === 0) return [];
+    // section이 아니라 "진짜 시술명"(cc/한정가·체험가/회차 뗀 이름)으로 묶는다.
+    // 한정가/체험가 프로모션은 "메가세일 OO 1cc 체험가"처럼 배지가 이름 앞에 붙어
+    // section도 다르고 문자열도 완전히 같지 않은 경우가 많아, 접미사 비교로 묶는다.
+    const anchorName = matched[0].name;
+    const sameFamily = matched.filter((t) => sameTreatmentFamily(t.name, anchorName));
+    return findCcCombos(boosterRequest.target, sameFamily, 15);
+  }, [boosterRequest, matcher]);
+  function selectBoosterCombo(combo: CcCombo) {
+    const target = boosterRequest?.target ?? 0;
+    const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    setSelectedItems((prev) => [
+      ...prev,
+      {
+        id,
+        name: mergedComboName(combo, target),
+        basePrice: combo.totalPrice,
+        count: 1,
+        unused: false,
+        displayed: true,
+        category: combo.items[0]?.treatment.category,
+      },
+    ]);
+    setBoosterQuery("");
+    setBoosterOpen(false);
   }
   function removeItem(id: string) { setSelectedItems((prev) => prev.filter((i) => i.id !== id)); }
 
@@ -755,7 +811,8 @@ export default function Home() {
               </div>
             </div>
 
-            <div style={{ position: "relative" }}>
+            <div ref={boosterRef} style={{ display: "flex", gap: 6, alignItems: "flex-start", position: "relative" }}>
+              <div style={{ position: "relative", flex: 1, minWidth: 0 }}>
               <input
                 type="text"
                 value={inputValue}
@@ -763,7 +820,7 @@ export default function Home() {
                 onKeyDown={handleKeyDown}
                 onBlur={() => { setInputValue(""); setHighlightedIndex(0); }}
                 placeholder="예: 슈링크 300샷 한정가"
-                style={styles.input}
+                style={{ ...styles.input, height: 36, boxSizing: "border-box" }}
               />
               {candidates.length > 0 && (
                 <div style={styles.candidateBox}>
@@ -784,6 +841,91 @@ export default function Home() {
                       <span style={{ marginLeft: 12, flexShrink: 0, fontVariantNumeric: "tabular-nums", color: C.sub }}>{formatNumber(c.price)}원</span>
                     </button>
                   ))}
+                </div>
+              )}
+              </div>
+              <button
+                onClick={() => setBoosterOpen((v) => !v)}
+                style={{
+                  background: boosterOpen ? C.primaryLt : C.borderSoft,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 8,
+                  fontSize: 12,
+                  color: C.primary,
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  padding: "0 12px",
+                  height: 36,
+                  flexShrink: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                부스터
+              </button>
+              {boosterOpen && (
+                <div onClick={() => setBoosterOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 40 }} />
+              )}
+              {boosterOpen && (
+                <div
+                  style={{
+                    position: "fixed",
+                    top: "20%",
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                    width: 500,
+                    maxHeight: "60vh",
+                    overflowY: "auto",
+                    background: C.surface,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 10,
+                    padding: 12,
+                    fontSize: 12,
+                    color: C.primary,
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                    zIndex: 50,
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={boosterQuery}
+                    onChange={(e) => setBoosterQuery(e.target.value)}
+                    placeholder="예: 리쥬란HB 6cc"
+                    autoFocus
+                    style={{ ...styles.input, height: 34, boxSizing: "border-box", width: "100%" }}
+                  />
+                  <p style={{ ...styles.hint, marginTop: 6, marginBottom: 0, whiteSpace: "pre-line", textAlign: "center" }}>
+                    <span style={{ color: C.danger }}>부스터 시술명과 용량을 입력하면 여러 조합 중 선택할 수 있습니다. (예: 리쥬란힐러 6cc)</span>
+                    {"\n* 체험가 또는 한정가는 중복으로 조합하지 않습니다.\n* 체험가/한정가 적용 가능 여부를 미리 체크해 주세요."}
+                  </p>
+                  {boosterRequest && boosterCombos.length === 0 && (
+                    <p style={{ ...styles.hint, marginTop: 8, marginBottom: 0, color: C.danger }}>조합을 만들 수 있는 시술을 찾지 못했습니다.</p>
+                  )}
+                  {boosterCombos.length > 0 && (
+                    <div style={{ marginTop: 8, maxHeight: 350, overflowY: "auto" }}>
+                      {boosterCombos.map((combo) => {
+                        const label = formatComboLabel(combo);
+                        return (
+                          <button
+                            key={label}
+                            onClick={() => selectBoosterCombo(combo)}
+                            style={{
+                              ...styles.candidateRow,
+                              width: "100%", border: "none", textAlign: "left",
+                              background: C.surface,
+                              color: "#555",
+                              alignItems: "flex-start",
+                              fontSize: 11,
+                            }}
+                          >
+                            <span style={{ flex: 1, whiteSpace: "normal", wordBreak: "keep-all", lineHeight: 1.4 }}>{label}</span>
+                            <span style={{ marginLeft: 12, flexShrink: 0, fontVariantNumeric: "tabular-nums", color: C.sub }}>{formatNumber(combo.totalPrice)}원</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -991,30 +1133,57 @@ export default function Home() {
                       position: "absolute",
                       top: "100%",
                       left: 0,
-                      marginTop: 8,
+                      marginTop: 6,
                       width: 280,
                       background: C.surface,
                       border: `1px solid ${C.border}`,
-                      borderRadius: 10,
-                      padding: 12,
-                      fontSize: 12,
+                      borderRadius: 8,
+                      padding: "6px 8px",
+                      fontSize: 11,
                       color: C.primary,
-                      lineHeight: 1.6,
+                      lineHeight: 1.4,
                       boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
                       zIndex: 50,
-                      whiteSpace: "normal",
+                      whiteSpace: "pre-line",
                     }}
                   >
-                    <div>
-                      좌측에서 시술을 검색하거나 직접 추가한 후 부위, 총 용량 등 상세차팅 메모를 작성해주세요.
-                    </div>
+                    {"시술을 검색하거나 직접 추가한 다음\n부위, 총 용량, 고객 요청 등을 추가 수정할 수 있습니다."}
                   </div>
                 )}
               </div>
-              <button onClick={clearAllItems} disabled={selectedItems.length === 0}
-                style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
-                CLEAR
-              </button>
+              <div
+                style={{ position: "relative" }}
+                onMouseEnter={() => setShowClearTip(true)}
+                onMouseLeave={() => setShowClearTip(false)}
+              >
+                <button onClick={clearAllItems} disabled={selectedItems.length === 0}
+                  style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
+                  CLEAR
+                </button>
+                {showClearTip && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "100%",
+                      right: 0,
+                      marginBottom: 6,
+                      width: "max-content",
+                      background: C.surface,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 8,
+                      padding: "5px 8px",
+                      fontSize: 10,
+                      color: C.primary,
+                      lineHeight: 1.3,
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                      zIndex: 50,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    CLEAR 버튼을 눌러도 상담실장 이름은 유지됩니다.
+                  </div>
+                )}
+              </div>
             </div>
 
             <textarea
@@ -1050,7 +1219,26 @@ export default function Home() {
                 {/* 담당자 + 멤버십 */}
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <input type="text" value={staffName} onChange={(e) => setStaffName(e.target.value)} maxLength={4} placeholder="이름" style={{ ...styles.numInput, width: 64, textAlign: "left" }} />
+                    <span style={{ color: C.sub, fontSize: 13 }}>상담실장 :</span>
+                    <input
+                      type="text"
+                      value={staffName}
+                      onChange={(e) => setStaffName(e.target.value)}
+                      maxLength={4}
+                      placeholder="이름"
+                      style={{
+                        width: 36,
+                        border: "none",
+                        borderBottom: `1px solid ${C.border}`,
+                        borderRadius: 0,
+                        padding: "2px 0",
+                        fontSize: 13,
+                        textAlign: "center",
+                        outline: "none",
+                        background: "transparent",
+                        color: C.primary,
+                      }}
+                    />
                     <span style={{ color: C.sub, fontSize: 13 }}>S</span>
                   </div>
                   {(["VIP", "쁘띠"] as const).map((t) => (
