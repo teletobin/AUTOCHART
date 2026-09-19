@@ -917,9 +917,10 @@ export default function Home() {
                               color: "#555",
                               alignItems: "flex-start",
                               fontSize: 11,
-                              borderBottom: idx < boosterCombos.length - 1 ? "1px dashed rgba(0, 0, 0, 0.15)" : "none",
-                              paddingBottom: 8,
-                              paddingTop: 8,
+                              borderBottom: idx < boosterCombos.length - 1 ? "1px dashed rgba(0, 0, 0, 0.12)" : "none",
+                              marginBottom: idx < boosterCombos.length - 1 ? 6 : 0,
+                              paddingBottom: idx < boosterCombos.length - 1 ? 6 : 9,
+                              paddingTop: 9,
                             }}
                           >
                             <span style={{ flex: 1, whiteSpace: "normal", wordBreak: "keep-all", lineHeight: 1.4 }}>{label}</span>
