@@ -36,10 +36,10 @@ type Tab = "exclude" | "alias" | "manual" | "category" | "branchRules";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "category", label: "시술별 카테고리" },
-  { key: "exclude", label: "시술명 정리" },
-  { key: "alias", label: "검색어 매칭" },
   { key: "branchRules", label: "지점별 규칙" },
   { key: "manual", label: "지점별 시술 추가" },
+  { key: "alias", label: "검색어 매칭" },
+  { key: "exclude", label: "시술명 정리" },
 ];
 
 const SETUP_SQL = `create table cleanup_rules (
