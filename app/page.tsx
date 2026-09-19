@@ -595,11 +595,12 @@ export default function Home() {
   const [editableText, setEditableText] = useState("");
   const prevFinalTextRef = useRef("");
   useEffect(() => {
-    setEditableText((prev) => {
-      const merged = mergeGeneratedText(prevFinalTextRef.current, prev, finalText);
-      prevFinalTextRef.current = finalText;
-      return merged;
-    });
+    // StrictMode(dev)는 setState 업데이터 함수를 두 번 호출한다. 업데이터 안에서 ref를 직접 건드리면
+    // 두 번째 호출이 이미 바뀐 ref를 읽어버려 통째로 "삽입된 줄"로 오인해 중복된다.
+    // 그래서 oldGen을 미리 상수로 고정해 업데이터를 순수 함수로 만든다.
+    const oldGen = prevFinalTextRef.current;
+    setEditableText((prev) => mergeGeneratedText(oldGen, prev, finalText));
+    prevFinalTextRef.current = finalText;
   }, [finalText]);
 
   async function handleCopy() {
