@@ -880,7 +880,9 @@ export default function RulesPage() {
               <TabSearchInput value={globalReplaceSearch} onChange={setGlobalReplaceSearch} />
             </div>
             <p style={styles.cardHint}>
-              모든 지점의 홈페이지 시술명 속 특정 문구를 다른 문구로 바꿔줍니다.
+              홈페이지 시술명을 더욱 간결하게 표시해 검색되도록 치환합니다.
+              <br />
+              시술명 속 불필요한 공백, 영문으로 표시되는 장비명, 간결한 시술명 등을 입력해주세요.
               <br />
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.danger }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
