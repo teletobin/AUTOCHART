@@ -312,12 +312,22 @@ export default function Home() {
     // 밀려 조합 후보에서 아예 빠질 수 있어, 넉넉히 크게 가져온다.
     const matched = matcher(boosterRequest.baseQuery, 200);
     if (matched.length === 0) return [];
-    // 정규화된 이름(cc/한정가·체험가/회차 제거)이 정확하게 같은 시술만 조합한다.
+    // 정규화된 이름(cc/한정가·체험가/회차 제거)이 정확하게 같은 시술끼리만 조합한다.
     // 예: "리쥬란힐러 4cc" 검색 시 "아이리쥬란힐러", "리쥬란HB플러스" 등은 제외.
-    const anchorName = matched[0].name;
-    const anchorBaseName = deriveBaseName(anchorName);
-    const sameFamily = matched.filter((t) => deriveBaseName(t.name) === anchorBaseName);
-    return findCcCombos(boosterRequest.target, sameFamily, 15);
+    // matched[0](검색 1등)을 무조건 기준으로 삼으면, 같은 섹션 안에 여러 하위
+    // 라인업이 섞여 있을 때(예: "올리디아" 섹션의 스킨/다른 상품) 검색어와 무관한
+    // 라인업이 1등으로 잡혀 조합이 하나도 안 나오는 문제가 생긴다. 그래서 순위
+    // 순서대로 그룹을 시도해 실제로 조합이 나오는 첫 그룹을 쓴다.
+    const triedBaseNames = new Set<string>();
+    for (const candidate of matched) {
+      const baseName = deriveBaseName(candidate.name);
+      if (triedBaseNames.has(baseName)) continue;
+      triedBaseNames.add(baseName);
+      const sameFamily = matched.filter((t) => deriveBaseName(t.name) === baseName);
+      const combos = findCcCombos(boosterRequest.target, sameFamily, 15);
+      if (combos.length > 0) return combos;
+    }
+    return [];
   }, [boosterRequest, matcher]);
   function selectBoosterCombo(combo: CcCombo) {
     const target = boosterRequest?.target ?? 0;
