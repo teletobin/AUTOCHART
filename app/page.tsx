@@ -846,6 +846,7 @@ export default function Home() {
               </div>
               <button
                 onClick={() => setBoosterOpen((v) => !v)}
+                title="리쥬란 같이 CC별 상품을 조합해 목표 용량을 만들 때, 최저가~최고가 조합을 선택할 수 있어요."
                 style={{
                   background: boosterOpen ? C.primaryLt : C.borderSoft,
                   border: `1px solid ${C.border}`,
