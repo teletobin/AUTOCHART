@@ -140,11 +140,11 @@ function CountDial({ count, onChange }: { count: number; onChange: (count: numbe
         min={1}
         value={count}
         onChange={(e) => onChange(Math.max(1, Number(e.target.value) || 1))}
-        style={{ width: 24, border: "none", padding: 0, textAlign: "center", fontSize: 13, outline: "none", background: "transparent" }}
+        style={{ width: 24, border: "none", padding: 0, textAlign: "center", fontSize: 14, outline: "none", background: "transparent" }}
       />
       <div className="flex flex-col leading-none gap-0">
-        <button onClick={() => onChange(count + 1)} style={{ fontSize: 6, color: "#a89f9a", padding: "1px 0", lineHeight: 1 }} aria-label="증가">▲</button>
-        <button onClick={() => onChange(Math.max(1, count - 1))} style={{ fontSize: 6, color: "#a89f9a", padding: "1px 0", lineHeight: 1 }} aria-label="감소">▼</button>
+        <button onClick={() => onChange(count + 1)} style={{ fontSize: 7, color: "#a89f9a", padding: "1px 0", lineHeight: 1 }} aria-label="증가">▲</button>
+        <button onClick={() => onChange(Math.max(1, count - 1))} style={{ fontSize: 7, color: "#a89f9a", padding: "1px 0", lineHeight: 1 }} aria-label="감소">▼</button>
       </div>
     </div>
   );
@@ -154,24 +154,24 @@ const styles: Record<string, React.CSSProperties> = {
   wrap:    { display: "flex", flexDirection: "column", minHeight: "100vh", background: C.bg, color: C.primary, fontFamily: "Pretendard, -apple-system, sans-serif" },
   header:  { borderBottom: `1px solid ${C.border}`, background: C.surface, padding: "14px 0", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
   headerInner: { maxWidth: MAX_WIDTH, margin: "0 auto", padding: "0 20px", boxSizing: "border-box" as const, display: "flex", alignItems: "center", justifyContent: "space-between" },
-  logo:    { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 17, color: C.primary },
-  btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  btnGhost:   { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" },
+  logo:    { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 19, color: C.primary },
+  btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 14, fontWeight: 600, cursor: "pointer" },
+  btnGhost:   { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
   main:    { maxWidth: MAX_WIDTH, margin: "0 auto", width: "100%", padding: "24px 20px", display: "grid", gridTemplateColumns: "1fr", gap: 16 },
   card:    { background: C.surface, borderRadius: 14, padding: "20px 22px" },
-  cardTitle: { fontSize: 14, fontWeight: 700, color: C.sub, marginBottom: 14, letterSpacing: "0.04em" },
+  cardTitle: { fontSize: 15, fontWeight: 700, color: C.sub, marginBottom: 14, letterSpacing: "0.04em" },
   titleRow: { display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 34, marginBottom: 14 },
-  input:   { width: "100%", border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
-  hint:    { fontSize: 11, color: C.sub, marginTop: 6 },
+  input:   { width: "100%", border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 14, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
+  hint:    { fontSize: 12, color: C.sub, marginTop: 6 },
   candidateBox: { position: "absolute" as const, zIndex: 20, marginTop: 4, width: "100%", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: "0 8px 24px rgba(111,104,100,0.10)", overflow: "hidden" },
-  candidateRow: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 14px", fontSize: 13, cursor: "pointer", borderBottom: `1px solid ${C.borderSoft}` },
-  tableHead: { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.border}`, paddingBottom: 8, fontSize: 11, color: C.sub, marginBottom: 4 },
-  tableRow:  { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.borderSoft}`, padding: "8px 0", fontSize: 13 },
-  totalRow:  { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, fontWeight: 700, fontSize: 14 },
-  textarea:  { width: "100%", resize: "none" as const, border: `1px solid ${C.border}`, borderRadius: 10, background: C.bg, padding: "12px 14px", fontSize: 13, color: C.primary, outline: "none", lineHeight: 1.8, boxSizing: "border-box" as const },
+  candidateRow: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 14px", fontSize: 14, cursor: "pointer", borderBottom: `1px solid ${C.borderSoft}` },
+  tableHead: { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.border}`, paddingBottom: 8, fontSize: 12, color: C.sub, marginBottom: 4 },
+  tableRow:  { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.borderSoft}`, padding: "8px 0", fontSize: 14 },
+  totalRow:  { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, fontWeight: 700, fontSize: 15 },
+  textarea:  { width: "100%", resize: "none" as const, border: `1px solid ${C.border}`, borderRadius: 10, background: C.bg, padding: "12px 14px", fontSize: 14, color: C.primary, outline: "none", lineHeight: 1.8, boxSizing: "border-box" as const },
   subSection: { display: "flex", flexDirection: "column" as const, gap: 6, border: `1px solid ${C.primaryLt}`, borderRadius: 10, padding: "14px 16px", background: "#fdfcfb" },
-  label:  { fontSize: 13, fontWeight: 600, color: C.primary, textAlign: "right" as const, minWidth: 88, flexShrink: 0 },
-  numInput: { width: 120, border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 10px", fontSize: 13, textAlign: "right" as const, outline: "none", background: "#fff", color: C.primary },
+  label:  { fontSize: 14, fontWeight: 600, color: C.primary, textAlign: "right" as const, minWidth: 88, flexShrink: 0 },
+  numInput: { width: 120, border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 10px", fontSize: 14, textAlign: "right" as const, outline: "none", background: "#fff", color: C.primary },
   divider: { borderTop: `1px dashed ${C.border}`, margin: "2px 0" },
   dividerSolid: { borderTop: `2px solid ${C.primaryLt}`, margin: "2px 0" },
 };
@@ -726,7 +726,7 @@ export default function Home() {
           >
             {branchSwitch.phase === "confirm" && (
               <>
-                <p style={{ fontSize: 14, color: C.primary, marginBottom: 14 }}>
+                <p style={{ fontSize: 15, color: C.primary, marginBottom: 14 }}>
                   지점을 {branchSwitch.target}으로 변경할까요?
                 </p>
                 <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
@@ -736,12 +736,12 @@ export default function Home() {
               </>
             )}
             {branchSwitch.phase === "loading" && (
-              <p style={{ fontSize: 14, color: C.primary }}>
+              <p style={{ fontSize: 15, color: C.primary }}>
                 {branchSwitch.target} 시술을 불러오는 중입니다...
               </p>
             )}
             {branchSwitch.phase === "done" && (
-              <p style={{ fontSize: 14, color: C.primary }}>
+              <p style={{ fontSize: 15, color: C.primary }}>
                 연동이 완료되었습니다.
               </p>
             )}
@@ -750,11 +750,11 @@ export default function Home() {
       )}
 
       {!branch && (
-        <p style={{ maxWidth: MAX_WIDTH, margin: "12px auto 0", padding: "0 20px", fontSize: 13, color: C.primary }}>
+        <p style={{ maxWidth: MAX_WIDTH, margin: "12px auto 0", padding: "0 20px", fontSize: 14, color: C.primary }}>
           상단에서 지점을 선택해주세요.
         </p>
       )}
-      {loadError && <p style={{ maxWidth: MAX_WIDTH, margin: "8px auto 0", padding: "0 20px", fontSize: 12, color: C.danger }}>시술 데이터를 불러오지 못했습니다: {loadError}</p>}
+      {loadError && <p style={{ maxWidth: MAX_WIDTH, margin: "8px auto 0", padding: "0 20px", fontSize: 13, color: C.danger }}>시술 데이터를 불러오지 못했습니다: {loadError}</p>}
 
       {/* 메인 그리드 */}
       <main style={styles.main}>
@@ -772,7 +772,7 @@ export default function Home() {
                     background: "transparent",
                     border: `1px solid ${C.border}`,
                     borderRadius: 16,
-                    fontSize: 11,
+                    fontSize: 12,
                     color: C.sub,
                     cursor: "help",
                     fontWeight: 600,
@@ -798,7 +798,7 @@ export default function Home() {
                       border: `1px solid ${C.border}`,
                       borderRadius: 8,
                       padding: "8px 10px",
-                      fontSize: 11,
+                      fontSize: 12,
                       color: C.primary,
                       lineHeight: 1.5,
                       boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
@@ -856,7 +856,7 @@ export default function Home() {
                     background: boosterOpen ? C.primaryLt : C.borderSoft,
                     border: `1px solid ${C.border}`,
                     borderRadius: 8,
-                    fontSize: 12,
+                    fontSize: 13,
                     color: C.primary,
                     cursor: "pointer",
                     fontWeight: 600,
@@ -882,7 +882,7 @@ export default function Home() {
                       border: `1px solid ${C.border}`,
                       borderRadius: 8,
                       padding: "5px 8px",
-                      fontSize: 10,
+                      fontSize: 11,
                       color: C.primary,
                       lineHeight: 1.3,
                       boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
@@ -911,7 +911,7 @@ export default function Home() {
                     border: `1px solid ${C.border}`,
                     borderRadius: 10,
                     padding: 12,
-                    fontSize: 12,
+                    fontSize: 13,
                     color: C.primary,
                     boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
                     zIndex: 50,
@@ -946,7 +946,7 @@ export default function Home() {
                                 background: C.surface,
                                 color: "#555",
                                 alignItems: "flex-start",
-                                fontSize: 11,
+                                fontSize: 12,
                                 border: "none",
                                 paddingBottom: 6,
                                 paddingTop: 6,
@@ -986,7 +986,7 @@ export default function Home() {
                 style={{ flex: "0 0 116px", height: 36 }}
               />
               <button onClick={addManualItem} disabled={!manualName.trim() || !manualPrice}
-                style={{ ...styles.btnPrimary, height: 36, boxSizing: "border-box", padding: "0 8px", fontSize: 13, opacity: (!manualName.trim() || !manualPrice) ? 0.4 : 1, flexShrink: 0 }}>
+                style={{ ...styles.btnPrimary, height: 36, boxSizing: "border-box", padding: "0 8px", fontSize: 14, opacity: (!manualName.trim() || !manualPrice) ? 0.4 : 1, flexShrink: 0 }}>
                 추가
               </button>
             </div>
@@ -1009,7 +1009,7 @@ export default function Home() {
                   {selectedItems.map((item) => (
                     <div key={item.id} style={styles.tableRow}>
                       <div style={{ width: 16, display: "flex", justifyContent: "center" }}>
-                        <button onClick={() => removeItem(item.id)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                        <button onClick={() => removeItem(item.id)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 15, lineHeight: 1, padding: 0 }}>×</button>
                       </div>
                       <button
                         onClick={() => {
@@ -1022,7 +1022,7 @@ export default function Home() {
                           border: `1px solid ${C.primary}`,
                           background: "transparent",
                           color: C.primary,
-                          fontSize: 9,
+                          fontSize: 10,
                           fontWeight: "bold",
                           cursor: "pointer",
                           display: "flex",
@@ -1038,13 +1038,13 @@ export default function Home() {
                         value={item.name}
                         onChange={(v) => updateItemName(item.id, v)}
                         className=""
-                        style={{ flex: 1, minWidth: 120, border: `1px solid transparent`, borderRadius: 6, padding: "2px 4px", background: "transparent", fontSize: 13, color: C.primary, lineHeight: 1.5 } as React.CSSProperties}
+                        style={{ flex: 1, minWidth: 120, border: `1px solid transparent`, borderRadius: 6, padding: "2px 4px", background: "transparent", fontSize: 14, color: C.primary, lineHeight: 1.5 } as React.CSSProperties}
                       />
-                      <span style={{ width: 60, textAlign: "center", fontVariantNumeric: "tabular-nums", color: C.primary, fontSize: 13 }}>{formatNumber(item.basePrice)}</span>
+                      <span style={{ width: 60, textAlign: "center", fontVariantNumeric: "tabular-nums", color: C.primary, fontSize: 14 }}>{formatNumber(item.basePrice)}</span>
                       <div style={{ width: 50, display: "flex", justifyContent: "center" }}>
                         <CountDial count={item.count} onChange={(count) => updateItemCount(item.id, count)} />
                       </div>
-                      <span style={{ width: 80, textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 13 }}>{formatNumber(computeUnitPrice(item))}</span>
+                      <span style={{ width: 80, textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 14 }}>{formatNumber(computeUnitPrice(item))}</span>
                       <div style={{ width: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
                         <input
                           type="checkbox"
@@ -1064,8 +1064,8 @@ export default function Home() {
 
             {selectedItems.length > 0 && (
               <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, gap: 4 }}>
-                <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>TOTAL</span>
-                <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(totalPrice)}원</span>
+                <span style={{ fontSize: 14, fontWeight: 700, color: C.primary }}>TOTAL</span>
+                <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 14, fontWeight: 700, color: C.primary }}>{formatNumber(totalPrice)}원</span>
               </div>
             )}
 
@@ -1073,7 +1073,7 @@ export default function Home() {
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6, position: "relative" }}>
                 <button
                   onClick={() => setDiscountMenuOpen((v) => !v)}
-                  style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700 }}
+                  style={{ ...styles.btnGhost, fontSize: 11, padding: "4px 8px", color: C.primary, fontWeight: 700 }}
                 >
                   {discountPercent > 0 ? `할인적용 (${discountPercent}%)` : "할인적용"}
                 </button>
@@ -1103,7 +1103,7 @@ export default function Home() {
                         }}
                         style={{
                           padding: "4px 8px",
-                          fontSize: 10,
+                          fontSize: 11,
                           border: `1px solid ${C.border}`,
                           borderRadius: 8,
                           background: discountPercent === p ? C.primaryLt : "transparent",
@@ -1124,7 +1124,7 @@ export default function Home() {
                       }}
                       style={{
                         padding: "4px 8px",
-                        fontSize: 10,
+                        fontSize: 11,
                         border: `1px solid ${C.border}`,
                         borderRadius: 8,
                         background: "transparent",
@@ -1155,7 +1155,7 @@ export default function Home() {
                     background: "transparent",
                     border: `1px solid ${C.border}`,
                     borderRadius: 16,
-                    fontSize: 11,
+                    fontSize: 12,
                     color: C.sub,
                     cursor: "help",
                     fontWeight: 600,
@@ -1181,7 +1181,7 @@ export default function Home() {
                       border: `1px solid ${C.border}`,
                       borderRadius: 8,
                       padding: "6px 8px",
-                      fontSize: 11,
+                      fontSize: 12,
                       color: C.primary,
                       lineHeight: 1.4,
                       boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
@@ -1199,7 +1199,7 @@ export default function Home() {
                 onMouseLeave={() => setShowClearTip(false)}
               >
                 <button onClick={clearAllItems} disabled={selectedItems.length === 0}
-                  style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
+                  style={{ ...styles.btnGhost, fontSize: 11, padding: "4px 8px", color: C.primary, fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.1)", opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
                   CLEAR
                 </button>
                 {showClearTip && (
@@ -1214,7 +1214,7 @@ export default function Home() {
                       border: `1px solid ${C.border}`,
                       borderRadius: 8,
                       padding: "5px 8px",
-                      fontSize: 10,
+                      fontSize: 11,
                       color: C.primary,
                       lineHeight: 1.3,
                       boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
@@ -1247,7 +1247,7 @@ export default function Home() {
                 return (
                   <div key={label} style={{ flex: 1, display: "flex", alignItems: "center" }}>
                     {idx > 0 && <div style={{ width: "1px", height: "20px", background: "rgba(0,0,0,0.08)", opacity: checked ? 0 : 1, transition: "opacity 0.2s ease" }} />}
-                    <button onClick={toggle} style={{ flex: 1, padding: "0 18px", border: "none", borderRadius: checked ? 6 : 0, fontSize: 13, fontWeight: 600, cursor: "pointer", background: checked ? "#fff" : "transparent", color: checked ? C.primary : C.sub, transition: "all 0.2s ease", boxShadow: checked ? "0 2px 4px rgba(0,0,0,0.1)" : "none", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <button onClick={toggle} style={{ flex: 1, padding: "0 18px", border: "none", borderRadius: checked ? 6 : 0, fontSize: 14, fontWeight: 600, cursor: "pointer", background: checked ? "#fff" : "transparent", color: checked ? C.primary : C.sub, transition: "all 0.2s ease", boxShadow: checked ? "0 2px 4px rgba(0,0,0,0.1)" : "none", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {label}
                     </button>
                   </div>
@@ -1261,7 +1261,7 @@ export default function Home() {
                 {/* 담당자 + 멤버십 */}
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
-                    <span style={{ color: C.sub, fontSize: 13 }}>상담실장 :</span>
+                    <span style={{ color: C.sub, fontSize: 14 }}>상담실장 :</span>
                     <input
                       type="text"
                       value={staffName}
@@ -1274,17 +1274,17 @@ export default function Home() {
                         borderBottom: `1px solid ${C.border}`,
                         borderRadius: 0,
                         padding: "2px 0",
-                        fontSize: 13,
+                        fontSize: 14,
                         textAlign: "center",
                         outline: "none",
                         background: "transparent",
                         color: C.primary,
                       }}
                     />
-                    <span style={{ color: C.sub, fontSize: 13 }}>S</span>
+                    <span style={{ color: C.sub, fontSize: 14 }}>S</span>
                   </div>
                   {(["VIP", "쁘띠"] as const).map((t) => (
-                    <label key={t} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 13, cursor: "pointer", fontWeight: membershipType === t ? 700 : 400, color: membershipType === t ? C.primary : C.sub }}>
+                    <label key={t} style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 14, cursor: "pointer", fontWeight: membershipType === t ? 700 : 400, color: membershipType === t ? C.primary : C.sub }}>
                       <input type="checkbox" checked={membershipType === t} onChange={() => setMembershipType(t)} style={{ accentColor: C.primary }} />
                       {t}
                     </label>
@@ -1303,7 +1303,7 @@ export default function Home() {
                             onClick={() => setCreditInput(String(v * 10000))}
                             style={{
                               padding: "4px 10px",
-                              fontSize: 11,
+                              fontSize: 12,
                               flex: 1,
                               minWidth: 0,
                               whiteSpace: "nowrap",
@@ -1329,7 +1329,7 @@ export default function Home() {
                             onClick={() => setCreditInput(String(v * 10000))}
                             style={{
                               padding: "4px 10px",
-                              fontSize: 11,
+                              fontSize: 12,
                               flex: 1,
                               minWidth: 0,
                               whiteSpace: "nowrap",
@@ -1357,7 +1357,7 @@ export default function Home() {
                           onClick={() => setCreditInput(String(v * 10000))}
                           style={{
                             padding: "4px 10px",
-                            fontSize: 11,
+                            fontSize: 12,
                             flex: 1,
                             minWidth: 0,
                             whiteSpace: "nowrap",
@@ -1385,24 +1385,24 @@ export default function Home() {
                   <div key={label} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                     <span style={styles.label}>{label}</span>
                     <input type="text" value={val ? Number(val).toLocaleString() : ""} onChange={(e) => set(e.target.value.replace(/[^0-9]/g, ''))} style={styles.numInput} />
-                    <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
                   </div>
                 ))}
 
                 <div style={styles.divider} />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, textAlign: "right", minWidth: 88, flexShrink: 0 }}>− TOTAL</span>
-                  <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(discountedTotal)}</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: C.primary, textAlign: "right", minWidth: 88, flexShrink: 0 }}>− TOTAL</span>
+                  <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right", fontSize: 14, fontWeight: 700, color: C.primary }}>{formatNumber(discountedTotal)}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
                 </div>
 
                 {transferEnabled && (
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 13, fontWeight: 600, color: C.primary }}>양도</span>
+                      <span style={{ fontSize: 14, fontWeight: 600, color: C.primary }}>양도</span>
                       {transferRecipients.length < 5 && (
                         <button onClick={addTransferRecipient}
-                          style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700 }}>
+                          style={{ ...styles.btnGhost, fontSize: 11, padding: "4px 8px", color: C.primary, fontWeight: 700 }}>
                           양도차트 추가
                         </button>
                       )}
@@ -1410,13 +1410,13 @@ export default function Home() {
                     {transferRecipients.map((recipient) => (
                       <div key={recipient.id} style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                         <button onClick={() => setOpenTransferPanelId(recipient.id)}
-                          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, border: "none", background: "transparent", color: C.sub, fontWeight: 500, fontSize: 13, cursor: "pointer", padding: "4px 0", textDecoration: "underline", textDecorationColor: "rgba(0,0,0,0.1)" }}>
+                          style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 4, border: "none", background: "transparent", color: C.sub, fontWeight: 500, fontSize: 14, cursor: "pointer", padding: "4px 0", textDecoration: "underline", textDecorationColor: "rgba(0,0,0,0.1)" }}>
                           <span>{recipient.name || "OOO"}님께</span>
                           <span style={{ fontVariantNumeric: "tabular-nums" }}>{formatNumber(Number(recipient.amount) || 0)}원</span>
                           <span>양도함</span>
                         </button>
                         <button onClick={() => removeTransferRecipient(recipient.id)}
-                          style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 14 }}>×</button>
+                          style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 15 }}>×</button>
                       </div>
                     ))}
                   </div>
@@ -1424,9 +1424,9 @@ export default function Home() {
 
                 <div style={styles.dividerSolid} />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, textAlign: "right", minWidth: 88, flexShrink: 0 }}>잔액</span>
-                  <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right", fontSize: 13, fontWeight: 700, color: C.primary }}>{formatNumber(balance)}</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: C.primary, textAlign: "right", minWidth: 88, flexShrink: 0 }}>잔액</span>
+                  <span style={{ fontVariantNumeric: "tabular-nums", width: 120, textAlign: "right", fontSize: 14, fontWeight: 700, color: C.primary }}>{formatNumber(balance)}</span>
+                  <span style={{ fontSize: 14, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
                 </div>
               </div>
             )}
@@ -1443,8 +1443,8 @@ export default function Home() {
             onClick={(e) => e.stopPropagation()}
             style={{ width: "min(360px, 92vw)", background: C.surface, borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,0.35)", padding: 22 }}
           >
-            <p style={{ fontSize: 15, fontWeight: 700, color: C.primary, marginBottom: 6 }}>회원권 보유 고객(양도인)</p>
-            <p style={{ fontSize: 12, color: C.sub, marginBottom: 14, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 17, fontWeight: 700, color: C.primary, marginBottom: 6 }}>회원권 보유 고객(양도인)</p>
+            <p style={{ fontSize: 13, color: C.sub, marginBottom: 14, lineHeight: 1.5 }}>
               회원권을 보유한 고객(양도인) 이름과 생년월일(6자리)을 입력해주세요.
             </p>
             <input
@@ -1493,8 +1493,8 @@ export default function Home() {
               style={{ width: "min(1000px, 96vw)", overflowY: "auto", background: C.bg, borderRadius: 18, boxShadow: "0 24px 64px rgba(0,0,0,0.35)", padding: 24 }}
             >
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-                <span style={{ fontSize: 16, fontWeight: 700, color: C.primary }}>양도차트 {panelIndex + 1}</span>
-                <button onClick={() => setOpenTransferPanelId(null)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 22, lineHeight: 1 }}>×</button>
+                <span style={{ fontSize: 18, fontWeight: 700, color: C.primary }}>양도차트 {panelIndex + 1}</span>
+                <button onClick={() => setOpenTransferPanelId(null)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 24, lineHeight: 1 }}>×</button>
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1.2fr 1fr", gap: 16 }}>
@@ -1556,7 +1556,7 @@ export default function Home() {
                       style={{ flex: "0 0 116px", height: 36 }}
                     />
                     <button onClick={() => panelAddManualItem(panelRecipient.id)} disabled={!panelRecipient.panelManualName.trim() || !panelRecipient.panelManualPrice}
-                      style={{ ...styles.btnPrimary, height: 36, boxSizing: "border-box", padding: "0 8px", fontSize: 13, opacity: (!panelRecipient.panelManualName.trim() || !panelRecipient.panelManualPrice) ? 0.4 : 1, flexShrink: 0 }}>
+                      style={{ ...styles.btnPrimary, height: 36, boxSizing: "border-box", padding: "0 8px", fontSize: 14, opacity: (!panelRecipient.panelManualName.trim() || !panelRecipient.panelManualPrice) ? 0.4 : 1, flexShrink: 0 }}>
                       추가
                     </button>
                   </div>
@@ -1578,13 +1578,13 @@ export default function Home() {
                         {items.map((item) => (
                           <div key={item.id} style={styles.tableRow}>
                             <div style={{ width: 16, display: "flex", justifyContent: "center" }}>
-                              <button onClick={() => panelRemoveItem(panelRecipient.id, item.id)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 14, lineHeight: 1, padding: 0 }}>×</button>
+                              <button onClick={() => panelRemoveItem(panelRecipient.id, item.id)} style={{ background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 15, lineHeight: 1, padding: 0 }}>×</button>
                             </div>
                             <button
                               onClick={() => panelToggleDisplayed(panelRecipient.id, item.id)}
                               style={{
                                 width: 13, height: 13, borderRadius: "50%", border: `1px solid ${C.primary}`,
-                                background: "transparent", color: C.primary, fontSize: 9, fontWeight: "bold",
+                                background: "transparent", color: C.primary, fontSize: 10, fontWeight: "bold",
                                 cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
                               }}
                               aria-label="선택결과 표시"
@@ -1595,13 +1595,13 @@ export default function Home() {
                               value={item.name}
                               onChange={(v) => panelUpdateItemName(panelRecipient.id, item.id, v)}
                               className=""
-                              style={{ flex: 1, minWidth: 120, border: `1px solid transparent`, borderRadius: 6, padding: "2px 4px", background: "transparent", fontSize: 13, color: C.primary, lineHeight: 1.5 } as React.CSSProperties}
+                              style={{ flex: 1, minWidth: 120, border: `1px solid transparent`, borderRadius: 6, padding: "2px 4px", background: "transparent", fontSize: 14, color: C.primary, lineHeight: 1.5 } as React.CSSProperties}
                             />
-                            <span style={{ width: 60, textAlign: "center", fontVariantNumeric: "tabular-nums", color: C.primary, fontSize: 13 }}>{formatNumber(item.basePrice)}</span>
+                            <span style={{ width: 60, textAlign: "center", fontVariantNumeric: "tabular-nums", color: C.primary, fontSize: 14 }}>{formatNumber(item.basePrice)}</span>
                             <div style={{ width: 50, display: "flex", justifyContent: "center" }}>
                               <CountDial count={item.count} onChange={(count) => panelUpdateCount(panelRecipient.id, item.id, count)} />
                             </div>
-                            <span style={{ width: 80, textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 13 }}>{formatNumber(computeUnitPrice(item))}</span>
+                            <span style={{ width: 80, textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 14 }}>{formatNumber(computeUnitPrice(item))}</span>
                             <div style={{ width: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
                               <input
                                 type="checkbox"
@@ -1620,8 +1620,8 @@ export default function Home() {
                   {items.length > 0 && (
                     <>
                       <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, gap: 4 }}>
-                        <span style={{ fontSize: 13, fontWeight: 700, color: C.primary }}>TOTAL</span>
-                        <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 13, fontWeight: 700, color: C.primary }}>
+                        <span style={{ fontSize: 14, fontWeight: 700, color: C.primary }}>TOTAL</span>
+                        <span style={{ fontVariantNumeric: "tabular-nums", fontSize: 14, fontWeight: 700, color: C.primary }}>
                           {panelRecipient.panelDiscountPercent > 0
                             ? `${formatNumber(panelTotal)}원 → ${panelRecipient.panelDiscountPercent}% OFF ${formatNumber(Math.round(panelTotal * (1 - panelRecipient.panelDiscountPercent / 100)))}원`
                             : `${formatNumber(panelTotal)}원`}
@@ -1630,7 +1630,7 @@ export default function Home() {
                       <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 6, position: "relative" }}>
                         <button
                           onClick={() => setPanelDiscountMenuOpen((v) => !v)}
-                          style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700 }}
+                          style={{ ...styles.btnGhost, fontSize: 11, padding: "4px 8px", color: C.primary, fontWeight: 700 }}
                         >
                           {panelRecipient.panelDiscountPercent > 0 ? `할인적용 (${panelRecipient.panelDiscountPercent}%)` : "할인적용"}
                         </button>
@@ -1660,7 +1660,7 @@ export default function Home() {
                                 }}
                                 style={{
                                   padding: "4px 8px",
-                                  fontSize: 10,
+                                  fontSize: 11,
                                   border: `1px solid ${C.border}`,
                                   borderRadius: 8,
                                   background: panelRecipient.panelDiscountPercent === p ? C.primaryLt : "transparent",
@@ -1681,7 +1681,7 @@ export default function Home() {
                               }}
                               style={{
                                 padding: "4px 8px",
-                                fontSize: 10,
+                                fontSize: 11,
                                 border: `1px solid ${C.border}`,
                                 borderRadius: 8,
                                 background: "transparent",
@@ -1707,7 +1707,7 @@ export default function Home() {
                     <p style={{ ...styles.cardTitle, marginBottom: 0 }}>차트 생성</p>
                     <div style={{ display: "flex", gap: 6 }}>
                       <button onClick={() => panelClearChart(panelRecipient.id)}
-                        style={{ ...styles.btnGhost, fontSize: 10, padding: "4px 8px", color: C.primary, fontWeight: 700 }}>
+                        style={{ ...styles.btnGhost, fontSize: 11, padding: "4px 8px", color: C.primary, fontWeight: 700 }}>
                         CLEAR
                       </button>
                     </div>
@@ -1718,7 +1718,7 @@ export default function Home() {
                     style={{ ...styles.textarea, overflowY: "hidden", height: Math.max(160, panelRecipient.panelEditableText.split("\n").length * 24 + 50) }}
                   />
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 12 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: C.primary, flexShrink: 0, width: 50 }}>양도인 :</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: C.primary, flexShrink: 0, width: 50 }}>양도인 :</span>
                     <input
                       type="text"
                       value={giverName}
@@ -1728,7 +1728,7 @@ export default function Home() {
                     />
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 8 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: C.primary, flexShrink: 0, width: 50 }}>양수인 :</span>
+                    <span style={{ fontSize: 14, fontWeight: 600, color: C.primary, flexShrink: 0, width: 50 }}>양수인 :</span>
                     <input
                       type="text"
                       value={panelRecipient.name}

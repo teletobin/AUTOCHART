@@ -55,29 +55,29 @@ const styles: Record<string, React.CSSProperties> = {
   wrap:      { minHeight: "100vh", background: C.bg, color: C.primary, fontFamily: "Pretendard, -apple-system, sans-serif" },
   header:    { borderBottom: `1px solid ${C.border}`, background: C.surface, padding: "14px 28px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
   headerInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 28, paddingRight: 28, boxSizing: "border-box" },
-  title:     { fontSize: 17, fontWeight: 700, color: C.primary },
-  logo:      { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 17, color: C.primary },
-  backLink:  { fontSize: 12, color: C.sub, textDecoration: "none" },
+  title:     { fontSize: 19, fontWeight: 700, color: C.primary },
+  logo:      { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 19, color: C.primary },
+  backLink:  { fontSize: 13, color: C.sub, textDecoration: "none" },
   tabBar:    { borderBottom: `1px solid ${C.border}`, background: C.surface, width: "100%", position: "sticky" as const, top: "64px", zIndex: 50 },
   tabBarInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", gap: 4, padding: "0 28px", overflowX: "auto" as const, boxSizing: "border-box" },
   main:      { width: "100%", maxWidth: "none", margin: "0", padding: "24px 28px", boxSizing: "border-box" },
   card:      { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px" },
-  cardTitle: { fontSize: 14, fontWeight: 700, color: C.primary, marginBottom: 6, letterSpacing: "0.04em" },
-  cardHint:  { fontSize: 13, color: C.primary, marginBottom: 14, lineHeight: 1.6 },
-  input:     { flex: 1, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
-  btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "9px 16px", fontSize: 13, fontWeight: 700, cursor: "pointer", flexShrink: 0 },
-  btnGhost: { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 12, fontWeight: 600, cursor: "pointer" },
-  row:       { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, border: `1px solid ${C.borderSoft}`, borderRadius: 8, padding: "9px 12px", fontSize: 13 },
-  rowEdit:   { display: "flex", alignItems: "center", gap: 8, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 13 },
-  linkBtn:   { background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 12, padding: 0 },
+  cardTitle: { fontSize: 15, fontWeight: 700, color: C.primary, marginBottom: 6, letterSpacing: "0.04em" },
+  cardHint:  { fontSize: 14, color: C.primary, marginBottom: 14, lineHeight: 1.6 },
+  input:     { flex: 1, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 14, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
+  btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "9px 16px", fontSize: 14, fontWeight: 700, cursor: "pointer", flexShrink: 0 },
+  btnGhost: { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
+  row:       { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, border: `1px solid ${C.borderSoft}`, borderRadius: 8, padding: "9px 12px", fontSize: 14 },
+  rowEdit:   { display: "flex", alignItems: "center", gap: 8, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 14 },
+  linkBtn:   { background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 13, padding: 0 },
   list:      { display: "flex", flexDirection: "column" as const, gap: 6, maxHeight: "60vh", overflowY: "auto" as const },
-  empty:     { fontSize: 12, color: C.sub },
+  empty:     { fontSize: 13, color: C.sub },
 };
 
 function tabButtonStyle(active: boolean): React.CSSProperties {
   return {
     padding: "10px 14px",
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 600,
     color: active ? C.primary : C.sub,
     background: "none",
@@ -570,13 +570,13 @@ export default function RulesPage() {
         >
           {applying ? "적용 중..." : "전지점 데이터에 적용"}
         </button>
-        {applyResult && <span style={{ fontSize: 13, color: C.primary }}>업데이트: {applyResult.updated}건</span>}
+        {applyResult && <span style={{ fontSize: 14, color: C.primary }}>업데이트: {applyResult.updated}건</span>}
       </div>
 
-      {applyError && <p style={{ marginTop: 10, fontSize: 13, color: C.danger }}>에러: {applyError}</p>}
+      {applyError && <p style={{ marginTop: 10, fontSize: 14, color: C.danger }}>에러: {applyError}</p>}
 
       {applyResult && applyResult.errors.length > 0 && (
-        <p style={{ marginTop: 10, fontSize: 13, color: C.danger }}>에러: {applyResult.errors.length}건</p>
+        <p style={{ marginTop: 10, fontSize: 14, color: C.danger }}>에러: {applyResult.errors.length}건</p>
       )}
     </div>
   );
@@ -591,13 +591,13 @@ export default function RulesPage() {
         >
           {branchApplying ? "적용 중..." : `${branch || "지점"} 데이터에 적용`}
         </button>
-        {branchApplyResult && <span style={{ fontSize: 13, color: C.primary }}>업데이트: {branchApplyResult.updated}건</span>}
+        {branchApplyResult && <span style={{ fontSize: 14, color: C.primary }}>업데이트: {branchApplyResult.updated}건</span>}
       </div>
 
-      {branchApplyError && <p style={{ marginTop: 10, fontSize: 13, color: C.danger }}>에러: {branchApplyError}</p>}
+      {branchApplyError && <p style={{ marginTop: 10, fontSize: 14, color: C.danger }}>에러: {branchApplyError}</p>}
 
       {branchApplyResult && branchApplyResult.errors.length > 0 && (
-        <p style={{ marginTop: 10, fontSize: 13, color: C.danger }}>에러: {branchApplyResult.errors.length}건</p>
+        <p style={{ marginTop: 10, fontSize: 14, color: C.danger }}>에러: {branchApplyResult.errors.length}건</p>
       )}
     </div>
   );
@@ -611,14 +611,14 @@ export default function RulesPage() {
               <img src="/logo.png" alt="차팅 서포트" style={{ height: 36, width: "auto" }} />
               <span style={{ fontWeight: 700 }}>차팅 서포트</span>
             </Link>
-            <span style={{ color: C.sub, fontWeight: 400, fontSize: 16.5 }}>&gt;</span>
-            <span style={{ fontWeight: 500, color: C.sub, fontSize: 16.5 }}>상세설정</span>
+            <span style={{ color: C.sub, fontWeight: 400, fontSize: 18.5 }}>&gt;</span>
+            <span style={{ fontWeight: 500, color: C.sub, fontSize: 18.5 }}>상세설정</span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <BranchPicker key={`${branch}-${branchPickerResetKey}`} value={branch} onChange={handleBranchChange} />
             <Link
               href="/"
-              style={{ ...styles.btnGhost, fontSize: 11, padding: "6px 10px", textDecoration: "none", display: "inline-block" }}
+              style={{ ...styles.btnGhost, fontSize: 12, padding: "6px 10px", textDecoration: "none", display: "inline-block" }}
             >
               메인으로
             </Link>
@@ -654,7 +654,7 @@ export default function RulesPage() {
           >
             {branchSwitch.phase === "confirm" && (
               <>
-                <p style={{ fontSize: 14, color: C.primary, marginBottom: 14 }}>
+                <p style={{ fontSize: 15, color: C.primary, marginBottom: 14 }}>
                   지점을 {branchSwitch.target}으로 변경할까요?
                 </p>
                 <div style={{ display: "flex", justifyContent: "center", gap: 8 }}>
@@ -664,12 +664,12 @@ export default function RulesPage() {
               </>
             )}
             {branchSwitch.phase === "loading" && (
-              <p style={{ fontSize: 14, color: C.primary }}>
+              <p style={{ fontSize: 15, color: C.primary }}>
                 {branchSwitch.target} 시술을 불러오는 중입니다...
               </p>
             )}
             {branchSwitch.phase === "done" && (
-              <p style={{ fontSize: 14, color: C.primary }}>
+              <p style={{ fontSize: 15, color: C.primary }}>
                 연동이 완료되었습니다.
               </p>
             )}
@@ -679,14 +679,14 @@ export default function RulesPage() {
 
       {loadError && (
         <div style={{ maxWidth: MAX_WIDTH, margin: "0 auto", padding: "16px 20px 0" }}>
-          <p style={{ fontSize: 13, color: C.danger }}>에러: {loadError}</p>
+          <p style={{ fontSize: 14, color: C.danger }}>에러: {loadError}</p>
           {tableMissing && (
             <div style={{ marginTop: 8, borderRadius: 10, border: `1px solid ${C.danger}`, background: "#fdf1ef", padding: 12 }}>
-              <p style={{ fontSize: 13, color: C.danger }}>
+              <p style={{ fontSize: 14, color: C.danger }}>
                 cleanup_rules 테이블이 아직 없습니다. Supabase 대시보드 → SQL Editor에서
                 아래 SQL을 한 번 실행한 뒤 이 페이지를 새로고침하세요.
               </p>
-              <pre style={{ marginTop: 8, overflowX: "auto", borderRadius: 8, background: "#fff", padding: 8, fontSize: 11, color: C.primary }}>
+              <pre style={{ marginTop: 8, overflowX: "auto", borderRadius: 8, background: "#fff", padding: 8, fontSize: 12, color: C.primary }}>
                 {SETUP_SQL}
               </pre>
             </div>
@@ -720,7 +720,7 @@ export default function RulesPage() {
                 value={excludeSearch}
                 onChange={(e) => setExcludeSearch(e.target.value)}
                 placeholder="검색..."
-                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 12, padding: "6px 10px" }}
+                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 13, padding: "6px 10px" }}
               />
             </div>
             <p style={styles.cardHint}>
@@ -800,7 +800,7 @@ export default function RulesPage() {
                 value={aliasSearch}
                 onChange={(e) => setAliasSearch(e.target.value)}
                 placeholder="검색..."
-                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 12, padding: "6px 10px" }}
+                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 13, padding: "6px 10px" }}
               />
             </div>
             <p style={styles.cardHint}>
@@ -822,7 +822,7 @@ export default function RulesPage() {
               </span>
             </p>
 
-            {aliasError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {aliasError}</p>}
+            {aliasError && <p style={{ marginBottom: 8, fontSize: 14, color: C.danger }}>에러: {aliasError}</p>}
 
             <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
               <input
@@ -895,7 +895,7 @@ export default function RulesPage() {
                 value={branchRulesSearch}
                 onChange={(e) => setBranchRulesSearch(e.target.value)}
                 placeholder="검색..."
-                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 12, padding: "6px 10px" }}
+                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 13, padding: "6px 10px" }}
               />
             </div>
             <p style={styles.cardHint}>
@@ -914,11 +914,11 @@ export default function RulesPage() {
 
             {branchApplySection}
 
-            {!branch && <p style={{ marginBottom: 8, fontSize: 13, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
-            {loadError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {loadError}</p>}
+            {!branch && <p style={{ marginBottom: 8, fontSize: 14, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
+            {loadError && <p style={{ marginBottom: 8, fontSize: 14, color: C.danger }}>에러: {loadError}</p>}
 
             <div style={{ display: "flex", flexDirection: "column" as const, gap: 8 }}>
-              <div style={{ display: "flex", gap: 8, fontSize: 14, color: C.primary, fontWeight: 400 }}>
+              <div style={{ display: "flex", gap: 8, fontSize: 15, color: C.primary, fontWeight: 400 }}>
                 <div style={{ flex: 1, textAlign: "center" as const }}>홈페이지 시술명</div>
                 <div style={{ flexShrink: 0, width: 24 }} />
                 <div style={{ flex: 1, textAlign: "center" as const }}>차팅용(검색용)명칭</div>
@@ -1001,7 +1001,7 @@ export default function RulesPage() {
                 value={manualSearch}
                 onChange={(e) => setManualSearch(e.target.value)}
                 placeholder="검색..."
-                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 12, padding: "6px 10px" }}
+                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 13, padding: "6px 10px" }}
               />
             </div>
             <p style={styles.cardHint}>
@@ -1010,8 +1010,8 @@ export default function RulesPage() {
               (예: 서브시전 얼굴전체 150,000원)
             </p>
 
-            {!branch && <p style={{ marginBottom: 8, fontSize: 13, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
-            {manualError && <p style={{ marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {manualError}</p>}
+            {!branch && <p style={{ marginBottom: 8, fontSize: 14, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
+            {manualError && <p style={{ marginBottom: 8, fontSize: 14, color: C.danger }}>에러: {manualError}</p>}
 
             <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
               <input
@@ -1076,7 +1076,7 @@ export default function RulesPage() {
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{t.name}</span>
                     <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
                       {t.category && (
-                        <span style={{ fontSize: 11, fontWeight: 600, color: C.sub, background: C.primaryLt, borderRadius: 6, padding: "2px 8px", whiteSpace: "nowrap" }}>{t.category}</span>
+                        <span style={{ fontSize: 12, fontWeight: 600, color: C.sub, background: C.primaryLt, borderRadius: 6, padding: "2px 8px", whiteSpace: "nowrap" }}>{t.category}</span>
                       )}
                       <span style={{ fontVariantNumeric: "tabular-nums", color: C.primary }}>{formatNumber(t.price)}원</span>
                       <button onClick={() => startEditManual(t)} style={styles.linkBtn}>수정</button>
@@ -1096,7 +1096,7 @@ export default function RulesPage() {
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <p style={styles.cardTitle}>시술별 카테고리</p>
                   {categoryTreatments.filter(t => !t.category).length > 0 && (
-                    <p style={{ fontSize: 12, color: C.danger, margin: 0 }}>
+                    <p style={{ fontSize: 13, color: C.danger, margin: 0 }}>
                       (미분류 시술: {categoryTreatments.filter(t => !t.category).length}건 있습니다. 카테고리를 지정해주세요)
                     </p>
                   )}
@@ -1121,13 +1121,13 @@ export default function RulesPage() {
               </div>
             </div>
 
-            {!branch && <p style={{ marginTop: 8, fontSize: 13, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
+            {!branch && <p style={{ marginTop: 8, fontSize: 14, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
 
-            {syncError && <p style={{ marginTop: 8, fontSize: 13, color: C.danger }}>연동 에러: {syncError}</p>}
-            {syncResult && <p style={{ marginTop: 8, fontSize: 12, color: C.sub }}>연동 완료: {syncResult.scraped}건 수집, {syncResult.saved}건 저장</p>}
-            {resetError && <p style={{ marginTop: 8, fontSize: 13, color: C.danger }}>리셋 에러: {resetError}</p>}
+            {syncError && <p style={{ marginTop: 8, fontSize: 14, color: C.danger }}>연동 에러: {syncError}</p>}
+            {syncResult && <p style={{ marginTop: 8, fontSize: 13, color: C.sub }}>연동 완료: {syncResult.scraped}건 수집, {syncResult.saved}건 저장</p>}
+            {resetError && <p style={{ marginTop: 8, fontSize: 14, color: C.danger }}>리셋 에러: {resetError}</p>}
 
-            {categoryError && <p style={{ marginTop: 8, marginBottom: 8, fontSize: 13, color: C.danger }}>에러: {categoryError}</p>}
+            {categoryError && <p style={{ marginTop: 8, marginBottom: 8, fontSize: 14, color: C.danger }}>에러: {categoryError}</p>}
 
             <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
               <input
@@ -1154,12 +1154,12 @@ export default function RulesPage() {
             </div>
 
             <div style={{ marginTop: 14, marginBottom: 16 }}>
-              <p style={{ fontSize: 12, fontWeight: 700, color: C.primary, marginBottom: 10 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: C.primary, marginBottom: 10 }}>
                 미분류 시술 ({categoryTreatments.filter(t => !t.category).length})
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: "50vh", overflowY: "auto" }}>
                 {categoryTreatments.filter(t => !t.category).length === 0 ? (
-                  <p style={{ fontSize: 11, color: C.sub }}>없음</p>
+                  <p style={{ fontSize: 12, color: C.sub }}>없음</p>
                 ) : (
                   categoryTreatments
                     .filter((t) => {
@@ -1172,7 +1172,7 @@ export default function RulesPage() {
                     .map((t) => (
                       <label
                         key={t.id}
-                        style={{ display: "flex", gap: 6, alignItems: "flex-start", border: `1px dashed ${C.sub}`, borderRadius: 6, padding: "6px 8px", fontSize: 11, lineHeight: 1.3, cursor: "pointer", background: "#fdfcfb" }}
+                        style={{ display: "flex", gap: 6, alignItems: "flex-start", border: `1px dashed ${C.sub}`, borderRadius: 6, padding: "6px 8px", fontSize: 12, lineHeight: 1.3, cursor: "pointer", background: "#fdfcfb" }}
                       >
                         <input
                           type="checkbox"
@@ -1187,7 +1187,7 @@ export default function RulesPage() {
                         />
                         <span style={{ flex: 1, wordBreak: "break-word" as const, minWidth: 0 }}>
                           <span style={{ display: "block", color: C.primary }}>{t.name}</span>
-                          <span style={{ display: "block", color: C.sub, fontVariantNumeric: "tabular-nums", fontSize: 10 }}>{formatNumber(t.price)}원</span>
+                          <span style={{ display: "block", color: C.sub, fontVariantNumeric: "tabular-nums", fontSize: 11 }}>{formatNumber(t.price)}원</span>
                         </span>
                       </label>
                     ))
@@ -1217,15 +1217,15 @@ export default function RulesPage() {
                       overflow: "hidden",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, padding: "10px 12px", borderBottom: `1px solid ${C.border}`, fontSize: 12, fontWeight: 700, color: C.primary, whiteSpace: "nowrap" }}>
-                      <span>{cat} <span style={{ fontWeight: 400, color: C.sub, fontSize: 11 }}>({items.length})</span></span>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, padding: "10px 12px", borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 700, color: C.primary, whiteSpace: "nowrap" }}>
+                      <span>{cat} <span style={{ fontWeight: 400, color: C.sub, fontSize: 12 }}>({items.length})</span></span>
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: 8, maxHeight: "70vh", overflowY: "auto" }}>
-                      {items.length === 0 && <p style={{ fontSize: 11, color: C.sub, padding: "4px 0" }}>없음</p>}
+                      {items.length === 0 && <p style={{ fontSize: 12, color: C.sub, padding: "4px 0" }}>없음</p>}
                       {items.map((t) => (
                         <label
                           key={t.id}
-                          style={{ display: "flex", gap: 6, alignItems: "flex-start", border: `1px solid ${C.borderSoft}`, borderRadius: 6, padding: "6px 8px", fontSize: 11, lineHeight: 1.3, cursor: "pointer", background: "#fafafa" }}
+                          style={{ display: "flex", gap: 6, alignItems: "flex-start", border: `1px solid ${C.borderSoft}`, borderRadius: 6, padding: "6px 8px", fontSize: 12, lineHeight: 1.3, cursor: "pointer", background: "#fafafa" }}
                         >
                           <input
                             type="checkbox"
@@ -1240,7 +1240,7 @@ export default function RulesPage() {
                           />
                           <span style={{ flex: 1, wordBreak: "break-word" as const, minWidth: 0 }}>
                             <span style={{ display: "block", color: C.primary }}>{t.name}</span>
-                            <span style={{ display: "block", color: C.sub, fontVariantNumeric: "tabular-nums", fontSize: 10 }}>{formatNumber(t.price)}원</span>
+                            <span style={{ display: "block", color: C.sub, fontVariantNumeric: "tabular-nums", fontSize: 11 }}>{formatNumber(t.price)}원</span>
                           </span>
                         </label>
                       ))}
@@ -1281,7 +1281,7 @@ export default function RulesPage() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <p style={{ fontSize: 13.5, lineHeight: 1.6, color: C.primary, marginBottom: 18, whiteSpace: "pre-line" }}>
+            <p style={{ fontSize: 14.5, lineHeight: 1.6, color: C.primary, marginBottom: 18, whiteSpace: "pre-line" }}>
               {confirmModal.message}
             </p>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
