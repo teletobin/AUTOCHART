@@ -732,7 +732,7 @@ export default function RulesPage() {
                   <line x1="12" y1="10" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                   <circle cx="12" cy="18" r="1.1" fill="currentColor" />
                 </svg>
-                전 지점 데이터에 적용되므로 수정하거나 삭제하지 마세요
+                전 지점 데이터에 적용되므로 신중한 추가/수정/삭제가 필요합니다.
               </span>
             </p>
 
