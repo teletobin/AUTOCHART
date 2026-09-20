@@ -917,8 +917,8 @@ export default function RulesPage() {
             {!branch && <p style={{ marginBottom: 8, fontSize: 14, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
             {loadError && <p style={{ marginBottom: 8, fontSize: 14, color: C.danger }}>에러: {loadError}</p>}
 
-            <div style={{ display: "flex", flexDirection: "column" as const, gap: 8 }}>
-              <div style={{ display: "flex", gap: 8, fontSize: 15, color: C.primary, fontWeight: 400 }}>
+            <div style={{ display: "flex", flexDirection: "column" as const, gap: 6 }}>
+              <div style={{ display: "flex", gap: 8, fontSize: 13, color: C.sub, fontWeight: 500 }}>
                 <div style={{ flex: 1, textAlign: "center" as const }}>홈페이지 시술명</div>
                 <div style={{ flexShrink: 0, width: 24 }} />
                 <div style={{ flex: 1, textAlign: "center" as const }}>차팅용(검색용)명칭</div>
@@ -931,7 +931,7 @@ export default function RulesPage() {
                   onChange={(e) => setNewBranchFind(e.target.value)}
                   placeholder="예) 독일 고순도"
                   disabled={!branch}
-                  style={{ ...styles.input, flex: 1 }}
+                  style={{ ...styles.input, flex: 1, height: 34, padding: "6px 10px", fontSize: 13 }}
                 />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "center", color: C.sub, flexShrink: 0, width: 24 }}>→</div>
                 <input
@@ -940,7 +940,7 @@ export default function RulesPage() {
                   onChange={(e) => setNewBranchReplacement(e.target.value)}
                   placeholder="예) 제오민"
                   disabled={!branch}
-                  style={{ ...styles.input, flex: 1 }}
+                  style={{ ...styles.input, flex: 1, height: 34, padding: "6px 10px", fontSize: 13 }}
                 />
                 <button
                   onClick={() => {
@@ -1108,13 +1108,13 @@ export default function RulesPage() {
                 </p>
               </div>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                <button onClick={handleSync} disabled={syncing || !branch} style={{ ...styles.btnPrimary, boxShadow: "0 2px 6px rgba(0,0,0,0.12)", opacity: syncing || !branch ? 0.6 : 1 }}>
+                <button onClick={handleSync} disabled={syncing || !branch} style={{ ...styles.btnPrimary, padding: "10px 18px", fontSize: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.12)", opacity: syncing || !branch ? 0.6 : 1 }}>
                   {syncing ? "연동 중..." : "홈페이지 연동"}
                 </button>
                 <button
                   onClick={handleReset}
                   disabled={resetting || !branch}
-                  style={{ ...styles.btnPrimary, background: C.danger, boxShadow: "0 2px 6px rgba(0,0,0,0.12)", opacity: resetting || !branch ? 0.6 : 1 }}
+                  style={{ ...styles.btnPrimary, background: C.danger, padding: "10px 18px", fontSize: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.12)", opacity: resetting || !branch ? 0.6 : 1 }}
                 >
                   {resetting ? "삭제 중..." : "데이터 리셋"}
                 </button>
