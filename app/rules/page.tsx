@@ -176,15 +176,15 @@ export default function RulesPage() {
   function InlineConfirm({ scope, id, onConfirm }: { scope: "exclude" | "alias"; id: string; onConfirm: () => void }) {
     if (pendingRowAction?.scope !== scope || pendingRowAction.id !== id) return null;
     return (
-      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.primary, whiteSpace: "nowrap" }}>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.danger, whiteSpace: "nowrap" }}>
         {pendingRowAction.type === "edit" ? "수정할까요?" : "삭제할까요?"}
         <button
           onClick={() => { onConfirm(); setPendingRowAction(null); }}
-          style={{ ...styles.linkBtn, color: pendingRowAction.type === "delete" ? C.danger : C.primary, fontWeight: 700 }}
+          style={{ ...styles.linkBtn, fontSize: 12, color: C.danger, fontWeight: 700 }}
         >
-          예
+          YES
         </button>
-        <button onClick={() => setPendingRowAction(null)} style={styles.linkBtn}>아니오</button>
+        <button onClick={() => setPendingRowAction(null)} style={{ ...styles.linkBtn, fontSize: 12, color: C.danger }}>NO</button>
       </span>
     );
   }
