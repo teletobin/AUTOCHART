@@ -170,6 +170,25 @@ export default function RulesPage() {
   const [newBranchFind, setNewBranchFind] = useState("");
   const [newBranchReplacement, setNewBranchReplacement] = useState("");
 
+  // 시술명 정리/검색어 매칭 탭에서 수정·삭제 버튼을 누르면 바로 실행하지 않고,
+  // 그 줄 안에서 "수정할까요?/삭제할까요?"를 인라인으로 먼저 확인받는다.
+  const [pendingRowAction, setPendingRowAction] = useState<{ scope: "exclude" | "alias"; id: string; type: "edit" | "delete" } | null>(null);
+  function InlineConfirm({ scope, id, onConfirm }: { scope: "exclude" | "alias"; id: string; onConfirm: () => void }) {
+    if (pendingRowAction?.scope !== scope || pendingRowAction.id !== id) return null;
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.primary, whiteSpace: "nowrap" }}>
+        {pendingRowAction.type === "edit" ? "수정할까요?" : "삭제할까요?"}
+        <button
+          onClick={() => { onConfirm(); setPendingRowAction(null); }}
+          style={{ ...styles.linkBtn, color: pendingRowAction.type === "delete" ? C.danger : C.primary, fontWeight: 700 }}
+        >
+          예
+        </button>
+        <button onClick={() => setPendingRowAction(null)} style={styles.linkBtn}>아니오</button>
+      </span>
+    );
+  }
+
   // 수정/삭제 성공 시 카드 타이틀 옆에 잠깐 보여주는 인라인 완료 메시지.
   const [rowToast, setRowToast] = useState<string | null>(null);
   function showRowToast(message: string) {
@@ -777,7 +796,7 @@ export default function RulesPage() {
                   <line x1="12" y1="10" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                   <circle cx="12" cy="18" r="1.1" fill="currentColor" />
                 </svg>
-                전 지점 데이터에 적용되므로 신중한 추가/수정/삭제가 필요합니다.
+                모든 지점의 검색 결과에 적용되므로 신중한 추가/수정/삭제가 필요합니다.
               </span>
             </p>
 
@@ -826,8 +845,18 @@ export default function RulesPage() {
                   <div key={r.id} style={styles.row}>
                     <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{r.pattern}</span>
                     <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
-                      <button onClick={() => startEditRule(r)} style={styles.linkBtn}>수정</button>
-                      <button onClick={() => deleteRule(r.id)} style={styles.linkBtn}>삭제</button>
+                      {pendingRowAction?.scope === "exclude" && pendingRowAction.id === r.id ? (
+                        <InlineConfirm
+                          scope="exclude"
+                          id={r.id}
+                          onConfirm={() => (pendingRowAction.type === "edit" ? startEditRule(r) : deleteRule(r.id))}
+                        />
+                      ) : (
+                        <>
+                          <button onClick={() => setPendingRowAction({ scope: "exclude", id: r.id, type: "edit" })} style={styles.linkBtn}>수정</button>
+                          <button onClick={() => setPendingRowAction({ scope: "exclude", id: r.id, type: "delete" })} style={styles.linkBtn}>삭제</button>
+                        </>
+                      )}
                     </div>
                   </div>
                 )
@@ -918,8 +947,18 @@ export default function RulesPage() {
                       {a.alias} → {a.keyword}
                     </span>
                     <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
-                      <button onClick={() => startEditAlias(a)} style={styles.linkBtn}>수정</button>
-                      <button onClick={() => deleteAlias(a.id)} style={styles.linkBtn}>삭제</button>
+                      {pendingRowAction?.scope === "alias" && pendingRowAction.id === a.id ? (
+                        <InlineConfirm
+                          scope="alias"
+                          id={a.id}
+                          onConfirm={() => (pendingRowAction.type === "edit" ? startEditAlias(a) : deleteAlias(a.id))}
+                        />
+                      ) : (
+                        <>
+                          <button onClick={() => setPendingRowAction({ scope: "alias", id: a.id, type: "edit" })} style={styles.linkBtn}>수정</button>
+                          <button onClick={() => setPendingRowAction({ scope: "alias", id: a.id, type: "delete" })} style={styles.linkBtn}>삭제</button>
+                        </>
+                      )}
                     </div>
                   </div>
                 )
