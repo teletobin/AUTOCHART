@@ -744,10 +744,10 @@ export default function RulesPage() {
               <img src="/logo.png" alt="차팅 서포트" style={{ height: 36, width: "auto" }} />
               <span style={{ fontWeight: 700 }}>차팅 서포트</span>
             </Link>
-            <span style={{ color: C.sub, fontWeight: 400, fontSize: 18.5 }}>&gt;</span>
-            <span style={{ fontWeight: 500, color: C.sub, fontSize: 18.5 }}>상세설정</span>
-            <span style={{ color: C.sub, fontWeight: 400, fontSize: 18.5 }}>&gt;</span>
-            <span style={{ fontWeight: 700, color: C.primary, fontSize: 18.5 }}>
+            <span style={{ color: "rgba(111,104,100,0.45)", fontWeight: 400, fontSize: 18.5 }}>&gt;</span>
+            <span style={{ fontWeight: 500, color: "rgba(111,104,100,0.7)", fontSize: 18.5 }}>상세설정</span>
+            <span style={{ color: "rgba(111,104,100,0.45)", fontWeight: 400, fontSize: 18.5 }}>&gt;</span>
+            <span style={{ fontWeight: 500, color: "rgba(111,104,100,0.45)", fontSize: 18.5 }}>
               {[...MAIN_TABS, ...COMMON_TABS].find((t) => t.key === tab)?.label}
             </span>
           </div>
