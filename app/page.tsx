@@ -10,7 +10,7 @@ import { CATEGORY_ORDER } from "@/lib/categoryDetection";
 import { C, MAX_WIDTH } from "@/lib/theme";
 import { BRANCH_STORAGE_KEY } from "@/lib/branches";
 import { mergeGeneratedText } from "@/lib/mergeText";
-import { findCcCombos, formatComboLabel, mergedComboName, sameTreatmentFamily, type CcCombo } from "@/lib/ccCombo";
+import { findCcCombos, formatComboLabel, mergedComboName, deriveBaseName, type CcCombo } from "@/lib/ccCombo";
 import BranchPicker from "@/components/BranchPicker";
 import Dropdown from "@/components/Dropdown";
 
@@ -309,11 +309,11 @@ export default function Home() {
     // 밀려 조합 후보에서 아예 빠질 수 있어, 넉넉히 크게 가져온다.
     const matched = matcher(boosterRequest.baseQuery, 200);
     if (matched.length === 0) return [];
-    // section이 아니라 "진짜 시술명"(cc/한정가·체험가/회차 뗀 이름)으로 묶는다.
-    // 한정가/체험가 프로모션은 "메가세일 OO 1cc 체험가"처럼 배지가 이름 앞에 붙어
-    // section도 다르고 문자열도 완전히 같지 않은 경우가 많아, 접미사 비교로 묶는다.
+    // 정규화된 이름(cc/한정가·체험가/회차 제거)이 정확하게 같은 시술만 조합한다.
+    // 예: "리쥬란힐러 4cc" 검색 시 "아이리쥬란힐러", "리쥬란HB플러스" 등은 제외.
     const anchorName = matched[0].name;
-    const sameFamily = matched.filter((t) => sameTreatmentFamily(t.name, anchorName));
+    const anchorBaseName = deriveBaseName(anchorName);
+    const sameFamily = matched.filter((t) => deriveBaseName(t.name) === anchorBaseName);
     return findCcCombos(boosterRequest.target, sameFamily, 15);
   }, [boosterRequest, matcher]);
   function selectBoosterCombo(combo: CcCombo) {
