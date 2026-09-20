@@ -65,7 +65,7 @@ const styles: Record<string, React.CSSProperties> = {
   cardTitle: { fontSize: 18, fontWeight: 700, color: C.primary, marginBottom: 6, letterSpacing: "0.04em" },
   cardHint:  { fontSize: 14, color: C.primary, marginBottom: 14, lineHeight: 1.6 },
   input:     { flex: 1, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 14, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
-  btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 7, padding: "6px 12px", fontSize: 12, fontWeight: 700, cursor: "pointer", flexShrink: 0 },
+  btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 7, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0 },
   btnGhost: { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
   row:       { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, border: `1px solid ${C.borderSoft}`, borderRadius: 8, padding: "9px 12px", fontSize: 14 },
   rowEdit:   { display: "flex", alignItems: "center", gap: 8, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 14 },
