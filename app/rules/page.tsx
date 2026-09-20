@@ -899,13 +899,17 @@ export default function RulesPage() {
               />
             </div>
             <p style={styles.cardHint}>
-              {branch || "우리 지점"}에서만 사용하는 시술명 치환 규칙을 등록해주세요.
+              {branch || "우리 지점"}만의 시술명 치환 규칙을 등록해 주세요.
+              <br />
+              <span style={{ color: C.danger }}>*규칙을 등록한 다음 "{branch || "우리 지점"} 데이터에 적용" 버튼을 꼭 눌러 주세요.</span>
               <br />
               예1) 국산 고순도 → 코어
               <br />
               예2) 저통증 멀티석션 인젝터 → 하이쿡스
               <br />
               예3) 이중턱 개선 주사 → 브이올렛
+              <br />
+              예4) 물방울 리프팅 → LDM
             </p>
 
             {branchApplySection}
