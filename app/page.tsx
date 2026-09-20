@@ -212,6 +212,7 @@ export default function Home() {
   const [showChartTip, setShowChartTip] = useState(false);
   const [showClearTip, setShowClearTip] = useState(false);
   const [showBoosterTip, setShowBoosterTip] = useState(false);
+  const [showTransferTip, setShowTransferTip] = useState(false);
   const [panelDiscountMenuOpen, setPanelDiscountMenuOpen] = useState(false);
 
   // 지점 변경 확인/진행 상태 팝업. confirm(변경할지 물어보는 중) -> loading(불러오는 중)
@@ -1168,7 +1169,7 @@ export default function Home() {
                       whiteSpace: "pre-line",
                     }}
                   >
-                    {"시술을 검색하거나 직접 추가한 다음\n부위, 총 용량, 고객 요청 등을 추가 수정할 수 있습니다."}
+                    {"1. 고객 요청사항, 용량, 시술 부위 등을 자유롭게 수정할 수 있습니다.\n2. 회원권 영역에 입력한 금액으로 자동 계산됩니다."}
                   </div>
                 )}
               </div>
@@ -1216,11 +1217,31 @@ export default function Home() {
                 const checked = label === "회원권" ? includeHeader : transferEnabled;
                 const toggle = label === "회원권" ? () => setIncludeHeader((v) => !v) : handleToggleTransfer;
                 return (
-                  <div key={label} style={{ flex: 1, display: "flex", alignItems: "center" }}>
+                  <div
+                    key={label}
+                    style={{ flex: 1, display: "flex", alignItems: "center", position: "relative" }}
+                    onMouseEnter={label === "양도" ? () => setShowTransferTip(true) : undefined}
+                    onMouseLeave={label === "양도" ? () => setShowTransferTip(false) : undefined}
+                  >
                     {idx > 0 && <div style={{ width: "1px", height: "20px", background: "rgba(0,0,0,0.08)", opacity: checked ? 0 : 1, transition: "opacity 0.2s ease" }} />}
                     <button onClick={toggle} style={{ flex: 1, padding: "0 18px", border: "none", borderRadius: checked ? 6 : 0, fontSize: 14, fontWeight: 600, cursor: "pointer", background: checked ? "#fff" : "transparent", color: checked ? C.primary : C.sub, transition: "all 0.2s ease", boxShadow: checked ? "0 2px 4px rgba(0,0,0,0.1)" : "none", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {label}
                     </button>
+                    {label === "양도" && showTransferTip && (
+                      <div
+                        style={{
+                          ...styles.tooltip,
+                          position: "absolute",
+                          bottom: "100%",
+                          right: 0,
+                          marginBottom: 6,
+                          width: "max-content",
+                          whiteSpace: "pre-line",
+                        }}
+                      >
+                        {"회원권을 같이 사용하는 동반 상담 시 유용한 기능입니다.\n양도받는 고객의 총 금액이 자동 계산됩니다."}
+                      </div>
+                    )}
                   </div>
                 );
               })}
