@@ -82,7 +82,7 @@ const styles: Record<string, React.CSSProperties> = {
   tabBar:    { borderBottom: `1px solid ${C.border}`, background: C.primaryLt, width: "100%", position: "sticky" as const, top: "64px", zIndex: 50 },
   tabBarInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", gap: 4, padding: "0 28px", overflowX: "auto" as const, boxSizing: "border-box" },
   main:      { width: "100%", maxWidth: "none", margin: "0", padding: "24px 28px", boxSizing: "border-box" },
-  card:      { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 14, padding: "20px 22px" },
+  card:      { background: C.surface, borderRadius: 14, padding: "20px 22px", boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08)" },
   cardTitle: { fontSize: 18, fontWeight: 700, color: C.primary, marginBottom: 6, letterSpacing: "0.04em" },
   cardHint:  { fontSize: 14, color: C.primary, marginBottom: 14, lineHeight: 1.6 },
   input:     { flex: 1, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 14, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
