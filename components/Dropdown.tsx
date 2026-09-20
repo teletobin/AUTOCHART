@@ -58,7 +58,7 @@ export default function Dropdown({
           boxSizing: "border-box",
         }}
       >
-        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontSize: selected ? undefined : 12 }}>
           {selected ? selected.label : placeholder ?? "선택"}
         </span>
         <span style={{ color: C.sub, fontSize: 10, flexShrink: 0 }}>▼</span>

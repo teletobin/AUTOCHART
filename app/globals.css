@@ -17,3 +17,7 @@ body {
   color: var(--foreground);
   font-family: "Pretendard", -apple-system, Arial, Helvetica, sans-serif;
 }
+
+.manual-input-sm::placeholder {
+  font-size: 12px;
+}
