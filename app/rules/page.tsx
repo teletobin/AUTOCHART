@@ -1189,7 +1189,7 @@ export default function RulesPage() {
               <br />
               예1: 포텐자 기미팁 33,000원
               <br />
-              예2: 눈밑 쥬베룩스킨(케뉼라) 220,000원
+              예2: 눈밑 쥬베룩스킨(케뉼라) 220,000원 2cc
             </p>
 
             {!branch && <p style={{ marginBottom: 8, fontSize: 14, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
