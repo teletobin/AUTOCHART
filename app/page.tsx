@@ -904,7 +904,7 @@ export default function Home() {
                     position: "fixed",
                     top: "20%",
                     left: "50%",
-                    transform: "translateX(-50%)",
+                    marginLeft: -250,
                     width: 500,
                     maxHeight: "60vh",
                     overflowY: "auto",
