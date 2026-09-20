@@ -1121,7 +1121,7 @@ export default function RulesPage() {
 
             <div style={styles.list}>
               {manualTreatments.length === 0 && <p style={styles.empty}>직접 추가한 시술이 없습니다.</p>}
-              {manualTreatments.filter((t) => t.name.includes(manualSearch)).map((t) =>
+              {manualTreatments.filter((t) => t.name.includes(manualSearch)).sort((a, b) => a.name.localeCompare(b.name, "ko")).map((t) =>
                 editingManualId === t.id ? (
                   <div key={t.id} style={styles.rowEdit}>
                     <input
