@@ -174,6 +174,7 @@ const styles: Record<string, React.CSSProperties> = {
   numInput: { width: 120, border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 10px", fontSize: 14, textAlign: "right" as const, outline: "none", background: "#fff", color: C.primary },
   divider: { borderTop: `1px dashed ${C.border}`, margin: "2px 0" },
   dividerSolid: { borderTop: `2px solid ${C.primaryLt}`, margin: "2px 0" },
+  tooltip: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "6px 9px", fontSize: 12, fontWeight: 500, color: C.primary, lineHeight: 1.4, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50 },
 };
 
 export default function Home() {
@@ -789,20 +790,12 @@ export default function Home() {
                 {showSearchTip && (
                   <div
                     style={{
+                      ...styles.tooltip,
                       position: "absolute",
                       top: 0,
                       left: "100%",
                       marginLeft: 8,
                       width: "max-content",
-                      background: C.surface,
-                      border: `1px solid ${C.border}`,
-                      borderRadius: 8,
-                      padding: "8px 10px",
-                      fontSize: 12,
-                      color: C.primary,
-                      lineHeight: 1.5,
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-                      zIndex: 50,
                       whiteSpace: "nowrap",
                     }}
                   >
@@ -873,21 +866,12 @@ export default function Home() {
                 {showBoosterTip && (
                   <div
                     style={{
+                      ...styles.tooltip,
                       position: "absolute",
                       bottom: "100%",
                       right: 0,
                       marginBottom: 6,
                       width: "max-content",
-                      background: C.surface,
-                      border: `1px solid ${C.border}`,
-                      borderRadius: 8,
-                      padding: "5px 8px",
-                      fontSize: 12,
-                      fontWeight: 500,
-                      color: C.primary,
-                      lineHeight: 1.3,
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-                      zIndex: 50,
                       whiteSpace: "pre-line",
                     }}
                   >
@@ -1175,20 +1159,12 @@ export default function Home() {
                 {showChartTip && (
                   <div
                     style={{
+                      ...styles.tooltip,
                       position: "absolute",
                       top: "100%",
                       left: 0,
                       marginTop: 6,
                       width: 280,
-                      background: C.surface,
-                      border: `1px solid ${C.border}`,
-                      borderRadius: 8,
-                      padding: "6px 8px",
-                      fontSize: 12,
-                      color: C.primary,
-                      lineHeight: 1.4,
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-                      zIndex: 50,
                       whiteSpace: "pre-line",
                     }}
                   >
@@ -1208,20 +1184,12 @@ export default function Home() {
                 {showClearTip && (
                   <div
                     style={{
+                      ...styles.tooltip,
                       position: "absolute",
                       bottom: "100%",
                       right: 0,
                       marginBottom: 6,
                       width: "max-content",
-                      background: C.surface,
-                      border: `1px solid ${C.border}`,
-                      borderRadius: 8,
-                      padding: "5px 8px",
-                      fontSize: 11,
-                      color: C.primary,
-                      lineHeight: 1.3,
-                      boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
-                      zIndex: 50,
                       whiteSpace: "nowrap",
                     }}
                   >
