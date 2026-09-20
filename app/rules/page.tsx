@@ -1187,7 +1187,9 @@ export default function RulesPage() {
             <p style={styles.cardHint}>
               홈페이지에는 없는 {branch || "우리 지점"}만의 시술을 추가해 주세요.
               <br />
-              (예: 서브시전 얼굴전체 150,000원)
+              예1: 포텐자 기미팁 33,000원
+              <br />
+              예2: 눈밑 쥬베룩스킨(케뉼라) 220,000원
             </p>
 
             {!branch && <p style={{ marginBottom: 8, fontSize: 14, color: C.sub }}>상단에서 지점을 먼저 선택하세요.</p>}
