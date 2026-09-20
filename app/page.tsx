@@ -888,10 +888,10 @@ export default function Home() {
                       lineHeight: 1.3,
                       boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
                       zIndex: 50,
-                      whiteSpace: "nowrap",
+                      whiteSpace: "pre-line",
                     }}
                   >
-                    리쥬란 같이 CC별 상품을 조합해 목표 용량을 만들 때, 최저가~최고가 조합을 선택할 수 있어요.
+                    {"리쥬란 같이 CC별 수가를 조합해 목표 용량을 만들 때\n최저가~최고가 조합을 확인할 수 있어요."}
                   </div>
                 )}
               </div>
