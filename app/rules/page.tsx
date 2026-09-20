@@ -320,6 +320,15 @@ export default function RulesPage() {
   const [globalReplaceSearch, setGlobalReplaceSearch] = useState("");
   const [manualSearch, setManualSearch] = useState("");
 
+  // 탭을 벗어났다가 다시 돌아오면 검색어가 남아있지 않도록, 탭이 바뀔 때마다 전부 초기화한다.
+  useEffect(() => {
+    setAliasSearch("");
+    setExcludeSearch("");
+    setBranchRulesSearch("");
+    setGlobalReplaceSearch("");
+    setManualSearch("");
+  }, [tab]);
+
   function loadRules() {
     fetch("/api/rules")
       .then((res) => res.json())
