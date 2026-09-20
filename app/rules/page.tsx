@@ -738,7 +738,7 @@ export default function RulesPage() {
 
             {applySection}
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
               <input
                 type="text"
                 value={newExclude}
@@ -750,14 +750,14 @@ export default function RulesPage() {
                   }
                 }}
                 placeholder="예: (고농도 히알루론산)"
-                style={styles.input}
+                style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
               />
               <button
                 onClick={() => {
                   addRule("exclude", newExclude);
                   setNewExclude("");
                 }}
-                style={styles.btnPrimary}
+                style={{ ...styles.btnPrimary, height: 34 }}
               >
                 추가
               </button>
@@ -772,7 +772,7 @@ export default function RulesPage() {
                       type="text"
                       value={editPattern}
                       onChange={(e) => setEditPattern(e.target.value)}
-                      style={styles.input}
+                      style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
                     />
                     <button onClick={() => saveEditRule(r)} style={{ ...styles.linkBtn, color: C.primary }}>저장</button>
                     <button onClick={cancelEditRule} style={styles.linkBtn}>취소</button>
