@@ -11,9 +11,23 @@ import { BRANCH_STORAGE_KEY } from "@/lib/branches";
 import BranchPicker from "@/components/BranchPicker";
 import Dropdown from "@/components/Dropdown";
 
+let tabSearchMeasureCanvas: HTMLCanvasElement | null = null;
+function measureTabSearchWidth(text: string): number {
+  if (!tabSearchMeasureCanvas) tabSearchMeasureCanvas = document.createElement("canvas");
+  const ctx = tabSearchMeasureCanvas.getContext("2d");
+  if (!ctx) return 0;
+  ctx.font = "600 13px Pretendard, -apple-system, sans-serif";
+  return ctx.measureText(text).width;
+}
+
+const TAB_SEARCH_MIN_WIDTH = 52;
+
 function TabSearchInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const width = value
+    ? Math.max(TAB_SEARCH_MIN_WIDTH, Math.ceil(measureTabSearchWidth(value)) + 26)
+    : TAB_SEARCH_MIN_WIDTH;
   return (
-    <div style={{ position: "relative", width: 180, flex: "0 0 auto" }}>
+    <div style={{ position: "relative", width, flex: "0 0 auto", transition: "width 0.15s ease" }}>
       <svg
         width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.sub} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
         style={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", flexShrink: 0 }}
@@ -38,7 +52,7 @@ function TabSearchInput({ value, onChange }: { value: string; onChange: (v: stri
           outline: "none",
           color: C.primary,
           background: "transparent",
-          textAlign: "right",
+          textAlign: value ? "right" : "left",
           boxSizing: "border-box",
         }}
       />
