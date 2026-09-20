@@ -882,7 +882,7 @@ export default function Home() {
                       border: `1px solid ${C.border}`,
                       borderRadius: 8,
                       padding: "5px 8px",
-                      fontSize: 11,
+                      fontSize: 12,
                       color: C.primary,
                       lineHeight: 1.3,
                       boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
