@@ -746,6 +746,10 @@ export default function RulesPage() {
             </Link>
             <span style={{ color: C.sub, fontWeight: 400, fontSize: 18.5 }}>&gt;</span>
             <span style={{ fontWeight: 500, color: C.sub, fontSize: 18.5 }}>상세설정</span>
+            <span style={{ color: C.sub, fontWeight: 400, fontSize: 18.5 }}>&gt;</span>
+            <span style={{ fontWeight: 700, color: C.primary, fontSize: 18.5 }}>
+              {[...MAIN_TABS, ...COMMON_TABS].find((t) => t.key === tab)?.label}
+            </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <BranchPicker key={`${branch}-${branchPickerResetKey}`} value={branch} onChange={handleBranchChange} />
