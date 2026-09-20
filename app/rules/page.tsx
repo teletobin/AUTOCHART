@@ -170,6 +170,24 @@ export default function RulesPage() {
   const [newBranchFind, setNewBranchFind] = useState("");
   const [newBranchReplacement, setNewBranchReplacement] = useState("");
 
+  // 수정/삭제 성공 시 카드 타이틀 옆에 잠깐 보여주는 인라인 완료 메시지.
+  const [rowToast, setRowToast] = useState<string | null>(null);
+  function showRowToast(message: string) {
+    setRowToast(message);
+    setTimeout(() => setRowToast(null), 1000);
+  }
+  function RowToast() {
+    if (!rowToast) return null;
+    return (
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 12, fontWeight: 600, color: C.primary, background: C.primaryLt, borderRadius: 12, padding: "3px 9px" }}>
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M20 6 9 17l-5-5" />
+        </svg>
+        {rowToast}
+      </span>
+    );
+  }
+
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [editPattern, setEditPattern] = useState("");
   const [editReplacement, setEditReplacement] = useState("");
@@ -307,6 +325,7 @@ export default function RulesPage() {
   async function deleteRule(id: string) {
     await fetch(`/api/rules/${id}`, { method: "DELETE" });
     setRules((prev) => prev.filter((r) => r.id !== id));
+    showRowToast("삭제 완료");
   }
 
   function startEditRule(rule: Rule) {
@@ -338,6 +357,7 @@ export default function RulesPage() {
     }
     setRules((prev) => prev.map((r) => (r.id === rule.id ? data.rule : r)));
     cancelEditRule();
+    showRowToast("수정 완료");
   }
 
   async function handleApply() {
@@ -434,11 +454,13 @@ export default function RulesPage() {
     }
     setManualTreatments((prev) => prev.map((t) => (t.id === id ? data.treatment : t)));
     cancelEditManual();
+    showRowToast("수정 완료");
   }
 
   async function deleteManualTreatment(id: string) {
     await fetch(`/api/manual-treatments/${id}`, { method: "DELETE" });
     setManualTreatments((prev) => prev.filter((t) => t.id !== id));
+    showRowToast("삭제 완료");
   }
 
   async function runSync() {
@@ -571,11 +593,13 @@ export default function RulesPage() {
     }
     setAliases((prev) => prev.map((a) => (a.id === id ? data.alias : a)));
     cancelEditAlias();
+    showRowToast("수정 완료");
   }
 
   async function deleteAlias(id: string) {
     await fetch(`/api/aliases/${id}`, { method: "DELETE" });
     setAliases((prev) => prev.filter((a) => a.id !== id));
+    showRowToast("삭제 완료");
   }
 
   const excludeRules = rules.filter((r) => r.type === "exclude");
@@ -735,7 +759,10 @@ export default function RulesPage() {
         {tab === "exclude" && (
           <section style={styles.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>시술명 정리</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <p style={{ ...styles.cardTitle, marginBottom: 0 }}>시술명 정리</p>
+                <RowToast />
+              </div>
               <TabSearchInput value={excludeSearch} onChange={setExcludeSearch} />
             </div>
             <p style={styles.cardHint}>
@@ -809,7 +836,10 @@ export default function RulesPage() {
         {tab === "alias" && (
           <section style={styles.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>검색어 매칭</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <p style={{ ...styles.cardTitle, marginBottom: 0 }}>검색어 매칭</p>
+                <RowToast />
+              </div>
               <TabSearchInput value={aliasSearch} onChange={setAliasSearch} />
             </div>
             <p style={styles.cardHint}>
@@ -898,7 +928,10 @@ export default function RulesPage() {
         {tab === "branchRules" && (
           <section style={styles.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>지점별 규칙</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <p style={{ ...styles.cardTitle, marginBottom: 0 }}>지점별 규칙</p>
+                <RowToast />
+              </div>
               <TabSearchInput value={branchRulesSearch} onChange={setBranchRulesSearch} />
             </div>
             <p style={styles.cardHint}>
@@ -998,7 +1031,10 @@ export default function RulesPage() {
         {tab === "manual" && (
           <section style={styles.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
-              <p style={{ ...styles.cardTitle, marginBottom: 0 }}>지점별 시술 추가</p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <p style={{ ...styles.cardTitle, marginBottom: 0 }}>지점별 시술 추가</p>
+                <RowToast />
+              </div>
               <TabSearchInput value={manualSearch} onChange={setManualSearch} />
             </div>
             <p style={styles.cardHint}>
