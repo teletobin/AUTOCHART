@@ -168,7 +168,7 @@ const styles: Record<string, React.CSSProperties> = {
   tableHead: { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.border}`, padding: "8px 0", fontSize: 12, color: C.sub, marginBottom: 4 },
   tableRow:  { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.borderSoft}`, padding: "8px 0", fontSize: 14 },
   totalRow:  { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, fontWeight: 700, fontSize: 15 },
-  textarea:  { width: "100%", resize: "none" as const, border: `1px solid ${C.border}`, borderRadius: 10, background: C.bg, padding: "12px 14px", fontSize: 14, color: C.primary, outline: "none", lineHeight: 1.8, boxSizing: "border-box" as const },
+  textarea:  { width: "100%", resize: "none" as const, border: "none", borderRadius: 10, background: C.bg, padding: "12px 14px", fontSize: 14, color: C.primary, outline: "none", lineHeight: 1.8, boxSizing: "border-box" as const },
   subSection: { display: "flex", flexDirection: "column" as const, gap: 6, border: `1px solid ${C.primaryLt}`, borderRadius: 10, padding: "14px 16px", background: "#fdfcfb" },
   label:  { fontSize: 14, fontWeight: 600, color: C.primary, textAlign: "right" as const, minWidth: 88, flexShrink: 0 },
   numInput: { width: 120, border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 10px", fontSize: 14, textAlign: "right" as const, outline: "none", background: "#fff", color: C.primary },
@@ -838,7 +838,7 @@ export default function Home() {
                         width: "100%", border: "none", textAlign: "left",
                       }}
                     >
-                      <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
+                      <span style={{ flex: 1, whiteSpace: "normal", wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{c.name}</span>
                       <span style={{ marginLeft: 12, flexShrink: 0, fontVariantNumeric: "tabular-nums", color: C.sub }}>{formatNumber(c.price)}원</span>
                     </button>
                   ))}
@@ -1533,7 +1533,7 @@ export default function Home() {
                               width: "100%", border: "none", textAlign: "left",
                             }}
                           >
-                            <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</span>
+                            <span style={{ flex: 1, whiteSpace: "normal", wordBreak: "break-word", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as const, overflow: "hidden" }}>{c.name}</span>
                             <span style={{ marginLeft: 12, flexShrink: 0, fontVariantNumeric: "tabular-nums", color: C.sub }}>{formatNumber(c.price)}원</span>
                           </button>
                         ))}
