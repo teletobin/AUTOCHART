@@ -11,6 +11,27 @@ import { BRANCH_STORAGE_KEY } from "@/lib/branches";
 import BranchPicker from "@/components/BranchPicker";
 import Dropdown from "@/components/Dropdown";
 
+function TabSearchInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <div style={{ position: "relative", width: 100, flex: "0 0 auto" }}>
+      <svg
+        width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.sub} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
+        style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", flexShrink: 0 }}
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="m21 21-4.35-4.35" />
+      </svg>
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="검색"
+        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: 8, padding: "6px 10px 6px 26px", fontSize: 13, height: 32, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" }}
+      />
+    </div>
+  );
+}
+
 type Rule = {
   id: string;
   type: "exclude" | "replace";
@@ -715,13 +736,7 @@ export default function RulesPage() {
           <section style={styles.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <p style={{ ...styles.cardTitle, marginBottom: 0 }}>시술명 정리</p>
-              <input
-                type="text"
-                value={excludeSearch}
-                onChange={(e) => setExcludeSearch(e.target.value)}
-                placeholder="검색..."
-                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 13, padding: "6px 10px" }}
-              />
+              <TabSearchInput value={excludeSearch} onChange={setExcludeSearch} />
             </div>
             <p style={styles.cardHint}>
               차팅에 불필요한 시술명 속의 괄호 내용(장비, 제품, 시술 설명 등)을 삭제합니다.
@@ -795,13 +810,7 @@ export default function RulesPage() {
           <section style={styles.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <p style={{ ...styles.cardTitle, marginBottom: 0 }}>검색어 매칭</p>
-              <input
-                type="text"
-                value={aliasSearch}
-                onChange={(e) => setAliasSearch(e.target.value)}
-                placeholder="검색..."
-                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 13, padding: "6px 10px" }}
-              />
+              <TabSearchInput value={aliasSearch} onChange={setAliasSearch} />
             </div>
             <p style={styles.cardHint}>
               시술검색창에 줄임말, 오타, 한글로 입력해도 원하는 시술이 검색되도록 합니다.
@@ -890,13 +899,7 @@ export default function RulesPage() {
           <section style={styles.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <p style={{ ...styles.cardTitle, marginBottom: 0 }}>지점별 규칙</p>
-              <input
-                type="text"
-                value={branchRulesSearch}
-                onChange={(e) => setBranchRulesSearch(e.target.value)}
-                placeholder="검색..."
-                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 13, padding: "6px 10px" }}
-              />
+              <TabSearchInput value={branchRulesSearch} onChange={setBranchRulesSearch} />
             </div>
             <p style={styles.cardHint}>
               {branch || "우리 지점"}만의 시술명 치환 규칙을 등록해 주세요.
@@ -996,13 +999,7 @@ export default function RulesPage() {
           <section style={styles.card}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <p style={{ ...styles.cardTitle, marginBottom: 0 }}>지점별 시술 추가</p>
-              <input
-                type="text"
-                value={manualSearch}
-                onChange={(e) => setManualSearch(e.target.value)}
-                placeholder="검색..."
-                style={{ ...styles.input, width: 140, height: 32, flex: "0 0 auto", fontSize: 13, padding: "6px 10px" }}
-              />
+              <TabSearchInput value={manualSearch} onChange={setManualSearch} />
             </div>
             <p style={styles.cardHint}>
               홈페이지에는 없는 {branch || "우리 지점"}만의 시술을 추가해 주세요.
