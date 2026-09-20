@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { formatNumber } from "@/lib/format";
 import type { Alias, Treatment } from "@/lib/types";
@@ -56,12 +56,12 @@ type ApplyResult = {
 type Tab = "exclude" | "replaceGlobal" | "alias" | "manual" | "category" | "branchRules";
 
 const MAIN_TABS: { key: Tab; label: string }[] = [
-  { key: "category", label: "시술별 카테고리" },
+  { key: "category", label: "지점 시술별 카테고리" },
   { key: "branchRules", label: "지점별 규칙" },
   { key: "manual", label: "지점별 시술 추가" },
 ];
 
-// 전지점 공통 설정: 그룹 버튼을 눌러야 옆으로 펼쳐지는 서브탭들.
+// 전지점 공통 설정: 그룹 버튼을 눌러야 드롭다운으로 펼쳐지는 서브탭들.
 // 전지점 데이터에 영향을 주는 탭이라는 걸 지점별 탭과 시각적으로 분리하기 위함.
 const COMMON_TABS: { key: Tab; label: string }[] = [
   { key: "alias", label: "검색어 매칭" },
@@ -107,8 +107,7 @@ function tabButtonStyle(active: boolean): React.CSSProperties {
     fontSize: 15,
     fontWeight: 600,
     color: active ? C.primary : C.sub,
-    background: active ? C.surface : "none",
-    borderRadius: active ? "8px 8px 0 0" : 0,
+    background: "none",
     border: "none",
     borderBottom: active ? `2px solid ${C.primary}` : "2px solid transparent",
     cursor: "pointer",
@@ -118,6 +117,16 @@ function tabButtonStyle(active: boolean): React.CSSProperties {
 
 export default function RulesPage() {
   const [tab, setTab] = useState<Tab>("category");
+  const [commonMenuOpen, setCommonMenuOpen] = useState(false);
+  const commonMenuRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!commonMenuOpen) return;
+    function onOutsideClick(e: MouseEvent) {
+      if (commonMenuRef.current && !commonMenuRef.current.contains(e.target as Node)) setCommonMenuOpen(false);
+    }
+    document.addEventListener("mousedown", onOutsideClick);
+    return () => document.removeEventListener("mousedown", onOutsideClick);
+  }, [commonMenuOpen]);
   const [branch, setBranch] = useState("");
   const [confirmModal, setConfirmModal] = useState<{
     message: string;
@@ -780,14 +789,53 @@ export default function RulesPage() {
             </button>
           ))}
           <div style={{ width: 1, height: 20, background: C.border, margin: "0 6px", flexShrink: 0, alignSelf: "center" }} />
-          {COMMON_TABS.map((t) => (
-            <button key={t.key} onClick={() => setTab(t.key)} style={{ ...tabButtonStyle(tab === t.key), display: "flex", alignItems: "center", gap: 5 }}>
-              {t.label}
-              <span style={{ fontSize: 10, fontWeight: 700, color: tab === t.key ? C.danger : C.sub, background: tab === t.key ? "rgba(192,57,43,0.12)" : "rgba(0,0,0,0.06)", borderRadius: 8, padding: "1px 6px" }}>
-                공통
-              </span>
+          <div ref={commonMenuRef} style={{ position: "relative" }}>
+            <button
+              onClick={() => setCommonMenuOpen((v) => !v)}
+              style={{ ...tabButtonStyle(COMMON_TABS.some((t) => t.key === tab)), display: "flex", alignItems: "center", gap: 4 }}
+            >
+              전지점 공통 설정
+              <span style={{ fontSize: 10, transform: commonMenuOpen ? "rotate(180deg)" : "none" }}>▾</span>
             </button>
-          ))}
+            {commonMenuOpen && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: "calc(100% + 4px)",
+                  left: 0,
+                  minWidth: 160,
+                  background: C.surface,
+                  border: `1px solid ${C.border}`,
+                  borderRadius: 10,
+                  boxShadow: "0 10px 28px rgba(0,0,0,0.12)",
+                  padding: 5,
+                  zIndex: 300,
+                }}
+              >
+                {COMMON_TABS.map((t) => (
+                  <button
+                    key={t.key}
+                    onClick={() => { setTab(t.key); setCommonMenuOpen(false); }}
+                    style={{
+                      display: "block",
+                      width: "100%",
+                      textAlign: "left",
+                      padding: "8px 10px",
+                      border: "none",
+                      borderRadius: 7,
+                      fontSize: 14,
+                      fontWeight: tab === t.key ? 700 : 500,
+                      cursor: "pointer",
+                      background: tab === t.key ? C.primaryLt : "transparent",
+                      color: tab === t.key ? C.primary : "#555",
+                    }}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
