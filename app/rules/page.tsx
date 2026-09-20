@@ -889,7 +889,7 @@ export default function RulesPage() {
                   <line x1="12" y1="10" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
                   <circle cx="12" cy="18" r="1.1" fill="currentColor" />
                 </svg>
-                모든 지점의 검색 결과에 공통 적용됩니다. 수정/삭제 시 전 지점에 영향을 미치니 주의하세요
+                모든 지점의 검색 결과에 적용되므로 신중한 추가/수정/삭제가 필요합니다.
               </span>
             </p>
 
