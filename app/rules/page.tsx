@@ -53,7 +53,7 @@ const SETUP_SQL = `create table cleanup_rules (
 /* ── 디자인 토큰 (메인 페이지와 공유) ── */
 const styles: Record<string, React.CSSProperties> = {
   wrap:      { minHeight: "100vh", background: C.bg, color: C.primary, fontFamily: "Pretendard, -apple-system, sans-serif" },
-  header:    { borderBottom: `1px solid ${C.border}`, background: C.surface, padding: "14px 28px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
+  header:    { background: C.surface, padding: "14px 28px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
   headerInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 28, paddingRight: 28, boxSizing: "border-box" },
   title:     { fontSize: 19, fontWeight: 700, color: C.primary },
   logo:      { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 19, color: C.primary },
