@@ -843,7 +843,7 @@ export default function RulesPage() {
               <button
                 onClick={addAlias}
                 disabled={!newAliasText.trim() || !newAliasKeyword.trim()}
-                style={{ ...styles.btnPrimary, opacity: !newAliasText.trim() || !newAliasKeyword.trim() ? 0.4 : 1 }}
+                style={{ ...styles.btnPrimary, height: 34, opacity: !newAliasText.trim() || !newAliasKeyword.trim() ? 0.4 : 1 }}
               >
                 추가
               </button>
