@@ -881,9 +881,7 @@ export default function RulesPage() {
               <TabSearchInput value={globalReplaceSearch} onChange={setGlobalReplaceSearch} />
             </div>
             <p style={styles.cardHint}>
-              홈페이지 시술명을 더욱 간결하게 표시해 검색되도록 치환합니다.
-              <br />
-              시술명 속 불필요한 공백, 영문으로 표시되는 장비명, 간결한 시술명 등을 입력해주세요.
+              시술명이 더욱 간결하게 검색되고 차팅되도록 치환할 시술명을 입력해 주세요.
               <br />
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.danger }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
@@ -902,7 +900,7 @@ export default function RulesPage() {
                 type="text"
                 value={newGlobalReplaceFind}
                 onChange={(e) => setNewGlobalReplaceFind(e.target.value)}
-                placeholder="예: 쥬베룩스킨"
+                placeholder="예: 써마지 FLX 리프팅"
                 style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
               />
               <span style={{ color: C.sub, fontSize: 13 }}>→</span>
@@ -910,7 +908,7 @@ export default function RulesPage() {
                 type="text"
                 value={newGlobalReplaceReplacement}
                 onChange={(e) => setNewGlobalReplaceReplacement(e.target.value)}
-                placeholder="예: 쥬베룩 스킨"
+                placeholder="예: 써마지"
                 style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
               />
               <button
