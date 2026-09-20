@@ -13,10 +13,10 @@ import Dropdown from "@/components/Dropdown";
 
 function TabSearchInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   return (
-    <div style={{ position: "relative", width: 100, flex: "0 0 auto" }}>
+    <div style={{ position: "relative", width: 180, flex: "0 0 auto" }}>
       <svg
-        width="12" height="12" viewBox="0 0 24 24" fill="none" stroke={C.sub} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
-        style={{ position: "absolute", left: 9, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", flexShrink: 0 }}
+        width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.sub} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
+        style={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", flexShrink: 0 }}
       >
         <circle cx="11" cy="11" r="7" />
         <path d="m21 21-4.35-4.35" />
@@ -26,7 +26,21 @@ function TabSearchInput({ value, onChange }: { value: string; onChange: (v: stri
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="검색"
-        style={{ width: "100%", border: `1px solid ${C.border}`, borderRadius: 8, padding: "6px 10px 6px 26px", fontSize: 13, height: 32, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" }}
+        autoComplete="off"
+        style={{
+          width: "100%",
+          padding: "9px 4px 9px 18px",
+          border: "none",
+          borderBottom: `1.5px solid ${C.border}`,
+          borderRadius: 0,
+          fontSize: 13,
+          fontWeight: 600,
+          outline: "none",
+          color: C.primary,
+          background: "transparent",
+          textAlign: "right",
+          boxSizing: "border-box",
+        }}
       />
     </div>
   );
