@@ -1361,7 +1361,7 @@ export default function Home() {
                             cursor: "pointer"
                           }}
                         >
-                          쁘띠{v}
+                          쁘띠 {v}
                         </button>
                       );
                     })}
