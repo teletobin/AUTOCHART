@@ -53,7 +53,7 @@ type ApplyResult = {
   errors: { id: string; message: string }[];
 };
 
-type Tab = "exclude" | "alias" | "manual" | "category" | "branchRules";
+type Tab = "exclude" | "replaceGlobal" | "alias" | "manual" | "category" | "branchRules";
 
 const TABS: { key: Tab; label: string }[] = [
   { key: "category", label: "시술별 카테고리" },
@@ -61,6 +61,7 @@ const TABS: { key: Tab; label: string }[] = [
   { key: "manual", label: "지점별 시술 추가" },
   { key: "alias", label: "검색어 매칭" },
   { key: "exclude", label: "시술명 정리" },
+  { key: "replaceGlobal", label: "시술명 치환" },
 ];
 
 const SETUP_SQL = `create table cleanup_rules (
@@ -169,11 +170,13 @@ export default function RulesPage() {
   const [newExclude, setNewExclude] = useState("");
   const [newBranchFind, setNewBranchFind] = useState("");
   const [newBranchReplacement, setNewBranchReplacement] = useState("");
+  const [newGlobalReplaceFind, setNewGlobalReplaceFind] = useState("");
+  const [newGlobalReplaceReplacement, setNewGlobalReplaceReplacement] = useState("");
 
   // 시술명 정리/검색어 매칭 탭에서 수정·삭제 버튼을 누르면 바로 실행하지 않고,
   // 그 줄 안에서 "수정할까요?/삭제할까요?"를 인라인으로 먼저 확인받는다.
-  const [pendingRowAction, setPendingRowAction] = useState<{ scope: "exclude" | "alias"; id: string; type: "edit" | "delete" } | null>(null);
-  function InlineConfirm({ scope, id, onConfirm }: { scope: "exclude" | "alias"; id: string; onConfirm: () => void }) {
+  const [pendingRowAction, setPendingRowAction] = useState<{ scope: "exclude" | "alias" | "replaceGlobal"; id: string; type: "edit" | "delete" } | null>(null);
+  function InlineConfirm({ scope, id, onConfirm }: { scope: "exclude" | "alias" | "replaceGlobal"; id: string; onConfirm: () => void }) {
     if (pendingRowAction?.scope !== scope || pendingRowAction.id !== id) return null;
     return (
       <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.danger, whiteSpace: "nowrap" }}>
@@ -253,6 +256,7 @@ export default function RulesPage() {
 
   const [excludeSearch, setExcludeSearch] = useState("");
   const [branchRulesSearch, setBranchRulesSearch] = useState("");
+  const [globalReplaceSearch, setGlobalReplaceSearch] = useState("");
   const [manualSearch, setManualSearch] = useState("");
 
   function loadRules() {
@@ -626,6 +630,7 @@ export default function RulesPage() {
 
   const excludeRules = rules.filter((r) => r.type === "exclude");
   const branchRules = rules.filter((r) => r.type === "replace" && r.branch === branch);
+  const globalReplaceRules = rules.filter((r) => r.type === "replace" && !r.branch);
 
   const applySection = (
     <div style={{ marginBottom: 16, paddingBottom: 16, borderBottom: `1px solid ${C.border}` }}>
@@ -855,6 +860,104 @@ export default function RulesPage() {
                         <>
                           <button onClick={() => setPendingRowAction({ scope: "exclude", id: r.id, type: "edit" })} style={styles.linkBtn}>수정</button>
                           <button onClick={() => setPendingRowAction({ scope: "exclude", id: r.id, type: "delete" })} style={styles.linkBtn}>삭제</button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          </section>
+        )}
+
+        {tab === "replaceGlobal" && (
+          <section style={styles.card}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <p style={{ ...styles.cardTitle, marginBottom: 0 }}>시술명 치환</p>
+                <RowToast />
+              </div>
+              <TabSearchInput value={globalReplaceSearch} onChange={setGlobalReplaceSearch} />
+            </div>
+            <p style={styles.cardHint}>
+              모든 지점의 홈페이지 시술명 속 특정 문구를 다른 문구로 바꿔줍니다.
+              <br />
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.danger }}>
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
+                  <path d="M12 3.5 L22 20.5 H2 Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+                  <line x1="12" y1="10" x2="12" y2="15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  <circle cx="12" cy="18" r="1.1" fill="currentColor" />
+                </svg>
+                모든 지점의 검색 결과에 적용되므로 신중한 추가/수정/삭제가 필요합니다.
+              </span>
+            </p>
+
+            {applySection}
+
+            <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
+              <input
+                type="text"
+                value={newGlobalReplaceFind}
+                onChange={(e) => setNewGlobalReplaceFind(e.target.value)}
+                placeholder="예: 쥬베룩스킨"
+                style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
+              />
+              <span style={{ color: C.sub, fontSize: 13 }}>→</span>
+              <input
+                type="text"
+                value={newGlobalReplaceReplacement}
+                onChange={(e) => setNewGlobalReplaceReplacement(e.target.value)}
+                placeholder="예: 쥬베룩 스킨"
+                style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
+              />
+              <button
+                onClick={() => {
+                  addRule("replace", newGlobalReplaceFind, newGlobalReplaceReplacement);
+                  setNewGlobalReplaceFind("");
+                  setNewGlobalReplaceReplacement("");
+                }}
+                style={{ ...styles.btnPrimary, height: 34 }}
+              >
+                추가
+              </button>
+            </div>
+
+            <div style={styles.list}>
+              {globalReplaceRules.length === 0 && <p style={styles.empty}>등록된 치환 규칙이 없습니다.</p>}
+              {globalReplaceRules.filter((r) => r.pattern.includes(globalReplaceSearch) || (r.replacement?.includes(globalReplaceSearch) ?? false)).map((r) =>
+                editingRuleId === r.id ? (
+                  <div key={r.id} style={styles.rowEdit}>
+                    <input
+                      type="text"
+                      value={editPattern}
+                      onChange={(e) => setEditPattern(e.target.value)}
+                      style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
+                    />
+                    <input
+                      type="text"
+                      value={editReplacement}
+                      onChange={(e) => setEditReplacement(e.target.value)}
+                      style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
+                    />
+                    <button onClick={() => saveEditRule(r)} style={{ ...styles.linkBtn, color: C.primary }}>저장</button>
+                    <button onClick={cancelEditRule} style={styles.linkBtn}>취소</button>
+                  </div>
+                ) : (
+                  <div key={r.id} style={styles.row}>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {r.pattern} → {r.replacement}
+                    </span>
+                    <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
+                      {pendingRowAction?.scope === "replaceGlobal" && pendingRowAction.id === r.id ? (
+                        <InlineConfirm
+                          scope="replaceGlobal"
+                          id={r.id}
+                          onConfirm={() => (pendingRowAction.type === "edit" ? startEditRule(r) : deleteRule(r.id))}
+                        />
+                      ) : (
+                        <>
+                          <button onClick={() => setPendingRowAction({ scope: "replaceGlobal", id: r.id, type: "edit" })} style={styles.linkBtn}>수정</button>
+                          <button onClick={() => setPendingRowAction({ scope: "replaceGlobal", id: r.id, type: "delete" })} style={styles.linkBtn}>삭제</button>
                         </>
                       )}
                     </div>
