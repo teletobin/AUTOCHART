@@ -834,7 +834,7 @@ export default function RulesPage() {
 
             <div style={styles.list}>
               {excludeRules.length === 0 && <p style={styles.empty}>등록된 제외 문구가 없습니다.</p>}
-              {excludeRules.filter((r) => r.pattern.includes(excludeSearch)).map((r) =>
+              {excludeRules.filter((r) => r.pattern.includes(excludeSearch)).slice().reverse().map((r) =>
                 editingRuleId === r.id ? (
                   <div key={r.id} style={styles.rowEdit}>
                     <input
@@ -926,7 +926,7 @@ export default function RulesPage() {
 
             <div style={styles.list}>
               {globalReplaceRules.length === 0 && <p style={styles.empty}>등록된 치환 규칙이 없습니다.</p>}
-              {globalReplaceRules.filter((r) => r.pattern.includes(globalReplaceSearch) || (r.replacement?.includes(globalReplaceSearch) ?? false)).map((r) =>
+              {globalReplaceRules.filter((r) => r.pattern.includes(globalReplaceSearch) || (r.replacement?.includes(globalReplaceSearch) ?? false)).slice().reverse().map((r) =>
                 editingRuleId === r.id ? (
                   <div key={r.id} style={styles.rowEdit}>
                     <input
@@ -1027,7 +1027,7 @@ export default function RulesPage() {
 
             <div style={styles.list}>
               {aliases.length === 0 && <p style={styles.empty}>등록된 축약어가 없습니다.</p>}
-              {aliases.filter((a) => a.alias.includes(aliasSearch) || a.keyword.includes(aliasSearch)).map((a) =>
+              {aliases.filter((a) => a.alias.includes(aliasSearch) || a.keyword.includes(aliasSearch)).slice().reverse().map((a) =>
                 editingAliasId === a.id ? (
                   <div key={a.id} style={styles.rowEdit}>
                     <input
@@ -1141,7 +1141,7 @@ export default function RulesPage() {
 
             <div style={styles.list}>
               {branch && branchRules.length === 0 && <p style={styles.empty}>등록된 지점별 규칙이 없습니다.</p>}
-              {branchRules.filter((r) => r.pattern.includes(branchRulesSearch) || (r.replacement?.includes(branchRulesSearch) ?? false)).map((r) =>
+              {branchRules.filter((r) => r.pattern.includes(branchRulesSearch) || (r.replacement?.includes(branchRulesSearch) ?? false)).slice().reverse().map((r) =>
                 editingRuleId === r.id ? (
                   <div key={r.id} style={styles.rowEdit}>
                     <input
