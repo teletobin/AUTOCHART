@@ -830,15 +830,15 @@ export default function RulesPage() {
                 value={newAliasText}
                 onChange={(e) => setNewAliasText(e.target.value)}
                 placeholder="축약어/오타 (예: 포마)"
-                style={styles.input}
+                style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
               />
-              <span style={{ color: C.sub }}>→</span>
+              <span style={{ color: C.sub, fontSize: 13 }}>→</span>
               <input
                 type="text"
                 value={newAliasKeyword}
                 onChange={(e) => setNewAliasKeyword(e.target.value)}
                 placeholder="실제 검색 키워드 (예: FORMA)"
-                style={styles.input}
+                style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
               />
               <button
                 onClick={addAlias}
@@ -858,14 +858,14 @@ export default function RulesPage() {
                       type="text"
                       value={editAliasText}
                       onChange={(e) => setEditAliasText(e.target.value)}
-                      style={styles.input}
+                      style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
                     />
-                    <span style={{ color: C.sub }}>→</span>
+                    <span style={{ color: C.sub, fontSize: 13 }}>→</span>
                     <input
                       type="text"
                       value={editAliasKeyword}
                       onChange={(e) => setEditAliasKeyword(e.target.value)}
-                      style={styles.input}
+                      style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
                     />
                     <button onClick={() => saveEditAlias(a.id)} style={{ ...styles.linkBtn, color: C.primary }}>저장</button>
                     <button onClick={cancelEditAlias} style={styles.linkBtn}>취소</button>
