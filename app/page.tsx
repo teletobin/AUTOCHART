@@ -165,7 +165,7 @@ const styles: Record<string, React.CSSProperties> = {
   hint:    { fontSize: 12, color: C.sub, marginTop: 6 },
   candidateBox: { position: "absolute" as const, zIndex: 20, marginTop: 4, width: "100%", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 10, boxShadow: "0 8px 24px rgba(111,104,100,0.10)", overflow: "hidden" },
   candidateRow: { display: "flex", alignItems: "center", justifyContent: "space-between", padding: "9px 14px", fontSize: 14, cursor: "pointer", borderBottom: `1px solid ${C.borderSoft}` },
-  tableHead: { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.border}`, paddingBottom: 8, fontSize: 12, color: C.sub, marginBottom: 4 },
+  tableHead: { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.border}`, padding: "5px 0", fontSize: 12, color: C.sub, marginBottom: 4 },
   tableRow:  { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.borderSoft}`, padding: "8px 0", fontSize: 14 },
   totalRow:  { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, fontWeight: 700, fontSize: 15 },
   textarea:  { width: "100%", resize: "none" as const, border: `1px solid ${C.border}`, borderRadius: 10, background: C.bg, padding: "12px 14px", fontSize: 14, color: C.primary, outline: "none", lineHeight: 1.8, boxSizing: "border-box" as const },
@@ -1000,11 +1000,11 @@ export default function Home() {
                   <div style={styles.tableHead}>
                     <span style={{ width: 16 }} />
                     <span style={{ width: 20, textAlign: "center" }} />
-                    <span style={{ flex: 1, textAlign: "center" }}>시술명</span>
+                    <span style={{ flex: 1, textAlign: "center", paddingRight: 16 }}>시술명</span>
                     <span style={{ width: 60, textAlign: "center" }}>단가</span>
                     <span style={{ width: 50, textAlign: "center" }}>수량</span>
                     <span style={{ width: 80, textAlign: "center" }}>합계</span>
-                    <span style={{ width: 24, textAlign: "left", whiteSpace: "nowrap" }}>미시술</span>
+                    <span style={{ width: 24, textAlign: "left", whiteSpace: "nowrap", marginLeft: -4 }}>미시술</span>
                   </div>
                   {selectedItems.map((item) => (
                     <div key={item.id} style={styles.tableRow}>
