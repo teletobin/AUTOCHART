@@ -120,13 +120,13 @@ export default function RulesPage() {
   const [commonMenuOpen, setCommonMenuOpen] = useState(false);
   // 탭바 컨테이너에 overflowX:auto가 있어 absolute 드롭다운이 그 안에서 잘려버린다.
   // fixed + 버튼 좌표 계산으로 탭바의 overflow 클리핑을 완전히 벗어나게 한다.
-  const [commonMenuPos, setCommonMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const [commonMenuPos, setCommonMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const commonMenuBtnRef = useRef<HTMLButtonElement>(null);
   const commonMenuPanelRef = useRef<HTMLDivElement>(null);
   function toggleCommonMenu() {
     if (!commonMenuOpen && commonMenuBtnRef.current) {
       const rect = commonMenuBtnRef.current.getBoundingClientRect();
-      setCommonMenuPos({ top: rect.bottom + 4, left: rect.left });
+      setCommonMenuPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
     }
     setCommonMenuOpen((v) => !v);
   }
@@ -824,7 +824,7 @@ export default function RulesPage() {
             position: "fixed",
             top: commonMenuPos.top,
             left: commonMenuPos.left,
-            minWidth: 160,
+            width: commonMenuPos.width,
             background: C.surface,
             border: `1px solid ${C.border}`,
             borderRadius: 10,
