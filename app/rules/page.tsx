@@ -118,6 +118,7 @@ function tabButtonStyle(active: boolean): React.CSSProperties {
 export default function RulesPage() {
   const [tab, setTab] = useState<Tab>("category");
   const [commonMenuOpen, setCommonMenuOpen] = useState(false);
+  const [commonMenuHoverKey, setCommonMenuHoverKey] = useState<Tab | null>(null);
   // 탭바 컨테이너에 overflowX:auto가 있어 absolute 드롭다운이 그 안에서 잘려버린다.
   // fixed + 버튼 좌표 계산으로 탭바의 overflow 클리핑을 완전히 벗어나게 한다.
   const [commonMenuPos, setCommonMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
@@ -805,14 +806,12 @@ export default function RulesPage() {
               {t.label}
             </button>
           ))}
-          <div style={{ width: 1, height: 20, background: C.border, margin: "0 6px", flexShrink: 0, alignSelf: "center" }} />
           <button
             ref={commonMenuBtnRef}
             onClick={toggleCommonMenu}
-            style={{ ...tabButtonStyle(COMMON_TABS.some((t) => t.key === tab)), display: "flex", alignItems: "center", gap: 4 }}
+            style={tabButtonStyle(COMMON_TABS.some((t) => t.key === tab))}
           >
             전지점 공통 설정
-            <span style={{ fontSize: 10, transform: commonMenuOpen ? "rotate(180deg)" : "none" }}>▾</span>
           </button>
         </div>
       </div>
@@ -837,6 +836,8 @@ export default function RulesPage() {
             <button
               key={t.key}
               onClick={() => { setTab(t.key); setCommonMenuOpen(false); }}
+              onMouseEnter={() => setCommonMenuHoverKey(t.key)}
+              onMouseLeave={() => setCommonMenuHoverKey(null)}
               style={{
                 display: "block",
                 width: "100%",
@@ -847,8 +848,8 @@ export default function RulesPage() {
                 fontSize: 14,
                 fontWeight: tab === t.key ? 700 : 500,
                 cursor: "pointer",
-                background: tab === t.key ? C.primaryLt : "transparent",
-                color: tab === t.key ? C.primary : "#555",
+                background: tab === t.key || commonMenuHoverKey === t.key ? C.primaryLt : "transparent",
+                color: tab === t.key || commonMenuHoverKey === t.key ? C.primary : "#555",
               }}
             >
               {t.label}
