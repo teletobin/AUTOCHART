@@ -788,7 +788,7 @@ export default function RulesPage() {
               <TabSearchInput value={excludeSearch} onChange={setExcludeSearch} />
             </div>
             <p style={styles.cardHint}>
-              차팅에 불필요한 시술명 속의 괄호 내용(장비, 제품, 시술 설명 등)을 삭제합니다.
+              차팅에 불필요한 홈페이지 시술명 속 괄호 부분(장비, 제품, 시술 설명)을 삭제해 줍니다.
               <br />
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.danger }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
@@ -875,7 +875,7 @@ export default function RulesPage() {
               <TabSearchInput value={aliasSearch} onChange={setAliasSearch} />
             </div>
             <p style={styles.cardHint}>
-              시술검색창에 줄임말, 오타, 한글로 입력해도 원하는 시술이 검색되도록 합니다.
+              자주 쓰는 시술 줄임말, 오타, 별칭 등을 입력해 홈페이지에 등록된 정식 시술명으로 검색되도록 키워드를 매칭해 주세요.
               <br />
               (줄임말 예: 스보 → 스킨보톡스)
               <br />
