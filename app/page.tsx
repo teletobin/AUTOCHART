@@ -1000,7 +1000,7 @@ export default function Home() {
                   <div style={styles.tableHead}>
                     <span style={{ width: 16 }} />
                     <span style={{ width: 20, textAlign: "center" }} />
-                    <span style={{ flex: 1, textAlign: "center", paddingRight: 16 }}>시술명</span>
+                    <span style={{ flex: 1, textAlign: "left", paddingLeft: 4 }}>시술명</span>
                     <span style={{ width: 60, textAlign: "center" }}>단가</span>
                     <span style={{ width: 50, textAlign: "center" }}>수량</span>
                     <span style={{ width: 80, textAlign: "center" }}>합계</span>
