@@ -881,7 +881,7 @@ export default function RulesPage() {
               <TabSearchInput value={globalReplaceSearch} onChange={setGlobalReplaceSearch} />
             </div>
             <p style={styles.cardHint}>
-              시술명이 더욱 간결하게 검색되고 차팅되도록 치환할 시술명을 입력해 주세요.
+              간결하고 깔끔한 시술명 검색과 차팅을 위해 홈페이지의 시술명과 치환할 시술명을 입력해 주세요.
               <br />
               <span style={{ display: "inline-flex", alignItems: "center", gap: 4, color: C.danger }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
@@ -895,7 +895,13 @@ export default function RulesPage() {
 
             {applySection}
 
-            <div style={{ display: "flex", gap: 8, marginBottom: 12, alignItems: "center" }}>
+            <div style={{ display: "flex", gap: 8, fontSize: 13, color: C.sub, fontWeight: 500 }}>
+              <div style={{ flex: 1, textAlign: "center" as const }}>홈페이지 시술명</div>
+              <div style={{ flexShrink: 0, width: 24 }} />
+              <div style={{ flex: 1, textAlign: "center" as const }}>차팅용(검색용) 시술명</div>
+              <div style={{ flexShrink: 0, width: 60 }} />
+            </div>
+            <div style={{ display: "flex", gap: 8, marginTop: 6, marginBottom: 12, alignItems: "center" }}>
               <input
                 type="text"
                 value={newGlobalReplaceFind}
@@ -903,7 +909,7 @@ export default function RulesPage() {
                 placeholder="예: 써마지 FLX 리프팅"
                 style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
               />
-              <span style={{ color: C.sub, fontSize: 13 }}>→</span>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "center", color: C.sub, flexShrink: 0, width: 24, fontSize: 13 }}>→</div>
               <input
                 type="text"
                 value={newGlobalReplaceReplacement}
