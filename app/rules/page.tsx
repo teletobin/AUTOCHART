@@ -118,9 +118,6 @@ function tabButtonStyle(active: boolean): React.CSSProperties {
 
 export default function RulesPage() {
   const [tab, setTab] = useState<Tab>("category");
-  // 탭바 위 "지점별/전지점 공통" 세그먼트 토글이 어느 쪽을 가리킬지는 현재 tab이
-  // COMMON_TABS에 속하는지로 그때그때 판단한다(별도 state로 관리하면 tab과 어긋날 수 있음).
-  const isCommonTabActive = COMMON_TABS.some((t) => t.key === tab);
   const [branch, setBranch] = useState("");
   const [confirmModal, setConfirmModal] = useState<{
     message: string;
@@ -776,36 +773,19 @@ export default function RulesPage() {
       )}
 
       <div style={styles.tabBar}>
-        <div style={{ ...styles.tabBarInner, paddingTop: 8 }}>
-          <div style={{ display: "flex", gap: 4, background: "rgba(0,0,0,0.06)", borderRadius: 8, padding: 4 }}>
-            {([
-              { key: "branch" as const, label: "지점별", active: !isCommonTabActive, target: MAIN_TABS[0].key },
-              { key: "common" as const, label: "전지점 공통", active: isCommonTabActive, target: COMMON_TABS[0].key },
-            ]).map((seg) => (
-              <button
-                key={seg.key}
-                onClick={() => setTab(seg.target)}
-                style={{
-                  padding: "6px 14px",
-                  border: "none",
-                  borderRadius: 6,
-                  fontSize: 13,
-                  fontWeight: 700,
-                  cursor: "pointer",
-                  background: seg.active ? C.surface : "transparent",
-                  color: seg.active ? C.primary : C.sub,
-                  boxShadow: seg.active ? "0 1px 3px rgba(0,0,0,0.12)" : "none",
-                }}
-              >
-                {seg.label}
-              </button>
-            ))}
-          </div>
-        </div>
         <div style={styles.tabBarInner}>
-          {(isCommonTabActive ? COMMON_TABS : MAIN_TABS).map((t) => (
+          {MAIN_TABS.map((t) => (
             <button key={t.key} onClick={() => setTab(t.key)} style={tabButtonStyle(tab === t.key)}>
               {t.label}
+            </button>
+          ))}
+          <div style={{ width: 1, height: 20, background: C.border, margin: "0 6px", flexShrink: 0, alignSelf: "center" }} />
+          {COMMON_TABS.map((t) => (
+            <button key={t.key} onClick={() => setTab(t.key)} style={{ ...tabButtonStyle(tab === t.key), display: "flex", alignItems: "center", gap: 5 }}>
+              {t.label}
+              <span style={{ fontSize: 10, fontWeight: 700, color: tab === t.key ? C.danger : C.sub, background: tab === t.key ? "rgba(192,57,43,0.12)" : "rgba(0,0,0,0.06)", borderRadius: 8, padding: "1px 6px" }}>
+                공통
+              </span>
             </button>
           ))}
         </div>
