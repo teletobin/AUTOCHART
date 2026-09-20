@@ -320,6 +320,7 @@ export default function RulesPage() {
       return;
     }
     setRules((prev) => [...prev, data.rule]);
+    showRowToast("추가 완료");
   }
 
   async function deleteRule(id: string) {
@@ -425,6 +426,7 @@ export default function RulesPage() {
     setNewManualName("");
     setNewManualPrice("");
     setNewManualCategory(null);
+    showRowToast("추가 완료");
   }
 
   function startEditManual(t: ManualTreatment) {
@@ -566,6 +568,7 @@ export default function RulesPage() {
     setAliases((prev) => [...prev, data.alias]);
     setNewAliasText("");
     setNewAliasKeyword("");
+    showRowToast("추가 완료");
   }
 
   function startEditAlias(a: Alias) {
