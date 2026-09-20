@@ -55,10 +55,15 @@ type ApplyResult = {
 
 type Tab = "exclude" | "replaceGlobal" | "alias" | "manual" | "category" | "branchRules";
 
-const TABS: { key: Tab; label: string }[] = [
+const MAIN_TABS: { key: Tab; label: string }[] = [
   { key: "category", label: "시술별 카테고리" },
   { key: "branchRules", label: "지점별 규칙" },
   { key: "manual", label: "지점별 시술 추가" },
+];
+
+// 전지점 공통 설정: 그룹 버튼을 눌러야 옆으로 펼쳐지는 서브탭들.
+// 전지점 데이터에 영향을 주는 탭이라는 걸 지점별 탭과 시각적으로 분리하기 위함.
+const COMMON_TABS: { key: Tab; label: string }[] = [
   { key: "alias", label: "검색어 매칭" },
   { key: "exclude", label: "시술명 정리" },
   { key: "replaceGlobal", label: "시술명 치환" },
@@ -113,6 +118,9 @@ function tabButtonStyle(active: boolean): React.CSSProperties {
 
 export default function RulesPage() {
   const [tab, setTab] = useState<Tab>("category");
+  // "전지점 공통 설정" 그룹을 펼쳤는지. 공통 탭 중 하나가 이미 선택돼 있으면 항상 펼쳐진 것으로 본다.
+  const [commonGroupOpen, setCommonGroupOpen] = useState(false);
+  const isCommonTabActive = COMMON_TABS.some((t) => t.key === tab);
   const [branch, setBranch] = useState("");
   const [confirmModal, setConfirmModal] = useState<{
     message: string;
@@ -123,7 +131,7 @@ export default function RulesPage() {
 
   useEffect(() => {
     const t = new URLSearchParams(window.location.search).get("tab") as Tab | null;
-    if (t && TABS.some((tb) => tb.key === t)) setTab(t);
+    if (t && [...MAIN_TABS, ...COMMON_TABS].some((tb) => tb.key === t)) setTab(t);
     const saved = localStorage.getItem(BRANCH_STORAGE_KEY);
     if (saved) setBranch(saved);
   }, []);
@@ -769,7 +777,20 @@ export default function RulesPage() {
 
       <div style={styles.tabBar}>
         <div style={styles.tabBarInner}>
-          {TABS.map((t) => (
+          {MAIN_TABS.map((t) => (
+            <button key={t.key} onClick={() => setTab(t.key)} style={tabButtonStyle(tab === t.key)}>
+              {t.label}
+            </button>
+          ))}
+          <div style={{ width: 1, height: 20, background: C.border, margin: "0 4px", flexShrink: 0, alignSelf: "center" }} />
+          <button
+            onClick={() => setCommonGroupOpen((v) => !v)}
+            style={{ ...tabButtonStyle(isCommonTabActive), display: "flex", alignItems: "center", gap: 4 }}
+          >
+            전지점 공통 설정
+            <span style={{ fontSize: 10, transform: (commonGroupOpen || isCommonTabActive) ? "rotate(180deg)" : "none", transition: "transform 0.15s ease" }}>▾</span>
+          </button>
+          {(commonGroupOpen || isCommonTabActive) && COMMON_TABS.map((t) => (
             <button key={t.key} onClick={() => setTab(t.key)} style={tabButtonStyle(tab === t.key)}>
               {t.label}
             </button>
