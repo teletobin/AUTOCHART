@@ -1019,21 +1019,21 @@ export default function RulesPage() {
                 value={newManualName}
                 onChange={(e) => setNewManualName(e.target.value)}
                 placeholder="시술명"
-                style={{ ...styles.input, flex: 1, minWidth: 0 }}
+                style={{ ...styles.input, flex: 1, minWidth: 0, height: 34, padding: "6px 10px", fontSize: 13 }}
               />
               <input
                 type="number"
                 value={newManualPrice}
                 onChange={(e) => setNewManualPrice(e.target.value)}
                 placeholder="가격(원)"
-                style={{ ...styles.input, flex: "0 0 90px", minWidth: 0 }}
+                style={{ ...styles.input, flex: "0 0 90px", minWidth: 0, height: 34, padding: "6px 10px", fontSize: 13 }}
               />
               <Dropdown
                 value={newManualCategory ?? ""}
                 onChange={(v) => setNewManualCategory(v ? (v as TreatmentCategory) : null)}
                 placeholder="카테고리"
                 options={CATEGORY_ORDER.map((cat) => ({ value: cat, label: cat }))}
-                style={{ flex: "0 0 110px" }}
+                style={{ flex: "0 0 110px", height: 34 }}
               />
               <button
                 onClick={addManualTreatment}
@@ -1053,20 +1053,20 @@ export default function RulesPage() {
                       type="text"
                       value={editManualName}
                       onChange={(e) => setEditManualName(e.target.value)}
-                      style={styles.input}
+                      style={{ ...styles.input, height: 34, padding: "6px 10px", fontSize: 13 }}
                     />
                     <input
                       type="number"
                       value={editManualPrice}
                       onChange={(e) => setEditManualPrice(e.target.value)}
-                      style={{ ...styles.input, flex: "0 0 120px" }}
+                      style={{ ...styles.input, flex: "0 0 120px", height: 34, padding: "6px 10px", fontSize: 13 }}
                     />
                     <Dropdown
                       value={editManualCategory ?? ""}
                       onChange={(v) => setEditManualCategory(v ? (v as TreatmentCategory) : null)}
                       placeholder="카테고리"
                       options={CATEGORY_ORDER.map((cat) => ({ value: cat, label: cat }))}
-                      style={{ flex: "0 0 110px" }}
+                      style={{ flex: "0 0 110px", height: 34 }}
                     />
                     <button onClick={() => saveEditManual(t.id)} style={{ ...styles.linkBtn, color: C.primary }}>저장</button>
                     <button onClick={cancelEditManual} style={styles.linkBtn}>취소</button>
