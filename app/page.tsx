@@ -1004,7 +1004,7 @@ export default function Home() {
                     <span style={{ width: 60, textAlign: "center" }}>단가</span>
                     <span style={{ width: 50, textAlign: "center" }}>수량</span>
                     <span style={{ width: 80, textAlign: "center" }}>합계</span>
-                    <span style={{ width: 24, textAlign: "left", whiteSpace: "nowrap", marginLeft: -4 }}>미시술</span>
+                    <span style={{ width: 24, textAlign: "left", whiteSpace: "nowrap", marginLeft: -8 }}>미시술</span>
                   </div>
                   {selectedItems.map((item) => (
                     <div key={item.id} style={styles.tableRow}>
