@@ -118,11 +118,28 @@ function tabButtonStyle(active: boolean): React.CSSProperties {
 export default function RulesPage() {
   const [tab, setTab] = useState<Tab>("category");
   const [commonMenuOpen, setCommonMenuOpen] = useState(false);
-  const commonMenuRef = useRef<HTMLDivElement>(null);
+  // 탭바 컨테이너에 overflowX:auto가 있어 absolute 드롭다운이 그 안에서 잘려버린다.
+  // fixed + 버튼 좌표 계산으로 탭바의 overflow 클리핑을 완전히 벗어나게 한다.
+  const [commonMenuPos, setCommonMenuPos] = useState<{ top: number; left: number } | null>(null);
+  const commonMenuBtnRef = useRef<HTMLButtonElement>(null);
+  const commonMenuPanelRef = useRef<HTMLDivElement>(null);
+  function toggleCommonMenu() {
+    if (!commonMenuOpen && commonMenuBtnRef.current) {
+      const rect = commonMenuBtnRef.current.getBoundingClientRect();
+      setCommonMenuPos({ top: rect.bottom + 4, left: rect.left });
+    }
+    setCommonMenuOpen((v) => !v);
+  }
   useEffect(() => {
     if (!commonMenuOpen) return;
     function onOutsideClick(e: MouseEvent) {
-      if (commonMenuRef.current && !commonMenuRef.current.contains(e.target as Node)) setCommonMenuOpen(false);
+      const target = e.target as Node;
+      if (
+        commonMenuBtnRef.current && !commonMenuBtnRef.current.contains(target) &&
+        commonMenuPanelRef.current && !commonMenuPanelRef.current.contains(target)
+      ) {
+        setCommonMenuOpen(false);
+      }
     }
     document.addEventListener("mousedown", onOutsideClick);
     return () => document.removeEventListener("mousedown", onOutsideClick);
@@ -789,55 +806,56 @@ export default function RulesPage() {
             </button>
           ))}
           <div style={{ width: 1, height: 20, background: C.border, margin: "0 6px", flexShrink: 0, alignSelf: "center" }} />
-          <div ref={commonMenuRef} style={{ position: "relative" }}>
-            <button
-              onClick={() => setCommonMenuOpen((v) => !v)}
-              style={{ ...tabButtonStyle(COMMON_TABS.some((t) => t.key === tab)), display: "flex", alignItems: "center", gap: 4 }}
-            >
-              전지점 공통 설정
-              <span style={{ fontSize: 10, transform: commonMenuOpen ? "rotate(180deg)" : "none" }}>▾</span>
-            </button>
-            {commonMenuOpen && (
-              <div
-                style={{
-                  position: "absolute",
-                  top: "calc(100% + 4px)",
-                  left: 0,
-                  minWidth: 160,
-                  background: C.surface,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 10,
-                  boxShadow: "0 10px 28px rgba(0,0,0,0.12)",
-                  padding: 5,
-                  zIndex: 300,
-                }}
-              >
-                {COMMON_TABS.map((t) => (
-                  <button
-                    key={t.key}
-                    onClick={() => { setTab(t.key); setCommonMenuOpen(false); }}
-                    style={{
-                      display: "block",
-                      width: "100%",
-                      textAlign: "left",
-                      padding: "8px 10px",
-                      border: "none",
-                      borderRadius: 7,
-                      fontSize: 14,
-                      fontWeight: tab === t.key ? 700 : 500,
-                      cursor: "pointer",
-                      background: tab === t.key ? C.primaryLt : "transparent",
-                      color: tab === t.key ? C.primary : "#555",
-                    }}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
+          <button
+            ref={commonMenuBtnRef}
+            onClick={toggleCommonMenu}
+            style={{ ...tabButtonStyle(COMMON_TABS.some((t) => t.key === tab)), display: "flex", alignItems: "center", gap: 4 }}
+          >
+            전지점 공통 설정
+            <span style={{ fontSize: 10, transform: commonMenuOpen ? "rotate(180deg)" : "none" }}>▾</span>
+          </button>
         </div>
       </div>
+
+      {commonMenuOpen && commonMenuPos && (
+        <div
+          ref={commonMenuPanelRef}
+          style={{
+            position: "fixed",
+            top: commonMenuPos.top,
+            left: commonMenuPos.left,
+            minWidth: 160,
+            background: C.surface,
+            border: `1px solid ${C.border}`,
+            borderRadius: 10,
+            boxShadow: "0 10px 28px rgba(0,0,0,0.12)",
+            padding: 5,
+            zIndex: 300,
+          }}
+        >
+          {COMMON_TABS.map((t) => (
+            <button
+              key={t.key}
+              onClick={() => { setTab(t.key); setCommonMenuOpen(false); }}
+              style={{
+                display: "block",
+                width: "100%",
+                textAlign: "left",
+                padding: "8px 10px",
+                border: "none",
+                borderRadius: 7,
+                fontSize: 14,
+                fontWeight: tab === t.key ? 700 : 500,
+                cursor: "pointer",
+                background: tab === t.key ? C.primaryLt : "transparent",
+                color: tab === t.key ? C.primary : "#555",
+              }}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
 
       <main
         style={
