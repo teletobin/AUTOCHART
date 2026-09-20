@@ -210,6 +210,7 @@ export default function Home() {
   const [showSearchTip, setShowSearchTip] = useState(false);
   const [showChartTip, setShowChartTip] = useState(false);
   const [showClearTip, setShowClearTip] = useState(false);
+  const [showBoosterTip, setShowBoosterTip] = useState(false);
   const [panelDiscountMenuOpen, setPanelDiscountMenuOpen] = useState(false);
 
   // 지점 변경 확인/진행 상태 팝업. confirm(변경할지 물어보는 중) -> loading(불러오는 중)
@@ -844,27 +845,55 @@ export default function Home() {
                 </div>
               )}
               </div>
-              <button
-                onClick={() => setBoosterOpen((v) => !v)}
-                title="리쥬란 같이 CC별 상품을 조합해 목표 용량을 만들 때, 최저가~최고가 조합을 선택할 수 있어요."
-                style={{
-                  background: boosterOpen ? C.primaryLt : C.borderSoft,
-                  border: `1px solid ${C.border}`,
-                  borderRadius: 8,
-                  fontSize: 12,
-                  color: C.primary,
-                  cursor: "pointer",
-                  fontWeight: 600,
-                  padding: "0 12px",
-                  height: 36,
-                  flexShrink: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
+              <div
+                style={{ position: "relative" }}
+                onMouseEnter={() => setShowBoosterTip(true)}
+                onMouseLeave={() => setShowBoosterTip(false)}
               >
-                부스터
-              </button>
+                <button
+                  onClick={() => setBoosterOpen((v) => !v)}
+                  style={{
+                    background: boosterOpen ? C.primaryLt : C.borderSoft,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 8,
+                    fontSize: 12,
+                    color: C.primary,
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    padding: "0 12px",
+                    height: 36,
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  부스터
+                </button>
+                {showBoosterTip && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: "100%",
+                      right: 0,
+                      marginBottom: 6,
+                      width: "max-content",
+                      background: C.surface,
+                      border: `1px solid ${C.border}`,
+                      borderRadius: 8,
+                      padding: "5px 8px",
+                      fontSize: 10,
+                      color: C.primary,
+                      lineHeight: 1.3,
+                      boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                      zIndex: 50,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    리쥬란 같이 CC별 상품을 조합해 목표 용량을 만들 때, 최저가~최고가 조합을 선택할 수 있어요.
+                  </div>
+                )}
+              </div>
               {boosterOpen && (
                 <div onClick={() => setBoosterOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 40 }} />
               )}
