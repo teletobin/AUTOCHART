@@ -1107,7 +1107,7 @@ export default function RulesPage() {
               <TabSearchInput value={aliasSearch} onChange={setAliasSearch} />
             </div>
             <p style={styles.cardHint}>
-              자주 쓰는 시술 줄임말, 오타, 별칭 등을 입력해 홈페이지에 등록된 정식 시술명으로 검색되도록 키워드를 매칭해 주세요.
+              시술별 줄임말이나 별칭, 키보드 오타를 입력해도 원하는 시술이 검색되도록 키워드를 매칭해 주세요.
               <br />
               (줄임말 예: 스보 → 스킨보톡스)
               <br />
