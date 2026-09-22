@@ -30,7 +30,7 @@ function TabSearchInput({ value, onChange }: { value: string; onChange: (v: stri
     <div style={{ position: "relative", width, flex: "0 0 auto", transition: "width 0.15s ease" }}>
       <svg
         width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={C.sub} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
-        style={{ position: "absolute", left: 2, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", flexShrink: 0 }}
+        style={{ position: "absolute", right: 2, top: "50%", transform: "translateY(-50%)", pointerEvents: "none", flexShrink: 0 }}
       >
         <circle cx="11" cy="11" r="7" />
         <path d="m21 21-4.35-4.35" />
@@ -43,7 +43,7 @@ function TabSearchInput({ value, onChange }: { value: string; onChange: (v: stri
         autoComplete="off"
         style={{
           width: "100%",
-          padding: "9px 4px 9px 18px",
+          padding: "9px 18px 9px 4px",
           border: "none",
           borderBottom: `1.5px solid ${C.border}`,
           borderRadius: 0,
