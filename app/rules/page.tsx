@@ -20,7 +20,7 @@ function measureTabSearchWidth(text: string): number {
   return ctx.measureText(text).width;
 }
 
-const TAB_SEARCH_MIN_WIDTH = 52;
+const TAB_SEARCH_MIN_WIDTH = 67;
 
 function TabSearchInput({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const width = value
