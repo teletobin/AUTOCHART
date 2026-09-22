@@ -111,7 +111,7 @@ const styles: Record<string, React.CSSProperties> = {
   header:    { background: C.surface, padding: "14px 28px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
   headerInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 28, paddingRight: 28, boxSizing: "border-box" },
   title:     { fontSize: 19, fontWeight: 700, color: C.primary },
-  logo:      { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 19, color: C.primary },
+  logo:      { display: "flex", alignItems: "center", gap: 10, fontWeight: 600, fontSize: 19, color: C.primary },
   backLink:  { fontSize: 13, color: C.sub, textDecoration: "none" },
   tabBar:    { borderBottom: `1px solid ${C.border}`, background: C.primaryLt, width: "100%", minHeight: 44, flexShrink: 0, position: "sticky" as const, top: "64px", zIndex: 50, boxSizing: "border-box" as const },
   tabBarInner: { width: "100%", maxWidth: "none", margin: "0", minHeight: 44, display: "flex", alignItems: "center", flexShrink: 0, gap: 4, padding: "0 28px", overflowX: "auto" as const, boxSizing: "border-box" as const },
@@ -751,7 +751,7 @@ export default function RulesPage() {
           <div style={styles.logo}>
             <Link href="/" style={{ display: "flex", alignItems: "center", gap: 10, color: C.primary, textDecoration: "none" }}>
               <img src="/logo.png" alt="차팅 서포트" style={{ height: 36, width: "auto" }} />
-              <span style={{ fontWeight: 700 }}>차팅 서포트</span>
+              <span style={{ fontWeight: 600 }}>차팅 서포트</span>
             </Link>
             <span style={{ color: "rgba(111,104,100,0.45)", fontWeight: 400, fontSize: 18.5 }}>&gt;</span>
             <span style={{ fontWeight: 500, color: "rgba(111,104,100,0.7)", fontSize: 18.5 }}>상세설정</span>

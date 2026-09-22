@@ -154,7 +154,7 @@ const styles: Record<string, React.CSSProperties> = {
   wrap:    { display: "flex", flexDirection: "column", minHeight: "100vh", background: C.bg, color: C.primary, fontFamily: "Pretendard, -apple-system, sans-serif" },
   header:  { background: C.surface, padding: "14px 0", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
   headerInner: { maxWidth: MAX_WIDTH, margin: "0 auto", padding: "0 20px", boxSizing: "border-box" as const, display: "flex", alignItems: "center", justifyContent: "space-between" },
-  logo:    { display: "flex", alignItems: "center", gap: 10, fontWeight: 700, fontSize: 19, color: C.primary },
+  logo:    { display: "flex", alignItems: "center", gap: 10, fontWeight: 600, fontSize: 19, color: C.primary },
   btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontSize: 14, fontWeight: 600, cursor: "pointer" },
   btnGhost:   { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
   main:    { maxWidth: MAX_WIDTH, margin: "0 auto", width: "100%", padding: "24px 20px", display: "grid", gridTemplateColumns: "1fr", gap: 16 },
