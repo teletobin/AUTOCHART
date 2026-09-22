@@ -91,8 +91,11 @@ function scoreAgainst(qTokens: string[], indexed: Indexed[], queryNoSpace: strin
     // 이름에 "리쥬란힐러"가 우연히 들어간 다른 섹션의 패키지 상품(예: 다른
     // 프로모션 섹션의 "리쥬란힐러 2cc 체험가")보다 항상 먼저 오게 한다.
     // 그렇지 않으면 매칭 점수가 같아졌을 때 서로 다른 섹션의 order끼리
-    // 비교되어 뒤섞인다.
-    const ownSection = queryNoSpace.length > 0 && sectionNoSpace.includes(queryNoSpace);
+    // 비교되어 뒤섞인다. includes가 아니라 startsWith를 쓰는 이유: "인모드"를
+    // 검색했을 때 "인모드" 섹션은 물론 매치돼야 하지만, "바디 인모드"처럼
+    // 검색어가 섹션명 뒤쪽에 붙어 있을 뿐인 완전히 다른 섹션까지 includes로는
+    // 함께 매치되어 두 섹션이 뒤섞인 채 order로 정렬되는 문제가 있었다.
+    const ownSection = queryNoSpace.length > 0 && sectionNoSpace.startsWith(queryNoSpace);
 
     return { t, nameMatchedChars, matchedChars, score, order, exactPhrase, isOption, ownSection };
   });
