@@ -518,6 +518,11 @@ export default function Home() {
     setMembershipType("VIP");
     setDiscountPercent(0);
     setDiscountMenuOpen(false);
+    // editableText는 mergeGeneratedText가 "생성 텍스트에 없던 줄"(사용자가 직접
+    // 추가한 메모)을 항상 보존하도록 설계돼 있어, selectedItems만 비워서는 그
+    // 메모가 계속 남는다. CLEAR는 완전 초기화이므로 텍스트와 병합 기준점을 함께 비운다.
+    setEditableText("");
+    prevFinalTextRef.current = "";
   }
   function updateItemName(id: string, name: string) { setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, name } : i))); }
   function updateItemCount(id: string, count: number) {
