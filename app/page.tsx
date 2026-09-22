@@ -767,7 +767,7 @@ export default function Home() {
       )}
 
       {!branch && (
-        <p style={{ maxWidth: MAX_WIDTH, margin: "12px auto 0", padding: "0 20px", fontSize: 14, fontWeight: 600, color: C.danger }}>
+        <p style={{ maxWidth: MAX_WIDTH, margin: "12px auto 0", padding: "0 20px", fontSize: 14, fontWeight: 500, color: C.danger }}>
           상단에서 지점을 선택해주세요.
         </p>
       )}
