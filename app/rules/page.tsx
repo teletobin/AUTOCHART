@@ -1418,7 +1418,7 @@ export default function RulesPage() {
               </div>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
                 <button onClick={handleSync} disabled={syncing || !branch} style={{ ...styles.btnPrimary, padding: "10px 18px", fontSize: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.12)", opacity: syncing || !branch ? 0.6 : 1 }}>
-                  {syncing ? "연동 중..." : "홈페이지 연동"}
+                  {syncing ? "연동 중..." : "홈페이지 재연동"}
                 </button>
                 <button
                   onClick={handleReset}
