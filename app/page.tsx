@@ -767,11 +767,9 @@ export default function Home() {
       )}
 
       {!branch && (
-        <div style={{ maxWidth: MAX_WIDTH, margin: "12px auto 0", padding: "0 20px" }}>
-          <p style={{ display: "inline-flex", alignItems: "center", gap: 6, background: C.accent, color: C.danger, fontSize: 14, fontWeight: 700, borderRadius: 8, padding: "8px 14px" }}>
-            상단에서 지점을 선택해주세요.
-          </p>
-        </div>
+        <p style={{ maxWidth: MAX_WIDTH, margin: "12px auto 0", padding: "0 20px", fontSize: 14, fontWeight: 600, color: C.danger }}>
+          상단에서 지점을 선택해주세요.
+        </p>
       )}
       {loadError && <p style={{ maxWidth: MAX_WIDTH, margin: "8px auto 0", padding: "0 20px", fontSize: 13, color: C.danger }}>시술 데이터를 불러오지 못했습니다: {loadError}</p>}
 
