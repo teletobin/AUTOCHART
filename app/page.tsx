@@ -212,6 +212,7 @@ export default function Home() {
   const [showChartTip, setShowChartTip] = useState(false);
   const [showClearTip, setShowClearTip] = useState(false);
   const [showBoosterTip, setShowBoosterTip] = useState(false);
+  const [showManualTip, setShowManualTip] = useState(false);
   const [showTransferTip, setShowTransferTip] = useState(false);
   const [panelDiscountMenuOpen, setPanelDiscountMenuOpen] = useState(false);
 
@@ -977,7 +978,29 @@ export default function Home() {
 
             {/* 직접 입력 */}
             <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
-              <input type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="시술 직접 입력 (예: 얼굴 CO2 5개)" className="manual-input-sm" style={{ ...styles.input, flex: 2, minWidth: 0, height: 36, boxSizing: "border-box" }} />
+              <div
+                style={{ position: "relative", flex: 2, minWidth: 0 }}
+                onMouseEnter={() => setShowManualTip(true)}
+                onMouseLeave={() => setShowManualTip(false)}
+              >
+                <input type="text" value={manualName} onChange={(e) => setManualName(e.target.value)} placeholder="시술 직접 입력 (예: 얼굴 CO2 5개)" className="manual-input-sm" style={{ ...styles.input, width: "100%", height: 36, boxSizing: "border-box" }} />
+                {showManualTip && (
+                  <div
+                    style={{
+                      ...styles.tooltip,
+                      position: "absolute",
+                      bottom: "100%",
+                      left: 0,
+                      marginBottom: 6,
+                      width: "max-content",
+                      maxWidth: 320,
+                      whiteSpace: "pre-line",
+                    }}
+                  >
+                    {"검색보다 직접 입력이 더 계산과 차팅이 빠를 경우 사용하세요.\n예) 얼굴점 CO2 5개 / 60000 (세전금액) 입력\n\n얼굴점 CO2 5개 1-1  66,000원  으로 차트가 생성됩니다."}
+                  </div>
+                )}
+              </div>
               <input type="text" value={manualPrice ? Number(manualPrice).toLocaleString() : ""} onChange={(e) => setManualPrice(e.target.value.replace(/[^0-9]/g, ''))} placeholder="세전 금액" className="manual-input-sm" style={{ ...styles.input, flex: "0 0 76px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
               <Dropdown
                 value={manualCategory ?? ""}
