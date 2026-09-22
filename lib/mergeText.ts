@@ -1,9 +1,11 @@
 // 자동 생성된 차트 텍스트(oldGen -> newGen)가 바뀔 때, 사용자가 직접 편집해 둔 curText 안의
 // "생성 텍스트에 없던 줄"들을 새 텍스트의 같은 위치(앞뒤 줄 기준)에 다시 끼워 넣는다.
-// 매칭은 가격 숫자·강조점(🔸)을 지운 정규화된 줄로 비교한다 — 수량/금액만 바뀐 줄은 같은 줄로 취급해서
-// 그 줄에 붙여둔 메모의 위치를 잃지 않기 위함이다.
+// 매칭은 가격 숫자·강조점(🔸)·회차 표기("1-1", "2-1" 등)를 지운 정규화된 줄로 비교한다 —
+// 수량/금액/회차만 바뀐 줄은 같은 줄로 취급해서 그 줄에 붙여둔 메모의 위치를 잃지 않기
+// 위함이다. 회차를 정규화하지 않으면, 수량을 늘렸다 줄이는 과정에서 "1-1"이 "2-1"로
+// 바뀐 줄을 완전히 다른 줄로 오인해 옛 줄과 새 줄이 둘 다 남는 중복 문제가 생긴다.
 function normalizeLine(line: string): string {
-  return line.replace(/[\d,]+원/g, "").replace(/🔸/g, "").replace(/\s+/g, " ").trim();
+  return line.replace(/[\d,]+원/g, "").replace(/🔸/g, "").replace(/\d+-\d+/g, "").replace(/\s+/g, " ").trim();
 }
 
 function lcsMatch(a: string[], b: string[]): [number, number][] {
@@ -117,4 +119,15 @@ if (process.env.NODE_ENV !== "production") {
   );
   // 편집 없음: 그대로 새 텍스트
   assertEq("no edit", mergeGeneratedText("A\nB", "A\nB", "A2\nB"), "A2\nB");
+  // 수량을 2로 늘렸다가(회차 표기가 1-1->2-1로 바뀜, curText는 그 상태) 다시 1로
+  // 낮추면(newGen이 1-1로 복귀), 옛 "2-1" 줄이 남지 않고 새 "1-1" 한 줄만 남아야 한다.
+  assertEq(
+    "quantity raised then lowered doesn't duplicate the line",
+    mergeGeneratedText(
+      "슈링크 300샷 1-1  100,000원🔸",
+      "슈링크 300샷 2-1  100,000원🔸",
+      "슈링크 300샷 1-1  100,000원"
+    ),
+    "슈링크 300샷 1-1  100,000원"
+  );
 }
