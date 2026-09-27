@@ -9,7 +9,6 @@ import { TreatmentCategory } from "@/lib/types";
 import { CATEGORY_ORDER } from "@/lib/categoryDetection";
 import { C, MAX_WIDTH } from "@/lib/theme";
 import { BRANCH_STORAGE_KEY } from "@/lib/branches";
-import { mergeGeneratedText } from "@/lib/mergeText";
 import { findCcCombos, formatComboLabel, mergedComboName, deriveBaseName, type CcCombo } from "@/lib/ccCombo";
 import BranchPicker from "@/components/BranchPicker";
 import Dropdown from "@/components/Dropdown";
@@ -24,10 +23,38 @@ type SelectedItem = {
   unused: boolean;
   displayed: boolean;
   category?: TreatmentCategory;
+  // 수량을 늘릴 때 사용자가 고른 표시 방식. "visits"=회차(n-1)를 늘림, "scaled"=시술명 속
+  // 수량(샷/부위 등)을 늘림. 시술명에 이미 "N회"가 박혀있으면 이 값과 무관하게 항상 회차로 계산한다.
+  quantityMode?: "visits" | "scaled";
 };
 
 function computeUnitPrice(item: SelectedItem): number {
   return Math.round(item.basePrice * item.count * VAT_RATE);
+}
+
+// "300샷", "3부위"처럼 시술명 속에 박혀있는, "회"가 아닌 수량 단위. 수량을 늘릴 때
+// 이 숫자를 그만큼 곱해서 대신 늘리는 선택지를 제공하기 위해 찾아낸다.
+const SCALABLE_UNIT_RE = /(\d+)\s*(샷|부위|개|병|알|[Cc][Cc])/;
+
+// 시술명에 이미 "N회"가 있으면 그 N에 수량을 곱한 회차로, 아니면(선택적으로 고른
+// scaled 모드면 시술명 속 수량을 곱해 1-1로, 그 외에는 수량 그대로를 회차로) 표시한다.
+function getDisplayNameParts(item: SelectedItem): { base: string; n: string } {
+  const parsed = splitCountSuffix(item.name);
+  const hasExplicitHui = /\d+\s*회/.test(item.name);
+  if (hasExplicitHui) {
+    return { base: parsed.base, n: String(Number(parsed.n) * item.count) };
+  }
+  if (item.quantityMode === "scaled") {
+    const match = item.name.match(SCALABLE_UNIT_RE);
+    if (match) {
+      const scaledName = item.name
+        .replace(match[0], `${Number(match[1]) * item.count}${match[2]}`)
+        .replace(/\s+/g, " ")
+        .trim();
+      return { base: scaledName, n: "1" };
+    }
+  }
+  return { base: parsed.base, n: String(item.count) };
 }
 
 // panelItems가 null이면 금액 직접입력, 배열이면 팝업에서 시술을 골라
@@ -98,11 +125,13 @@ function AutoGrowInput({
   onChange,
   className,
   style,
+  placeholder,
 }: {
   value: string;
   onChange: (value: string) => void;
   className?: string;
   style?: React.CSSProperties;
+  placeholder?: string;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const resize = () => {
@@ -127,6 +156,7 @@ function AutoGrowInput({
       rows={1}
       className={`resize-none overflow-hidden ${className ?? ""}`}
       style={style}
+      placeholder={placeholder}
     />
   );
 }
@@ -185,6 +215,14 @@ export default function Home() {
   const [inputValue, setInputValue] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [selectedItems, setSelectedItems] = useState<SelectedItem[]>([]);
+  const [qtyPopup, setQtyPopup] = useState<{
+    itemId: string;
+    newCount: number;
+    mode: "confirm" | "choice";
+    confirmLabel?: string;
+    option1Label?: string;
+    option2Label?: string;
+  } | null>(null);
   const [creditInput, setCreditInput] = useState("");
   const [extraCreditInput, setExtraCreditInput] = useState("");
   const [staffName, setStaffName] = useState("");
@@ -519,15 +557,44 @@ export default function Home() {
     setMembershipType("VIP");
     setDiscountPercent(0);
     setDiscountMenuOpen(false);
-    // editableText는 mergeGeneratedText가 "생성 텍스트에 없던 줄"(사용자가 직접
-    // 추가한 메모)을 항상 보존하도록 설계돼 있어, selectedItems만 비워서는 그
-    // 메모가 계속 남는다. CLEAR는 완전 초기화이므로 텍스트와 병합 기준점을 함께 비운다.
-    setEditableText("");
-    prevFinalTextRef.current = "";
+    setChartMemo("");
   }
   function updateItemName(id: string, name: string) { setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, name } : i))); }
-  function updateItemCount(id: string, count: number) {
-    setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, count: Math.max(1, count || 1) } : i)));
+  function updateItemCount(id: string, count: number, quantityMode?: "visits" | "scaled") {
+    setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, count: Math.max(1, count || 1), ...(quantityMode ? { quantityMode } : {}) } : i)));
+  }
+  // 수량을 늘릴 때는 회차(n-1)를 늘릴지, 시술명 속 수량을 늘릴지 사용자가 고르게 팝업을 띄운다.
+  // 수량을 줄이거나 그대로면 고민할 게 없으니 바로 적용한다.
+  function requestCountChange(item: SelectedItem, newCount: number) {
+    if (newCount <= item.count) { updateItemCount(item.id, newCount); return; }
+    const parsed = splitCountSuffix(item.name);
+    const hasExplicitHui = /\d+\s*회/.test(item.name);
+    if (hasExplicitHui) {
+      const totalN = Number(parsed.n) * newCount;
+      setQtyPopup({ itemId: item.id, newCount, mode: "confirm", confirmLabel: `${parsed.base} ${totalN}-1` });
+      return;
+    }
+    const match = item.name.match(SCALABLE_UNIT_RE);
+    if (match) {
+      const scaledName = item.name
+        .replace(match[0], `${Number(match[1]) * newCount}${match[2]}`)
+        .replace(/\s+/g, " ")
+        .trim();
+      setQtyPopup({
+        itemId: item.id,
+        newCount,
+        mode: "choice",
+        option1Label: `${parsed.base} ${newCount}-1`,
+        option2Label: `${scaledName} 1-1`,
+      });
+      return;
+    }
+    setQtyPopup({ itemId: item.id, newCount, mode: "confirm", confirmLabel: `${parsed.base} ${newCount}-1` });
+  }
+  function confirmQtyPopup(mode: "visits" | "scaled") {
+    if (!qtyPopup) return;
+    updateItemCount(qtyPopup.itemId, qtyPopup.newCount, mode);
+    setQtyPopup(null);
   }
   function addManualItem() {
     const price = Number(manualPrice);
@@ -567,13 +634,13 @@ export default function Home() {
     const normalItems = displayedItems.filter((i) => !i.unused);
     const unusedItems = displayedItems.filter((i) => i.unused);
     const itemLines = normalItems.map((i) => {
-      const { base, n } = splitCountSuffix(i.name);
+      const { base, n } = getDisplayNameParts(i);
       const dot = i.count !== 1 ? RED_DOT : "";
       return `${base} ${n}-1  ${formatNumber(computeUnitPrice(i))}원${dot}`;
     });
     const unusedLines = unusedItems.length > 0
       ? ["=".repeat(20), ...unusedItems.map((i) => {
-          const { base, n } = splitCountSuffix(i.name);
+          const { base, n } = getDisplayNameParts(i);
           const displayName = base.replace(/\s+/g, " ").trim();
           const dot = i.count !== 1 ? RED_DOT : "";
           const countDisplay = n === "1" ? " 1회" : ` ${n}회`;
@@ -625,7 +692,7 @@ export default function Home() {
     const sortedNormalItems = [...unclassified, ...classified];
     const itemLines = sortedNormalItems.map((i) => {
       // 시술명 끝의 "N회"는 "N-1" 표기로 옮겨 붙인다 (없으면 "1-1").
-      const { base, n } = splitCountSuffix(i.name);
+      const { base, n } = getDisplayNameParts(i);
       const dot = i.count !== 1 ? RED_DOT : "";
       // 제모 시술 중 "구독권"이 포함된 이름은 예외 규칙: 만료일을 "구독권" 옆에 붙이고,
       // 최초 차팅일이므로 회차는 항상 "1회차 1-1"로 고정한다.
@@ -638,7 +705,7 @@ export default function Home() {
     // 미시술 체크된 시술은 원래 이름 그대로, 맨 마지막 구분선 아래에 표시한다.
     const unusedLines = unusedItems.length > 0
       ? ["=".repeat(20), ...unusedItems.map((i) => {
-          const { base, n } = splitCountSuffix(i.name);
+          const { base, n } = getDisplayNameParts(i);
           const displayName = base.replace(/\s+/g, " ").trim();
           const dot = i.count !== 1 ? RED_DOT : "";
           const countDisplay = n === "1" ? " 1회" : ` ${n}회`;
@@ -667,19 +734,13 @@ export default function Home() {
     return [...(headerVisible ? [header] : []), ...itemLines, ...unusedLines, ...totalLine, ...transferLine, ...creditLines].join("\n");
   }, [headerVisible, includeHeader, membershipType, staffName, paymentAmount, extraCredit, selectedItems, totalPrice, discountPercent, discountedTotal, discountLabel, existingBalance, transferEnabled, transferAmount, transferRecipients, balance]);
 
-  const [editableText, setEditableText] = useState("");
-  const prevFinalTextRef = useRef("");
-  useEffect(() => {
-    // StrictMode(dev)는 setState 업데이터 함수를 두 번 호출한다. 업데이터 안에서 ref를 직접 건드리면
-    // 두 번째 호출이 이미 바뀐 ref를 읽어버려 통째로 "삽입된 줄"로 오인해 중복된다.
-    // 그래서 oldGen을 미리 상수로 고정해 업데이터를 순수 함수로 만든다.
-    const oldGen = prevFinalTextRef.current;
-    setEditableText((prev) => mergeGeneratedText(oldGen, prev, finalText));
-    prevFinalTextRef.current = finalText;
-  }, [finalText]);
+  // 생성된 차트 줄(finalText)은 항상 그대로 보여주기만 하고 직접 고쳐 쓸 수 없게 한다.
+  // 고칠 게 있으면 그 아래에 자유 메모(chartMemo)를 덧붙이는 방식으로만 남긴다.
+  const [chartMemo, setChartMemo] = useState("");
 
   async function handleCopy() {
-    const cleaned = editableText.split(RED_DOT).join("");
+    const combined = chartMemo.trim() ? `${finalText}\n${chartMemo}` : finalText;
+    const cleaned = combined.split(RED_DOT).join("");
     await navigator.clipboard.writeText(cleaned);
     setCopied(true); setTimeout(() => setCopied(false), 1500);
   }
@@ -974,7 +1035,7 @@ export default function Home() {
               )}
             </div>
 
-            <p style={{ ...styles.hint, whiteSpace: "pre-line" }}>{"키보드 방향키 + Enter로 추가하거나 마우스로 선택 가능해요.\n수량을 변경하는 경우 우측에 생성된 차트도 수정해주세요."}</p>
+            <p style={{ ...styles.hint, whiteSpace: "pre-line" }}>{"키보드 방향키 + Enter로 추가하거나 마우스로 선택 가능해요."}</p>
 
             {/* 직접 입력 */}
             <div style={{ display: "flex", gap: 6, marginTop: 14 }}>
@@ -1068,7 +1129,7 @@ export default function Home() {
                       />
                       <span style={{ width: 60, textAlign: "center", fontVariantNumeric: "tabular-nums", color: C.primary, fontSize: 14 }}>{formatNumber(item.basePrice)}</span>
                       <div style={{ width: 50, display: "flex", justifyContent: "center" }}>
-                        <CountDial count={item.count} onChange={(count) => updateItemCount(item.id, count)} />
+                        <CountDial count={item.count} onChange={(count) => requestCountChange(item, count)} />
                       </div>
                       <span style={{ width: 80, textAlign: "center", fontVariantNumeric: "tabular-nums", fontSize: 14 }}>{formatNumber(computeUnitPrice(item))}</span>
                       <div style={{ width: 24, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1207,7 +1268,7 @@ export default function Home() {
                       whiteSpace: "pre-line",
                     }}
                   >
-                    {"1. 고객 요청사항, 용량, 시술 부위 등을 자유롭게 수정할 수 있습니다.\n2. 회원권 영역에 입력한 금액으로 자동 계산됩니다."}
+                    {"1. 시술명 줄 아래에 고객 요청사항, 용량, 시술 부위 등을 메모로 자유롭게 추가할 수 있습니다.\n2. 회원권 영역에 입력한 금액으로 자동 계산됩니다."}
                   </div>
                 )}
               </div>
@@ -1238,11 +1299,25 @@ export default function Home() {
               </div>
             </div>
 
-            <AutoGrowInput
-              value={editableText}
-              onChange={setEditableText}
-              style={{ ...styles.textarea, minHeight: 220 }}
-            />
+            <div style={{ ...styles.textarea, minHeight: 220 }}>
+              <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{finalText}</div>
+              <AutoGrowInput
+                value={chartMemo}
+                onChange={setChartMemo}
+                placeholder="+ 메모 추가"
+                style={{
+                  width: "100%",
+                  border: "none",
+                  outline: "none",
+                  resize: "none",
+                  background: "transparent",
+                  padding: 0,
+                  fontSize: 14,
+                  color: C.primary,
+                  lineHeight: 1.8,
+                }}
+              />
+            </div>
 
             <button onClick={handleCopy} disabled={selectedItems.length === 0}
               style={{ ...styles.btnPrimary, width: "100%", marginTop: 10, height: 36, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.12)", opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
@@ -1463,6 +1538,51 @@ export default function Home() {
           </div>
         </div>
       </main>
+
+      {qtyPopup && (
+        <div
+          onClick={() => setQtyPopup(null)}
+          style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 600, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: "min(360px, 92vw)", background: C.surface, borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,0.35)", padding: 22 }}
+          >
+            <p style={{ fontSize: 15, fontWeight: 700, color: C.primary, marginBottom: 14, lineHeight: 1.5 }}>
+              {qtyPopup.mode === "confirm"
+                ? "수량 변경을 아래처럼 적용할까요?"
+                : "수량을 어떤 방식으로 늘릴까요?"}
+            </p>
+            {qtyPopup.mode === "confirm" ? (
+              <>
+                <p style={{ fontSize: 14, color: C.primary, background: C.bg, borderRadius: 8, padding: "10px 12px", marginBottom: 16, wordBreak: "keep-all" }}>
+                  {qtyPopup.confirmLabel}
+                </p>
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
+                  <button onClick={() => setQtyPopup(null)} style={styles.btnGhost}>취소</button>
+                  <button onClick={() => confirmQtyPopup("visits")} style={styles.btnPrimary}>확인</button>
+                </div>
+              </>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <button
+                  onClick={() => confirmQtyPopup("visits")}
+                  style={{ ...styles.input, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
+                >
+                  {qtyPopup.option1Label}
+                </button>
+                <button
+                  onClick={() => confirmQtyPopup("scaled")}
+                  style={{ ...styles.input, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
+                >
+                  {qtyPopup.option2Label}
+                </button>
+                <button onClick={() => setQtyPopup(null)} style={{ ...styles.btnGhost, alignSelf: "flex-end", marginTop: 4 }}>취소</button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {showGiverPrompt && (
         <div
