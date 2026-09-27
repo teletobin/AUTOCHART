@@ -204,7 +204,7 @@ const styles: Record<string, React.CSSProperties> = {
   textarea:  { width: "100%", resize: "none" as const, border: "none", borderRadius: 10, background: C.bg, padding: "12px 14px", fontSize: 14, color: C.primary, outline: "none", lineHeight: 1.8, boxSizing: "border-box" as const },
   subSection: { display: "flex", flexDirection: "column" as const, gap: 6, border: `1px solid ${C.primaryLt}`, borderRadius: 10, padding: "14px 16px", background: "#fdfcfb" },
   label:  { fontSize: 14, fontWeight: 600, color: C.primary, textAlign: "right" as const, minWidth: 88, flexShrink: 0 },
-  numInput: { width: 90, border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 10px", fontSize: 14, textAlign: "right" as const, outline: "none", background: "#fff", color: C.primary },
+  numInput: { width: 100, border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 10px", fontSize: 14, textAlign: "right" as const, outline: "none", background: "#fff", color: C.primary },
   divider: { borderTop: `1px dashed ${C.border}`, margin: "2px 0" },
   dividerSolid: { borderTop: `2px solid ${C.primaryLt}`, margin: "2px 0" },
   tooltip: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "6px 9px", fontSize: 12, fontWeight: 500, color: C.primary, lineHeight: 1.4, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50 },
@@ -1505,7 +1505,7 @@ export default function Home() {
                 <div style={styles.divider} />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                   <span style={{ fontSize: 14, fontWeight: 700, color: C.primary, textAlign: "right", minWidth: 88, flexShrink: 0 }}>− TOTAL</span>
-                  <span style={{ fontVariantNumeric: "tabular-nums", width: 90, textAlign: "right", fontSize: 14, fontWeight: 700, color: C.primary }}>{formatNumber(discountedTotal)}</span>
+                  <span style={{ fontVariantNumeric: "tabular-nums", width: 100, textAlign: "right", fontSize: 14, fontWeight: 700, color: C.primary }}>{formatNumber(discountedTotal)}</span>
                   <span style={{ fontSize: 14, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
                 </div>
 
@@ -1538,7 +1538,7 @@ export default function Home() {
                 <div style={styles.dividerSolid} />
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: 6 }}>
                   <span style={{ fontSize: 14, fontWeight: 700, color: C.primary, textAlign: "right", minWidth: 88, flexShrink: 0 }}>잔액</span>
-                  <span style={{ fontVariantNumeric: "tabular-nums", width: 90, textAlign: "right", fontSize: 14, fontWeight: 700, color: C.primary }}>{formatNumber(balance)}</span>
+                  <span style={{ fontVariantNumeric: "tabular-nums", width: 100, textAlign: "right", fontSize: 14, fontWeight: 700, color: C.primary }}>{formatNumber(balance)}</span>
                   <span style={{ fontSize: 14, fontWeight: 700, color: C.primary, width: 20, textAlign: "left" }}>원</span>
                 </div>
               </div>
