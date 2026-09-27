@@ -1556,7 +1556,7 @@ export default function Home() {
             onClick={(e) => e.stopPropagation()}
             style={{ width: "min(360px, 92vw)", background: C.surface, borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,0.35)", padding: 22 }}
           >
-            <p style={{ fontSize: 15, fontWeight: 700, color: C.primary, marginBottom: 14, lineHeight: 1.5 }}>
+            <p style={{ fontSize: 15, fontWeight: 500, color: C.primary, marginBottom: 14, lineHeight: 1.5 }}>
               {qtyPopup.mode === "confirm"
                 ? "수량 변경을 아래처럼 적용할까요?"
                 : "변경된 수량을 어떻게 차팅할까요?"}
