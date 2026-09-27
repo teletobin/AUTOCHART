@@ -40,10 +40,7 @@ const SCALABLE_UNIT_RE = /(\d+)\s*(샷|부위|개|병|알|[Cc][Cc])/;
 // scaled 모드면 시술명 속 수량을 곱해 1-1로, 그 외에는 수량 그대로를 회차로) 표시한다.
 function getDisplayNameParts(item: SelectedItem): { base: string; n: string } {
   const parsed = splitCountSuffix(item.name);
-  const hasExplicitHui = /\d+\s*회/.test(item.name);
-  if (hasExplicitHui) {
-    return { base: parsed.base, n: String(Number(parsed.n) * item.count) };
-  }
+  // buildQtyPopup과 같은 순서: 시술명 속 수량(샷/부위 등)을 늘리기로 고른 경우를 먼저 본다.
   if (item.quantityMode === "scaled") {
     const match = item.name.match(SCALABLE_UNIT_RE);
     if (match) {
@@ -53,6 +50,9 @@ function getDisplayNameParts(item: SelectedItem): { base: string; n: string } {
         .trim();
       return { base: scaledName, n: "1" };
     }
+  }
+  if (parsed.n !== "1") {
+    return { base: parsed.base, n: String(Number(parsed.n) * item.count) };
   }
   return { base: parsed.base, n: String(item.count) };
 }
@@ -126,12 +126,16 @@ function AutoGrowInput({
   className,
   style,
   placeholder,
+  autoFocus,
+  onBlur,
 }: {
   value: string;
   onChange: (value: string) => void;
   className?: string;
   style?: React.CSSProperties;
   placeholder?: string;
+  autoFocus?: boolean;
+  onBlur?: () => void;
 }) {
   const ref = useRef<HTMLTextAreaElement>(null);
   const resize = () => {
@@ -157,6 +161,8 @@ function AutoGrowInput({
       className={`resize-none overflow-hidden ${className ?? ""}`}
       style={style}
       placeholder={placeholder}
+      autoFocus={autoFocus}
+      onBlur={onBlur}
     />
   );
 }
@@ -566,14 +572,12 @@ export default function Home() {
   function updateItemCount(id: string, count: number, quantityMode?: "visits" | "scaled") {
     setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, count: Math.max(1, count || 1), ...(quantityMode ? { quantityMode } : {}) } : i)));
   }
+  // 시술명 속에 곱할 수 있는 수량(샷/부위 등)이 있으면 그걸 늘릴지 회차를 늘릴지 먼저 물어보고,
+  // 그런 수량이 없을 때만 시술명에 이미 박혀있는 "N회"를 기준으로 회차를 계산한다.
+  // (순서를 반대로 하면, 프로모션 문구 등에 우연히 "1회" 같은 글자가 섞여 있을 때
+  // 정작 있어야 할 샷/부위 선택지가 통째로 사라지는 문제가 생긴다.)
   function buildQtyPopup(item: SelectedItem, newCount: number) {
     const parsed = splitCountSuffix(item.name);
-    const hasExplicitHui = /\d+\s*회/.test(item.name);
-    if (hasExplicitHui) {
-      const totalN = Number(parsed.n) * newCount;
-      setQtyPopup({ itemId: item.id, newCount, mode: "confirm", confirmLabel: `${parsed.base} ${totalN}-1` });
-      return;
-    }
     const match = item.name.match(SCALABLE_UNIT_RE);
     if (match) {
       const scaledName = item.name
@@ -587,6 +591,11 @@ export default function Home() {
         option1Label: `${parsed.base} ${newCount}-1`,
         option2Label: `${scaledName} 1-1`,
       });
+      return;
+    }
+    if (parsed.n !== "1") {
+      const totalN = Number(parsed.n) * newCount;
+      setQtyPopup({ itemId: item.id, newCount, mode: "confirm", confirmLabel: `${parsed.base} ${totalN}-1` });
       return;
     }
     setQtyPopup({ itemId: item.id, newCount, mode: "confirm", confirmLabel: `${parsed.base} ${newCount}-1` });
@@ -755,6 +764,9 @@ export default function Home() {
   // 시술 줄 사이사이에 끼워 넣는 메모. 시술 id별로 붙기 때문에, 정렬 순서가 바뀌어도
   // 메모는 원래 그 시술 줄을 그대로 따라간다.
   const [lineMemos, setLineMemos] = useState<Record<string, string>>({});
+  // 메모가 비어있는 시술 줄은 입력칸을 아예 숨겨 빈 줄 간격이 안 생기게 하고,
+  // 그 줄을 클릭했을 때만 입력칸을 잠깐 펼쳐서 메모를 적을 수 있게 한다.
+  const [activeMemoId, setActiveMemoId] = useState<string | null>(null);
   // 맨 마지막(총액 등 아래)에 남기는 자유 메모.
   const [chartMemo, setChartMemo] = useState("");
 
@@ -1333,16 +1345,29 @@ export default function Home() {
               {chartParts.header && (
                 <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{chartParts.header}</div>
               )}
-              {chartParts.items.map((it) => (
-                <div key={it.id}>
-                  <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{it.text}</div>
-                  <AutoGrowInput
-                    value={lineMemos[it.id] ?? ""}
-                    onChange={(v) => setLineMemos((prev) => ({ ...prev, [it.id]: v }))}
-                    style={styles.chartMemoInput}
-                  />
-                </div>
-              ))}
+              {chartParts.items.map((it) => {
+                const memo = lineMemos[it.id] ?? "";
+                const showMemoInput = memo !== "" || activeMemoId === it.id;
+                return (
+                  <div key={it.id}>
+                    <div
+                      onClick={() => setActiveMemoId(it.id)}
+                      style={{ whiteSpace: "pre-wrap", wordBreak: "break-word", cursor: "text" }}
+                    >
+                      {it.text}
+                    </div>
+                    {showMemoInput && (
+                      <AutoGrowInput
+                        value={memo}
+                        onChange={(v) => setLineMemos((prev) => ({ ...prev, [it.id]: v }))}
+                        autoFocus={activeMemoId === it.id}
+                        onBlur={() => setActiveMemoId((cur) => (cur === it.id ? null : cur))}
+                        style={styles.chartMemoInput}
+                      />
+                    )}
+                  </div>
+                );
+              })}
               {chartParts.tail && (
                 <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{chartParts.tail}</div>
               )}
