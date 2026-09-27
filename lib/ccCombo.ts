@@ -126,11 +126,12 @@ export function mergedComboName(combo: CcCombo, target: number): string {
   const names = combo.items.map((i) => deriveBaseName(i.treatment.name));
   const base = names.reduce((shortest, n) => (n.length < shortest.length ? n : shortest), names[0] ?? "");
   // 한정가/체험가가 섞인 조합은 실장이 나중에 구분할 수 있도록, 어느 cc가 그
-  // 한정가/체험가인지까지 반드시 표시해준다(예: "1CC 체험가 포함").
+  // 한정가/체험가인지까지 반드시 표시해준다(예: "1cc 체험가 포함"). 시술명에
+  // 원래 소문자로 들어있는 표기를 그대로 따른다.
   const notes: string[] = [];
   for (const i of combo.items) {
     const unit = parseCcUnit(i.treatment.name);
-    const unitLabel = unit !== null ? `${unit}CC ` : "";
+    const unitLabel = unit !== null ? `${unit}cc ` : "";
     if (i.treatment.name.includes("한정가")) notes.push(`${unitLabel}한정가 포함`);
     else if (i.treatment.name.includes("체험가")) notes.push(`${unitLabel}체험가 포함`);
   }
@@ -210,7 +211,7 @@ if (process.env.NODE_ENV !== "production") {
     { items: [{ treatment: T("리쥬란힐러 2cc 한정가", 150000), count: 2 }], totalPrice: 300000 },
     4
   );
-  if (nameSample !== "리쥬란힐러 4cc (2CC 한정가 포함)") {
+  if (nameSample !== "리쥬란힐러 4cc (2cc 한정가 포함)") {
     console.error("[ccCombo self-check FAIL] mergedComboName wrong", nameSample);
   }
   const nameSample2 = mergedComboName(
@@ -223,7 +224,7 @@ if (process.env.NODE_ENV !== "production") {
     },
     4
   );
-  if (nameSample2 !== "리쥬란힐러 4cc (2CC 한정가 포함, 1CC 체험가 포함)") {
+  if (nameSample2 !== "리쥬란힐러 4cc (2cc 한정가 포함, 1cc 체험가 포함)") {
     console.error("[ccCombo self-check FAIL] mergedComboName both-offer wrong", nameSample2);
   }
 }
