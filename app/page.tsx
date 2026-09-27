@@ -1621,7 +1621,7 @@ export default function Home() {
                 </>
               )}
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: C.sub, flexShrink: 0 }}>직접수정</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: C.sub, flexShrink: 0, lineHeight: 1.3, whiteSpace: "pre-line" }}>{"직접\n수정"}</span>
                 <input
                   type="text"
                   value={qtyManualInput}
