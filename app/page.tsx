@@ -25,8 +25,11 @@ type SelectedItem = {
   displayed: boolean;
   category?: TreatmentCategory;
   // 수량을 늘릴 때 사용자가 고른 표시 방식. "visits"=회차(n-1)를 늘림, "scaled"=시술명 속
-  // 수량(샷/부위 등)을 늘림. 시술명에 이미 "N회"가 박혀있으면 이 값과 무관하게 항상 회차로 계산한다.
-  quantityMode?: "visits" | "scaled";
+  // 수량(샷/부위 등)을 늘림, "manual"=차팅될 줄을 직접 입력. 시술명에 이미 "N회"가
+  // 박혀있으면 "manual"이 아닌 한 이 값과 무관하게 항상 회차로 계산한다.
+  quantityMode?: "visits" | "scaled" | "manual";
+  // quantityMode가 "manual"일 때 차팅에 쓸 줄(가격 앞부분까지) 직접 입력값.
+  manualQtyText?: string;
 };
 
 function computeUnitPrice(item: SelectedItem): number {
@@ -46,8 +49,13 @@ function scaleUnitMatch(name: string, multiplier: number): string | null {
 }
 
 // 시술명에 이미 "N회"가 있으면 그 N에 수량을 곱한 회차로, 아니면(선택적으로 고른
-// scaled 모드면 시술명 속 수량을 곱해 1-1로, 그 외에는 수량 그대로를 회차로) 표시한다.
-function getDisplayNameParts(item: SelectedItem): { base: string; n: string } {
+// scaled 모드면 시술명 속 수량을 곱해 1-1로, manual 모드면 직접 입력한 줄 그대로,
+// 그 외에는 수량 그대로를 회차로) 표시한다. raw가 있으면 base/n을 조합하지 않고
+// raw를 그대로 줄로 쓴다(가격만 뒤에 붙인다).
+function getDisplayNameParts(item: SelectedItem): { base: string; n: string; raw?: string } {
+  if (item.quantityMode === "manual" && item.manualQtyText) {
+    return { base: item.manualQtyText, n: "", raw: item.manualQtyText };
+  }
   const parsed = splitCountSuffix(item.name);
   // buildQtyPopup과 같은 순서: 시술명 속 수량(샷/부위 등)을 늘리기로 고른 경우를 먼저 본다.
   if (item.quantityMode === "scaled") {
@@ -225,7 +233,9 @@ export default function Home() {
     confirmLabel?: string;
     option1Label?: string;
     option2Label?: string;
+    manualDefault: string;
   } | null>(null);
+  const [qtyManualInput, setQtyManualInput] = useState("");
   const [creditInput, setCreditInput] = useState("");
   const [extraCreditInput, setExtraCreditInput] = useState("");
   const [staffName, setStaffName] = useState("");
@@ -567,8 +577,10 @@ export default function Home() {
     prevFinalTextRef.current = "";
   }
   function updateItemName(id: string, name: string) { setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, name } : i))); }
-  function updateItemCount(id: string, count: number, quantityMode?: "visits" | "scaled") {
-    setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, count: Math.max(1, count || 1), ...(quantityMode ? { quantityMode } : {}) } : i)));
+  function updateItemCount(id: string, count: number, quantityMode?: "visits" | "scaled" | "manual", manualQtyText?: string) {
+    setSelectedItems((prev) => prev.map((i) => (i.id === id
+      ? { ...i, count: Math.max(1, count || 1), ...(quantityMode ? { quantityMode } : {}), ...(manualQtyText !== undefined ? { manualQtyText } : {}) }
+      : i)));
   }
   // 시술명 속에 곱할 수 있는 수량(샷/부위 등)이 있으면 그걸 늘릴지 회차를 늘릴지 먼저 물어보고,
   // 그런 수량이 없을 때만 시술명에 이미 박혀있는 "N회"를 기준으로 회차를 계산한다.
@@ -578,21 +590,25 @@ export default function Home() {
     const parsed = splitCountSuffix(item.name);
     const scaledName = scaleUnitMatch(item.name, newCount);
     if (scaledName) {
+      const option1Label = `${parsed.base} ${newCount}-1`;
       setQtyPopup({
         itemId: item.id,
         newCount,
         mode: "choice",
-        option1Label: `${parsed.base} ${newCount}-1`,
+        option1Label,
         option2Label: `${scaledName} 1-1`,
+        manualDefault: option1Label,
       });
       return;
     }
     if (parsed.n !== "1") {
       const totalN = Number(parsed.n) * newCount;
-      setQtyPopup({ itemId: item.id, newCount, mode: "confirm", confirmLabel: `${parsed.base} ${totalN}-1` });
+      const confirmLabel = `${parsed.base} ${totalN}-1`;
+      setQtyPopup({ itemId: item.id, newCount, mode: "confirm", confirmLabel, manualDefault: confirmLabel });
       return;
     }
-    setQtyPopup({ itemId: item.id, newCount, mode: "confirm", confirmLabel: `${parsed.base} ${newCount}-1` });
+    const confirmLabel = `${parsed.base} ${newCount}-1`;
+    setQtyPopup({ itemId: item.id, newCount, mode: "confirm", confirmLabel, manualDefault: confirmLabel });
   }
   // ▲를 연달아 눌러 수량을 3, 4로 올릴 때마다 팝업이 뜨면 클릭을 이어가기 어렵다.
   // 그래서 수량 변경은 클릭할 때마다 바로 반영하고(가격도 즉시 갱신), 회차/시술명 해석을
@@ -618,6 +634,15 @@ export default function Home() {
     updateItemCount(qtyPopup.itemId, qtyPopup.newCount, mode);
     setQtyPopup(null);
   }
+  function confirmQtyPopupManual() {
+    if (!qtyPopup || !qtyManualInput.trim()) return;
+    updateItemCount(qtyPopup.itemId, qtyPopup.newCount, "manual", qtyManualInput.trim());
+    setQtyPopup(null);
+  }
+  // 팝업이 새로 뜰 때마다(다른 시술/수량) 직접 입력칸을 그 상황에 맞는 기본값으로 채워둔다.
+  useEffect(() => {
+    if (qtyPopup) setQtyManualInput(qtyPopup.manualDefault);
+  }, [qtyPopup]);
   function addManualItem() {
     const price = Number(manualPrice);
     if (!manualName.trim() || !price || price <= 0) return;
@@ -655,14 +680,14 @@ export default function Home() {
     const normalItems = displayedItems.filter((i) => !i.unused);
     const unusedItems = displayedItems.filter((i) => i.unused);
     const itemLines = normalItems.map((i) => {
-      const { base, n } = getDisplayNameParts(i);
-      return `${base} ${n}-1  ${formatNumber(computeUnitPrice(i))}원`;
+      const { base, n, raw } = getDisplayNameParts(i);
+      return `${raw ?? `${base} ${n}-1`}  ${formatNumber(computeUnitPrice(i))}원`;
     });
     const unusedLines = unusedItems.length > 0
       ? ["=".repeat(20), ...unusedItems.map((i) => {
-          const { base, n } = getDisplayNameParts(i);
-          const displayName = base.replace(/\s+/g, " ").trim();
-          const countDisplay = n === "1" ? " 1회" : ` ${n}회`;
+          const { base, n, raw } = getDisplayNameParts(i);
+          const displayName = raw ?? base.replace(/\s+/g, " ").trim();
+          const countDisplay = raw ? "" : (n === "1" ? " 1회" : ` ${n}회`);
           return `${displayName}${countDisplay} ${formatNumber(computeUnitPrice(i))}원 *미시술`;
         })]
       : [];
@@ -711,21 +736,22 @@ export default function Home() {
     const sortedNormalItems = [...unclassified, ...classified];
     const itemLines = sortedNormalItems.map((i) => {
       // 시술명 끝의 "N회"는 "N-1" 표기로 옮겨 붙인다 (없으면 "1-1").
-      const { base, n } = getDisplayNameParts(i);
+      const { base, n, raw } = getDisplayNameParts(i);
       // 제모 시술 중 "구독권"이 포함된 이름은 예외 규칙: 만료일을 "구독권" 옆에 붙이고,
-      // 최초 차팅일이므로 회차는 항상 "1회차 1-1"로 고정한다.
-      if (i.name.includes("제모") && i.name.includes("구독권")) {
+      // 최초 차팅일이므로 회차는 항상 "1회차 1-1"로 고정한다. 직접 입력(raw)한 경우는
+      // 사용자가 이미 원하는 형태를 다 적은 것이므로 이 예외 규칙을 적용하지 않는다.
+      if (!raw && i.name.includes("제모") && i.name.includes("구독권")) {
         const base2 = base.replace("구독권", `구독권(~${subscriptionExpiryYYMMDD()})`);
         return `${base2} 1회차 1-1  ${formatNumber(computeUnitPrice(i))}원`;
       }
-      return `${base} ${n}-1  ${formatNumber(computeUnitPrice(i))}원`;
+      return `${raw ?? `${base} ${n}-1`}  ${formatNumber(computeUnitPrice(i))}원`;
     });
     // 미시술 체크된 시술은 원래 이름 그대로, 맨 마지막 구분선 아래에 표시한다.
     const unusedLines = unusedItems.length > 0
       ? ["=".repeat(20), ...unusedItems.map((i) => {
-          const { base, n } = getDisplayNameParts(i);
-          const displayName = base.replace(/\s+/g, " ").trim();
-          const countDisplay = n === "1" ? " 1회" : ` ${n}회`;
+          const { base, n, raw } = getDisplayNameParts(i);
+          const displayName = raw ?? base.replace(/\s+/g, " ").trim();
+          const countDisplay = raw ? "" : (n === "1" ? " 1회" : ` ${n}회`);
           return `${displayName}${countDisplay} ${formatNumber(computeUnitPrice(i))}원 *미시술`;
         })]
       : [];
@@ -1561,33 +1587,49 @@ export default function Home() {
                 ? "수량 변경을 아래처럼 적용할까요?"
                 : "변경된 수량을 어떻게 차팅할까요?"}
             </p>
-            {qtyPopup.mode === "confirm" ? (
-              <>
-                <p style={{ fontSize: 14, color: C.primary, background: C.bg, borderRadius: 8, padding: "10px 12px", marginBottom: 16, wordBreak: "keep-all" }}>
-                  {qtyPopup.confirmLabel}
-                </p>
-                <div style={{ display: "flex", justifyContent: "flex-end", gap: 8 }}>
-                  <button onClick={() => setQtyPopup(null)} style={styles.btnGhost}>취소</button>
-                  <button onClick={() => confirmQtyPopup("visits")} style={styles.btnPrimary}>확인</button>
-                </div>
-              </>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {qtyPopup.mode === "confirm" ? (
                 <button
                   onClick={() => confirmQtyPopup("visits")}
                   style={{ ...styles.input, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
                 >
-                  {qtyPopup.option1Label}
+                  {qtyPopup.confirmLabel}
                 </button>
+              ) : (
+                <>
+                  <button
+                    onClick={() => confirmQtyPopup("visits")}
+                    style={{ ...styles.input, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
+                  >
+                    {qtyPopup.option1Label}
+                  </button>
+                  <button
+                    onClick={() => confirmQtyPopup("scaled")}
+                    style={{ ...styles.input, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
+                  >
+                    {qtyPopup.option2Label}
+                  </button>
+                </>
+              )}
+              <div style={{ display: "flex", gap: 6 }}>
+                <input
+                  type="text"
+                  value={qtyManualInput}
+                  onChange={(e) => setQtyManualInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter") confirmQtyPopupManual(); }}
+                  placeholder="직접 입력"
+                  style={{ ...styles.input, flex: 1 }}
+                />
                 <button
-                  onClick={() => confirmQtyPopup("scaled")}
-                  style={{ ...styles.input, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
+                  onClick={confirmQtyPopupManual}
+                  disabled={!qtyManualInput.trim()}
+                  style={{ ...styles.btnPrimary, opacity: qtyManualInput.trim() ? 1 : 0.4 }}
                 >
-                  {qtyPopup.option2Label}
+                  적용
                 </button>
-                <button onClick={() => setQtyPopup(null)} style={{ ...styles.btnGhost, alignSelf: "flex-end", marginTop: 4 }}>취소</button>
               </div>
-            )}
+              <button onClick={() => setQtyPopup(null)} style={{ ...styles.btnGhost, alignSelf: "flex-end", marginTop: 4 }}>취소</button>
+            </div>
           </div>
         </div>
       )}
