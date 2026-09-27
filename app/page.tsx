@@ -9,6 +9,7 @@ import { TreatmentCategory } from "@/lib/types";
 import { CATEGORY_ORDER } from "@/lib/categoryDetection";
 import { C, MAX_WIDTH } from "@/lib/theme";
 import { BRANCH_STORAGE_KEY } from "@/lib/branches";
+import { mergeGeneratedText } from "@/lib/mergeText";
 import { findCcCombos, formatComboLabel, mergedComboName, deriveBaseName, type CcCombo } from "@/lib/ccCombo";
 import BranchPicker from "@/components/BranchPicker";
 import Dropdown from "@/components/Dropdown";
@@ -201,8 +202,6 @@ const styles: Record<string, React.CSSProperties> = {
   tableRow:  { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.borderSoft}`, padding: "8px 0", fontSize: 14 },
   totalRow:  { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, fontWeight: 700, fontSize: 15 },
   textarea:  { width: "100%", resize: "none" as const, border: "none", borderRadius: 10, background: C.bg, padding: "12px 14px", fontSize: 14, color: C.primary, outline: "none", lineHeight: 1.8, boxSizing: "border-box" as const },
-  // 시술 줄 사이/맨 아래 메모 입력칸. 읽기 전용 시술 줄과 이어붙어 보이도록 테두리/배경 없이 묻어가게 한다.
-  chartMemoInput: { width: "100%", border: "none", outline: "none", resize: "none" as const, background: "transparent", padding: 0, fontSize: 14, color: C.primary, lineHeight: 1.8 },
   subSection: { display: "flex", flexDirection: "column" as const, gap: 6, border: `1px solid ${C.primaryLt}`, borderRadius: 10, padding: "14px 16px", background: "#fdfcfb" },
   label:  { fontSize: 14, fontWeight: 600, color: C.primary, textAlign: "right" as const, minWidth: 88, flexShrink: 0 },
   numInput: { width: 120, border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 10px", fontSize: 14, textAlign: "right" as const, outline: "none", background: "#fff", color: C.primary },
@@ -561,8 +560,11 @@ export default function Home() {
     setMembershipType("VIP");
     setDiscountPercent(0);
     setDiscountMenuOpen(false);
-    setLineMemos({});
-    setChartMemo("");
+    // editableText는 mergeGeneratedText가 "생성 텍스트에 없던 줄"을 항상 보존하도록
+    // 설계돼 있어, selectedItems만 비워서는 그 메모가 계속 남는다. CLEAR는 완전
+    // 초기화이므로 텍스트와 병합 기준점을 함께 비운다.
+    setEditableText("");
+    prevFinalTextRef.current = "";
   }
   function updateItemName(id: string, name: string) { setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, name } : i))); }
   function updateItemCount(id: string, count: number, quantityMode?: "visits" | "scaled") {
@@ -695,10 +697,7 @@ export default function Home() {
     if (!openTransferPanelId) setPanelDiscountMenuOpen(false);
   }, [openTransferPanelId]);
 
-  // 차트를 header / 시술 줄(각 줄은 id로 식별) / 나머지 꼬리 블록으로 나눈다.
-  // 시술 줄 자체는 절대 고쳐 쓸 수 없게 읽기 전용으로만 보여주고, 시술과 시술 사이에는
-  // lineMemos(id별 메모)를 끼워 넣어 편집할 수 있게 한다.
-  const chartParts = useMemo(() => {
+  const finalText = useMemo(() => {
     const staffDisplay = staffName.trim() ? `${staffName.trim()}S` : "";
     const paymentManwon = Math.round(paymentAmount / 10000);
     const extraManwon = Math.round(extraCredit / 10000);
@@ -710,16 +709,16 @@ export default function Home() {
       CATEGORY_ORDER.indexOf(a.category!) - CATEGORY_ORDER.indexOf(b.category!)
     );
     const sortedNormalItems = [...unclassified, ...classified];
-    const items = sortedNormalItems.map((i) => {
+    const itemLines = sortedNormalItems.map((i) => {
       // 시술명 끝의 "N회"는 "N-1" 표기로 옮겨 붙인다 (없으면 "1-1").
       const { base, n } = getDisplayNameParts(i);
       // 제모 시술 중 "구독권"이 포함된 이름은 예외 규칙: 만료일을 "구독권" 옆에 붙이고,
       // 최초 차팅일이므로 회차는 항상 "1회차 1-1"로 고정한다.
       if (i.name.includes("제모") && i.name.includes("구독권")) {
         const base2 = base.replace("구독권", `구독권(~${subscriptionExpiryYYMMDD()})`);
-        return { id: i.id, text: `${base2} 1회차 1-1  ${formatNumber(computeUnitPrice(i))}원` };
+        return `${base2} 1회차 1-1  ${formatNumber(computeUnitPrice(i))}원`;
       }
-      return { id: i.id, text: `${base} ${n}-1  ${formatNumber(computeUnitPrice(i))}원` };
+      return `${base} ${n}-1  ${formatNumber(computeUnitPrice(i))}원`;
     });
     // 미시술 체크된 시술은 원래 이름 그대로, 맨 마지막 구분선 아래에 표시한다.
     const unusedLines = unusedItems.length > 0
@@ -749,31 +748,23 @@ export default function Home() {
         creditLines = [`잔액: ${formatNumber(balance)}원`];
       }
     }
-    const tail = [...unusedLines, ...totalLine, ...transferLine, ...creditLines].join("\n");
-    return { header: headerVisible ? header : "", items, tail };
+    return [...(headerVisible ? [header] : []), ...itemLines, ...unusedLines, ...totalLine, ...transferLine, ...creditLines].join("\n");
   }, [headerVisible, includeHeader, membershipType, staffName, paymentAmount, extraCredit, selectedItems, totalPrice, discountPercent, discountedTotal, discountLabel, existingBalance, transferEnabled, transferAmount, transferRecipients, balance]);
 
-  // 시술 줄 사이사이에 끼워 넣는 메모. 시술 id별로 붙기 때문에, 정렬 순서가 바뀌어도
-  // 메모는 원래 그 시술 줄을 그대로 따라간다.
-  const [lineMemos, setLineMemos] = useState<Record<string, string>>({});
-  // 맨 마지막(총액 등 아래)에 남기는 자유 메모.
-  const [chartMemo, setChartMemo] = useState("");
-
-  const finalText = useMemo(() => {
-    const lines: string[] = [];
-    if (chartParts.header) lines.push(chartParts.header);
-    for (const it of chartParts.items) {
-      lines.push(it.text);
-      const memo = lineMemos[it.id]?.trim();
-      if (memo) lines.push(memo);
-    }
-    if (chartParts.tail) lines.push(chartParts.tail);
-    if (chartMemo.trim()) lines.push(chartMemo);
-    return lines.join("\n");
-  }, [chartParts, lineMemos, chartMemo]);
+  // 시술 줄 자체를 못 고치게 막았더니(id별 메모칸) 시술 사이 간격이 벌어져 보이는 문제가
+  // 계속 나서, 다시 원래처럼 하나의 textarea를 자유 편집하는 방식으로 되돌린다. 대신
+  // mergeGeneratedText가 "편집된 줄"과 "새로 끼워 넣은 줄"을 구분해 처리하므로(hunk 기반),
+  // 시술 줄을 고쳐도 원본이 중복으로 되살아나는 문제는 생기지 않는다.
+  const [editableText, setEditableText] = useState("");
+  const prevFinalTextRef = useRef("");
+  useEffect(() => {
+    const oldGen = prevFinalTextRef.current;
+    setEditableText((prev) => mergeGeneratedText(oldGen, prev, finalText));
+    prevFinalTextRef.current = finalText;
+  }, [finalText]);
 
   async function handleCopy() {
-    await navigator.clipboard.writeText(finalText);
+    await navigator.clipboard.writeText(editableText);
     setCopied(true); setTimeout(() => setCopied(false), 1500);
   }
 
@@ -1299,7 +1290,7 @@ export default function Home() {
                       whiteSpace: "pre-line",
                     }}
                   >
-                    {"1. 시술명 줄 아래에 고객 요청사항, 용량, 시술 부위 등을 메모로 자유롭게 추가할 수 있습니다.\n2. 회원권 영역에 입력한 금액으로 자동 계산됩니다."}
+                    {"1. 고객 요청사항, 용량, 시술 부위 등을 자유롭게 수정할 수 있습니다.\n2. 회원권 영역에 입력한 금액으로 자동 계산됩니다."}
                   </div>
                 )}
               </div>
@@ -1330,36 +1321,11 @@ export default function Home() {
               </div>
             </div>
 
-            <div style={{ ...styles.textarea, minHeight: 220 }}>
-              {chartParts.header && (
-                <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{chartParts.header}</div>
-              )}
-              {chartParts.items.map((it) => {
-                const memo = lineMemos[it.id] ?? "";
-                return (
-                  <div key={it.id}>
-                    <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{it.text}</div>
-                    <AutoGrowInput
-                      value={memo}
-                      onChange={(v) => setLineMemos((prev) => ({ ...prev, [it.id]: v }))}
-                      // 메모가 비어있으면 시술과 시술 사이 간격이 원래(한 줄)처럼 보이도록 아주 얇게
-                      // 줄여두고, 직접 Enter로 메모를 치기 시작하는 순간 자연스럽게 정상 줄간격으로
-                      // 늘어난다. 클릭해서 펼치고 접는 별도 동작은 없다 — 항상 그 자리에서 입력 가능.
-                      style={{ ...styles.chartMemoInput, lineHeight: memo ? 1.8 : 0.3 }}
-                    />
-                  </div>
-                );
-              })}
-              {chartParts.tail && (
-                <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{chartParts.tail}</div>
-              )}
-              <AutoGrowInput
-                value={chartMemo}
-                onChange={setChartMemo}
-                placeholder="+ 메모 추가"
-                style={styles.chartMemoInput}
-              />
-            </div>
+            <AutoGrowInput
+              value={editableText}
+              onChange={setEditableText}
+              style={{ ...styles.textarea, minHeight: 220 }}
+            />
 
             <button onClick={handleCopy} disabled={selectedItems.length === 0}
               style={{ ...styles.btnPrimary, width: "100%", marginTop: 10, height: 36, display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 2px 6px rgba(0,0,0,0.12)", opacity: selectedItems.length === 0 ? 0.4 : 1 }}>
