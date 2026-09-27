@@ -42,25 +42,33 @@ export function mergeGeneratedText(oldGen: string, curText: string, newGen: stri
   const newLines = newGen === "" ? [] : newGen.split("\n");
 
   const oldToCur = lcsMatch(oldLines, curLines);
-  const matchedCur = new Set(oldToCur.map(([, cj]) => cj));
 
-  // curText에서 oldGen과 매칭되지 않는 줄들 = 사용자가 끼워 넣은 줄. 직전 매칭된 oldIdx에 소속시킨다(-1 = 맨 앞).
-  const insertsAfterOld = new Map<number, string[]>();
-  let cursor = 0;
-  let anchor = -1;
-  for (let cj = 0; cj < curLines.length; cj++) {
-    if (cursor < oldToCur.length && oldToCur[cursor][1] === cj) {
-      anchor = oldToCur[cursor][0];
-      cursor++;
-      continue;
+  // oldLines와 curLines를 나란히 훑으며, 매칭되지 않고 남는 구간("hunk")들을 뽑아낸다.
+  // hunk는 [oldStart, oldEnd) 구간의 old 줄들이 curLines[...]로 바뀐 것을 뜻한다.
+  // oldStart === oldEnd(소비된 old 줄이 0개)면 순수 삽입(사용자가 새 메모 줄을 끼워 넣음)이고,
+  // oldStart < oldEnd 면 사용자가 기존 줄의 "내용 자체"를 고쳐 쓴 것(또는 통째로 지운 것)이다.
+  // 후자를 순수 삽입과 똑같이 취급하면, 고쳐 쓴 줄은 삽입 줄로 살고 원래 줄도 newGen에서
+  // 그대로 되살아나 두 줄이 동시에 남는 중복 버그가 생긴다.
+  type Hunk = { oldStart: number; oldEnd: number; curLines: string[]; anchorOld: number };
+  const hunks: Hunk[] = [];
+  {
+    let prevOld = -1;
+    let prevCur = -1;
+    const pushHunk = (oldEnd: number, curEnd: number) => {
+      const oldStart = prevOld + 1;
+      const curStart = prevCur + 1;
+      if (oldStart < oldEnd || curStart < curEnd) {
+        hunks.push({ oldStart, oldEnd, curLines: curLines.slice(curStart, curEnd), anchorOld: prevOld });
+      }
+    };
+    for (const [oi, cj] of oldToCur) {
+      pushHunk(oi, cj);
+      prevOld = oi;
+      prevCur = cj;
     }
-    if (!matchedCur.has(cj)) {
-      const arr = insertsAfterOld.get(anchor) ?? [];
-      arr.push(curLines[cj]);
-      insertsAfterOld.set(anchor, arr);
-    }
+    pushHunk(oldLines.length, curLines.length);
   }
-  if (insertsAfterOld.size === 0) return newGen;
+  if (hunks.length === 0) return newGen;
 
   const oldToNew = lcsMatch(oldLines, newLines);
   const newIdxForOld = new Map<number, number>(oldToNew.map(([oi, nj]) => [oi, nj]));
@@ -75,10 +83,18 @@ export function mergeGeneratedText(oldGen: string, curText: string, newGen: stri
   }
 
   const insertsAfterNewIdx = new Map<number, string[]>();
-  for (const [oldIdx, lines] of insertsAfterOld) {
-    const newIdx = oldIdx === -1 ? -1 : resolvedNewAnchor(oldIdx);
+  const skipNewIdx = new Set<number>();
+  for (const { oldStart, oldEnd, curLines: hunkLines, anchorOld } of hunks) {
+    // 이 hunk가 소비한 old 줄들이 newGen에서도 같은 시술로 살아있으면, 그 자리는
+    // 이미 사용자가 고쳐 쓴 내용으로 대체되는 것이므로 newGen의 원본 줄은 건너뛴다.
+    for (let oi = oldStart; oi < oldEnd; oi++) {
+      const nj = newIdxForOld.get(oi);
+      if (nj !== undefined) skipNewIdx.add(nj);
+    }
+    if (hunkLines.length === 0) continue; // 사용자가 그 줄을 통째로 지운 경우: 삽입할 내용 없음
+    const newIdx = anchorOld === -1 ? -1 : resolvedNewAnchor(anchorOld);
     const arr = insertsAfterNewIdx.get(newIdx) ?? [];
-    arr.push(...lines);
+    arr.push(...hunkLines);
     insertsAfterNewIdx.set(newIdx, arr);
   }
 
@@ -86,7 +102,7 @@ export function mergeGeneratedText(oldGen: string, curText: string, newGen: stri
   const before = insertsAfterNewIdx.get(-1);
   if (before) result.push(...before);
   for (let nj = 0; nj < newLines.length; nj++) {
-    result.push(newLines[nj]);
+    if (!skipNewIdx.has(nj)) result.push(newLines[nj]);
     const after = insertsAfterNewIdx.get(nj);
     if (after) result.push(...after);
   }
@@ -129,5 +145,12 @@ if (process.env.NODE_ENV !== "production") {
       "슈링크 300샷 1-1  100,000원"
     ),
     "슈링크 300샷 1-1  100,000원"
+  );
+  // 우측 차트에서 시술 줄의 내용을 직접 고쳐 쓴 뒤(예: 시술명 수정), 좌측에서 다른 시술을
+  // 새로 추가하면 고친 줄이 그대로 유지되고, 원래 내용이 다시 살아나 중복되면 안 된다.
+  assertEq(
+    "editing an existing line's own text doesn't resurrect the original when a new item is added",
+    mergeGeneratedText("A 100원", "A-수정 100원", "A 100원\nB 200원"),
+    "A-수정 100원\nB 200원"
   );
 }
