@@ -1589,13 +1589,15 @@ export default function Home() {
                 ? "수량 변경을 아래처럼 적용할까요?"
                 : "변경된 수량을 어떻게 차팅할까요?"}
             </p>
+            <style>{`.qty-candidate:hover { background: ${C.primaryLt} !important; color: #5f5854 !important; font-weight: 700 !important; }`}</style>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {qtyPopup.mode === "confirm" ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                   <span style={styles.qtyPopupLabel}>1.</span>
                   <button
                     onClick={() => confirmQtyPopup("visits")}
-                    style={{ ...styles.input, flex: 1, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
+                    className="qty-candidate"
+                    style={{ ...styles.input, flex: 1, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all", transition: "background 0.12s ease" }}
                   >
                     {qtyPopup.confirmLabel}
                   </button>
@@ -1606,7 +1608,8 @@ export default function Home() {
                     <span style={styles.qtyPopupLabel}>1.</span>
                     <button
                       onClick={() => confirmQtyPopup("visits")}
-                      style={{ ...styles.input, flex: 1, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
+                      className="qty-candidate"
+                      style={{ ...styles.input, flex: 1, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all", transition: "background 0.12s ease" }}
                     >
                       {qtyPopup.option1Label}
                     </button>
@@ -1615,7 +1618,8 @@ export default function Home() {
                     <span style={styles.qtyPopupLabel}>2.</span>
                     <button
                       onClick={() => confirmQtyPopup("scaled")}
-                      style={{ ...styles.input, flex: 1, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
+                      className="qty-candidate"
+                      style={{ ...styles.input, flex: 1, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all", transition: "background 0.12s ease" }}
                     >
                       {qtyPopup.option2Label}
                     </button>
