@@ -1334,16 +1334,22 @@ export default function Home() {
               {chartParts.header && (
                 <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{chartParts.header}</div>
               )}
-              {chartParts.items.map((it) => (
-                <div key={it.id}>
-                  <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{it.text}</div>
-                  <AutoGrowInput
-                    value={lineMemos[it.id] ?? ""}
-                    onChange={(v) => setLineMemos((prev) => ({ ...prev, [it.id]: v }))}
-                    style={styles.chartMemoInput}
-                  />
-                </div>
-              ))}
+              {chartParts.items.map((it) => {
+                const memo = lineMemos[it.id] ?? "";
+                return (
+                  <div key={it.id}>
+                    <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{it.text}</div>
+                    <AutoGrowInput
+                      value={memo}
+                      onChange={(v) => setLineMemos((prev) => ({ ...prev, [it.id]: v }))}
+                      // 메모가 비어있으면 시술과 시술 사이 간격이 원래(한 줄)처럼 보이도록 아주 얇게
+                      // 줄여두고, 직접 Enter로 메모를 치기 시작하는 순간 자연스럽게 정상 줄간격으로
+                      // 늘어난다. 클릭해서 펼치고 접는 별도 동작은 없다 — 항상 그 자리에서 입력 가능.
+                      style={{ ...styles.chartMemoInput, lineHeight: memo ? 1.8 : 0.3 }}
+                    />
+                  </div>
+                );
+              })}
               {chartParts.tail && (
                 <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{chartParts.tail}</div>
               )}
