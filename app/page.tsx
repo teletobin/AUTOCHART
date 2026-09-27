@@ -563,10 +563,7 @@ export default function Home() {
   function updateItemCount(id: string, count: number, quantityMode?: "visits" | "scaled") {
     setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, count: Math.max(1, count || 1), ...(quantityMode ? { quantityMode } : {}) } : i)));
   }
-  // 수량을 늘릴 때는 회차(n-1)를 늘릴지, 시술명 속 수량을 늘릴지 사용자가 고르게 팝업을 띄운다.
-  // 수량을 줄이거나 그대로면 고민할 게 없으니 바로 적용한다.
-  function requestCountChange(item: SelectedItem, newCount: number) {
-    if (newCount <= item.count) { updateItemCount(item.id, newCount); return; }
+  function buildQtyPopup(item: SelectedItem, newCount: number) {
     const parsed = splitCountSuffix(item.name);
     const hasExplicitHui = /\d+\s*회/.test(item.name);
     if (hasExplicitHui) {
@@ -590,6 +587,25 @@ export default function Home() {
       return;
     }
     setQtyPopup({ itemId: item.id, newCount, mode: "confirm", confirmLabel: `${parsed.base} ${newCount}-1` });
+  }
+  // ▲를 연달아 눌러 수량을 3, 4로 올릴 때마다 팝업이 뜨면 클릭을 이어가기 어렵다.
+  // 그래서 수량 변경은 클릭할 때마다 바로 반영하고(가격도 즉시 갱신), 회차/시술명 해석을
+  // 물어보는 팝업만 일정 시간 조작이 없을 때 마지막 수량 기준으로 한 번만 띄운다.
+  const qtyDebounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const selectedItemsRef = useRef<SelectedItem[]>(selectedItems);
+  selectedItemsRef.current = selectedItems;
+  function requestCountChange(item: SelectedItem, newCount: number) {
+    clearTimeout(qtyDebounceRef.current[item.id]);
+    if (newCount <= item.count) {
+      delete qtyDebounceRef.current[item.id];
+      updateItemCount(item.id, newCount);
+      return;
+    }
+    updateItemCount(item.id, newCount);
+    qtyDebounceRef.current[item.id] = setTimeout(() => {
+      const settled = selectedItemsRef.current.find((i) => i.id === item.id);
+      if (settled && settled.count > 1) buildQtyPopup(settled, settled.count);
+    }, 600);
   }
   function confirmQtyPopup(mode: "visits" | "scaled") {
     if (!qtyPopup) return;
