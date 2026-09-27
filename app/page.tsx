@@ -39,7 +39,7 @@ function computeUnitPrice(item: SelectedItem): number {
 // "300샷", "3부위"처럼 시술명 속에 박혀있는, "회"가 아닌 수량 단위. 수량을 늘릴 때
 // 이 숫자를 그만큼 곱해서 대신 늘리는 선택지를 제공하기 위해 찾아낸다.
 // 숫자에 "1,000"처럼 콤마가 들어간 경우도 통째로 잡아야 한다.
-const SCALABLE_UNIT_RE = /(\d{1,3}(?:,\d{3})*)\s*(샷|부위|개|병|알|[Cc][Cc])/;
+const SCALABLE_UNIT_RE = /(\d{1,3}(?:,\d{3})*)\s*(샷|부위|개|병|알|유닛|[Cc][Cc])/;
 function scaleUnitMatch(name: string, multiplier: number): string | null {
   const match = name.match(SCALABLE_UNIT_RE);
   if (!match) return null;
