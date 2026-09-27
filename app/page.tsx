@@ -1559,7 +1559,7 @@ export default function Home() {
             <p style={{ fontSize: 15, fontWeight: 700, color: C.primary, marginBottom: 14, lineHeight: 1.5 }}>
               {qtyPopup.mode === "confirm"
                 ? "수량 변경을 아래처럼 적용할까요?"
-                : "수량을 어떤 방식으로 늘릴까요?"}
+                : "변경된 수량을 어떻게 차팅할까요?"}
             </p>
             {qtyPopup.mode === "confirm" ? (
               <>
