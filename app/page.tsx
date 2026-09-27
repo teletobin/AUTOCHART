@@ -1316,7 +1316,7 @@ export default function Home() {
                       whiteSpace: "pre-line",
                     }}
                   >
-                    {"시술명 자체는 수정할 수 없습니다.\n시술과 관련된 메모는 시술명과 시술명 사이에 ENTER 키를 입력해 입력해 주세요."}
+                    {"시술명 자체는 수정할 수 없습니다.\n시술에 대한 메모는 시술명과 시술명 사이에 ENTER를 치고 입력해주세요."}
                   </div>
                 )}
               </div>
@@ -1593,7 +1593,7 @@ export default function Home() {
                   onClick={() => confirmQtyPopup("visits")}
                   style={{ ...styles.input, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
                 >
-                  {qtyPopup.confirmLabel}
+                  1. {qtyPopup.confirmLabel}
                 </button>
               ) : (
                 <>
@@ -1601,34 +1601,36 @@ export default function Home() {
                     onClick={() => confirmQtyPopup("visits")}
                     style={{ ...styles.input, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
                   >
-                    {qtyPopup.option1Label}
+                    1. {qtyPopup.option1Label}
                   </button>
                   <button
                     onClick={() => confirmQtyPopup("scaled")}
                     style={{ ...styles.input, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
                   >
-                    {qtyPopup.option2Label}
+                    2. {qtyPopup.option2Label}
                   </button>
                 </>
               )}
-              <div style={{ display: "flex", gap: 6 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ fontSize: 13, fontWeight: 600, color: C.sub, flexShrink: 0 }}>직접수정</span>
                 <input
                   type="text"
                   value={qtyManualInput}
                   onChange={(e) => setQtyManualInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") confirmQtyPopupManual(); }}
-                  placeholder="직접 입력"
                   style={{ ...styles.input, flex: 1 }}
                 />
+              </div>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 4 }}>
+                <button onClick={() => setQtyPopup(null)} style={styles.btnGhost}>취소</button>
                 <button
                   onClick={confirmQtyPopupManual}
                   disabled={!qtyManualInput.trim()}
-                  style={{ ...styles.btnPrimary, opacity: qtyManualInput.trim() ? 1 : 0.4 }}
+                  style={{ ...styles.btnPrimary, padding: styles.btnGhost.padding, fontSize: styles.btnGhost.fontSize, opacity: qtyManualInput.trim() ? 1 : 0.4 }}
                 >
                   적용
                 </button>
               </div>
-              <button onClick={() => setQtyPopup(null)} style={{ ...styles.btnGhost, alignSelf: "flex-end", marginTop: 4 }}>취소</button>
             </div>
           </div>
         </div>
