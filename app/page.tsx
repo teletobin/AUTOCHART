@@ -213,6 +213,8 @@ const styles: Record<string, React.CSSProperties> = {
   subSection: { display: "flex", flexDirection: "column" as const, gap: 6, border: `1px solid ${C.primaryLt}`, borderRadius: 10, padding: "14px 16px", background: "#fdfcfb" },
   label:  { fontSize: 14, fontWeight: 600, color: C.primary, textAlign: "right" as const, minWidth: 88, flexShrink: 0 },
   numInput: { width: 100, border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 10px", fontSize: 14, textAlign: "right" as const, outline: "none", background: "#fff", color: C.primary },
+  // 수량 팝업의 "1." "2." "직접수정" 라벨. 폭/크기를 통일해서 나란히 예쁘게 정렬되게 한다.
+  qtyPopupLabel: { fontSize: 13, fontWeight: 600, color: C.sub, flexShrink: 0, width: 28, textAlign: "center" as const, lineHeight: 1.3 },
   divider: { borderTop: `1px dashed ${C.border}`, margin: "2px 0" },
   dividerSolid: { borderTop: `2px solid ${C.primaryLt}`, margin: "2px 0" },
   tooltip: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "6px 9px", fontSize: 12, fontWeight: 500, color: C.primary, lineHeight: 1.4, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50 },
@@ -1590,7 +1592,7 @@ export default function Home() {
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {qtyPopup.mode === "confirm" ? (
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  <span style={{ fontSize: 13, fontWeight: 600, color: C.sub, flexShrink: 0 }}>1.</span>
+                  <span style={styles.qtyPopupLabel}>1.</span>
                   <button
                     onClick={() => confirmQtyPopup("visits")}
                     style={{ ...styles.input, flex: 1, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
@@ -1601,7 +1603,7 @@ export default function Home() {
               ) : (
                 <>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: C.sub, flexShrink: 0 }}>1.</span>
+                    <span style={styles.qtyPopupLabel}>1.</span>
                     <button
                       onClick={() => confirmQtyPopup("visits")}
                       style={{ ...styles.input, flex: 1, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
@@ -1610,7 +1612,7 @@ export default function Home() {
                     </button>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                    <span style={{ fontSize: 13, fontWeight: 600, color: C.sub, flexShrink: 0 }}>2.</span>
+                    <span style={styles.qtyPopupLabel}>2.</span>
                     <button
                       onClick={() => confirmQtyPopup("scaled")}
                       style={{ ...styles.input, flex: 1, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
@@ -1621,7 +1623,7 @@ export default function Home() {
                 </>
               )}
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: C.sub, flexShrink: 0, lineHeight: 1.3, whiteSpace: "pre-line" }}>{"직접\n수정"}</span>
+                <span style={{ ...styles.qtyPopupLabel, whiteSpace: "pre-line" }}>{"직접\n수정"}</span>
                 <input
                   type="text"
                   value={qtyManualInput}
