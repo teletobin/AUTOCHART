@@ -199,6 +199,8 @@ const styles: Record<string, React.CSSProperties> = {
   tableRow:  { display: "flex", alignItems: "center", gap: 4, borderBottom: `1px solid ${C.borderSoft}`, padding: "8px 0", fontSize: 14 },
   totalRow:  { display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: `1px solid ${C.border}`, paddingTop: 12, marginTop: 8, fontWeight: 700, fontSize: 15 },
   textarea:  { width: "100%", resize: "none" as const, border: "none", borderRadius: 10, background: C.bg, padding: "12px 14px", fontSize: 14, color: C.primary, outline: "none", lineHeight: 1.8, boxSizing: "border-box" as const },
+  // 시술 줄 사이/맨 아래 메모 입력칸. 읽기 전용 시술 줄과 이어붙어 보이도록 테두리/배경 없이 묻어가게 한다.
+  chartMemoInput: { width: "100%", border: "none", outline: "none", resize: "none" as const, background: "transparent", padding: 0, fontSize: 14, color: C.primary, lineHeight: 1.8 },
   subSection: { display: "flex", flexDirection: "column" as const, gap: 6, border: `1px solid ${C.primaryLt}`, borderRadius: 10, padding: "14px 16px", background: "#fdfcfb" },
   label:  { fontSize: 14, fontWeight: 600, color: C.primary, textAlign: "right" as const, minWidth: 88, flexShrink: 0 },
   numInput: { width: 120, border: `1px solid ${C.border}`, borderRadius: 7, padding: "4px 10px", fontSize: 14, textAlign: "right" as const, outline: "none", background: "#fff", color: C.primary },
@@ -557,6 +559,7 @@ export default function Home() {
     setMembershipType("VIP");
     setDiscountPercent(0);
     setDiscountMenuOpen(false);
+    setLineMemos({});
     setChartMemo("");
   }
   function updateItemName(id: string, name: string) { setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, name } : i))); }
@@ -641,7 +644,6 @@ export default function Home() {
   const discountLabel = discountPercent === 10 ? "3인 동반" : discountPercent === 5 ? "2인 동반" : "";
   const totalCreditWon = paymentAmount + extraCredit + existingBalance;
   const balance = totalCreditWon - discountedTotal - transferAmount;
-  const RED_DOT = " 🔸";
   const headerVisible = includeHeader && paymentAmount > 0 && extraCredit > 0;
 
   // 동행인 팝업 안에서 보여줄 미니 차트 텍스트 (시술 목록 + TOTAL + 양도받음 문구)
@@ -651,16 +653,14 @@ export default function Home() {
     const unusedItems = displayedItems.filter((i) => i.unused);
     const itemLines = normalItems.map((i) => {
       const { base, n } = getDisplayNameParts(i);
-      const dot = i.count !== 1 ? RED_DOT : "";
-      return `${base} ${n}-1  ${formatNumber(computeUnitPrice(i))}원${dot}`;
+      return `${base} ${n}-1  ${formatNumber(computeUnitPrice(i))}원`;
     });
     const unusedLines = unusedItems.length > 0
       ? ["=".repeat(20), ...unusedItems.map((i) => {
           const { base, n } = getDisplayNameParts(i);
           const displayName = base.replace(/\s+/g, " ").trim();
-          const dot = i.count !== 1 ? RED_DOT : "";
           const countDisplay = n === "1" ? " 1회" : ` ${n}회`;
-          return `${displayName}${countDisplay} ${formatNumber(computeUnitPrice(i))}원${dot} *미시술`;
+          return `${displayName}${countDisplay} ${formatNumber(computeUnitPrice(i))}원 *미시술`;
         })]
       : [];
     const subtotal = panelRecalcTotal(items);
@@ -694,7 +694,10 @@ export default function Home() {
     if (!openTransferPanelId) setPanelDiscountMenuOpen(false);
   }, [openTransferPanelId]);
 
-  const finalText = useMemo(() => {
+  // 차트를 header / 시술 줄(각 줄은 id로 식별) / 나머지 꼬리 블록으로 나눈다.
+  // 시술 줄 자체는 절대 고쳐 쓸 수 없게 읽기 전용으로만 보여주고, 시술과 시술 사이에는
+  // lineMemos(id별 메모)를 끼워 넣어 편집할 수 있게 한다.
+  const chartParts = useMemo(() => {
     const staffDisplay = staffName.trim() ? `${staffName.trim()}S` : "";
     const paymentManwon = Math.round(paymentAmount / 10000);
     const extraManwon = Math.round(extraCredit / 10000);
@@ -706,26 +709,24 @@ export default function Home() {
       CATEGORY_ORDER.indexOf(a.category!) - CATEGORY_ORDER.indexOf(b.category!)
     );
     const sortedNormalItems = [...unclassified, ...classified];
-    const itemLines = sortedNormalItems.map((i) => {
+    const items = sortedNormalItems.map((i) => {
       // 시술명 끝의 "N회"는 "N-1" 표기로 옮겨 붙인다 (없으면 "1-1").
       const { base, n } = getDisplayNameParts(i);
-      const dot = i.count !== 1 ? RED_DOT : "";
       // 제모 시술 중 "구독권"이 포함된 이름은 예외 규칙: 만료일을 "구독권" 옆에 붙이고,
       // 최초 차팅일이므로 회차는 항상 "1회차 1-1"로 고정한다.
       if (i.name.includes("제모") && i.name.includes("구독권")) {
         const base2 = base.replace("구독권", `구독권(~${subscriptionExpiryYYMMDD()})`);
-        return `${base2} 1회차 1-1  ${formatNumber(computeUnitPrice(i))}원${dot}`;
+        return { id: i.id, text: `${base2} 1회차 1-1  ${formatNumber(computeUnitPrice(i))}원` };
       }
-      return `${base} ${n}-1  ${formatNumber(computeUnitPrice(i))}원${dot}`;
+      return { id: i.id, text: `${base} ${n}-1  ${formatNumber(computeUnitPrice(i))}원` };
     });
     // 미시술 체크된 시술은 원래 이름 그대로, 맨 마지막 구분선 아래에 표시한다.
     const unusedLines = unusedItems.length > 0
       ? ["=".repeat(20), ...unusedItems.map((i) => {
           const { base, n } = getDisplayNameParts(i);
           const displayName = base.replace(/\s+/g, " ").trim();
-          const dot = i.count !== 1 ? RED_DOT : "";
           const countDisplay = n === "1" ? " 1회" : ` ${n}회`;
-          return `${displayName}${countDisplay} ${formatNumber(computeUnitPrice(i))}원${dot} *미시술`;
+          return `${displayName}${countDisplay} ${formatNumber(computeUnitPrice(i))}원 *미시술`;
         })]
       : [];
     const totalLine = selectedItems.length > 1 || discountPercent > 0
@@ -747,23 +748,36 @@ export default function Home() {
         creditLines = [`잔액: ${formatNumber(balance)}원`];
       }
     }
-    return [...(headerVisible ? [header] : []), ...itemLines, ...unusedLines, ...totalLine, ...transferLine, ...creditLines].join("\n");
+    const tail = [...unusedLines, ...totalLine, ...transferLine, ...creditLines].join("\n");
+    return { header: headerVisible ? header : "", items, tail };
   }, [headerVisible, includeHeader, membershipType, staffName, paymentAmount, extraCredit, selectedItems, totalPrice, discountPercent, discountedTotal, discountLabel, existingBalance, transferEnabled, transferAmount, transferRecipients, balance]);
 
-  // 생성된 차트 줄(finalText)은 항상 그대로 보여주기만 하고 직접 고쳐 쓸 수 없게 한다.
-  // 고칠 게 있으면 그 아래에 자유 메모(chartMemo)를 덧붙이는 방식으로만 남긴다.
+  // 시술 줄 사이사이에 끼워 넣는 메모. 시술 id별로 붙기 때문에, 정렬 순서가 바뀌어도
+  // 메모는 원래 그 시술 줄을 그대로 따라간다.
+  const [lineMemos, setLineMemos] = useState<Record<string, string>>({});
+  // 맨 마지막(총액 등 아래)에 남기는 자유 메모.
   const [chartMemo, setChartMemo] = useState("");
 
+  const finalText = useMemo(() => {
+    const lines: string[] = [];
+    if (chartParts.header) lines.push(chartParts.header);
+    for (const it of chartParts.items) {
+      lines.push(it.text);
+      const memo = lineMemos[it.id]?.trim();
+      if (memo) lines.push(memo);
+    }
+    if (chartParts.tail) lines.push(chartParts.tail);
+    if (chartMemo.trim()) lines.push(chartMemo);
+    return lines.join("\n");
+  }, [chartParts, lineMemos, chartMemo]);
+
   async function handleCopy() {
-    const combined = chartMemo.trim() ? `${finalText}\n${chartMemo}` : finalText;
-    const cleaned = combined.split(RED_DOT).join("");
-    await navigator.clipboard.writeText(cleaned);
+    await navigator.clipboard.writeText(finalText);
     setCopied(true); setTimeout(() => setCopied(false), 1500);
   }
 
   async function handlePanelCopy(text: string) {
-    const cleaned = text.split(RED_DOT).join("");
-    await navigator.clipboard.writeText(cleaned);
+    await navigator.clipboard.writeText(text);
     setPanelCopied(true); setTimeout(() => setPanelCopied(false), 1500);
   }
 
@@ -1316,22 +1330,27 @@ export default function Home() {
             </div>
 
             <div style={{ ...styles.textarea, minHeight: 220 }}>
-              <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{finalText}</div>
+              {chartParts.header && (
+                <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{chartParts.header}</div>
+              )}
+              {chartParts.items.map((it) => (
+                <div key={it.id}>
+                  <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{it.text}</div>
+                  <AutoGrowInput
+                    value={lineMemos[it.id] ?? ""}
+                    onChange={(v) => setLineMemos((prev) => ({ ...prev, [it.id]: v }))}
+                    style={styles.chartMemoInput}
+                  />
+                </div>
+              ))}
+              {chartParts.tail && (
+                <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{chartParts.tail}</div>
+              )}
               <AutoGrowInput
                 value={chartMemo}
                 onChange={setChartMemo}
                 placeholder="+ 메모 추가"
-                style={{
-                  width: "100%",
-                  border: "none",
-                  outline: "none",
-                  resize: "none",
-                  background: "transparent",
-                  padding: 0,
-                  fontSize: 14,
-                  color: C.primary,
-                  lineHeight: 1.8,
-                }}
+                style={styles.chartMemoInput}
               />
             </div>
 
