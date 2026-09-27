@@ -109,6 +109,51 @@ export function mergeGeneratedText(oldGen: string, curText: string, newGen: stri
   return result.join("\n");
 }
 
+// 시술 줄(reference) 자체는 절대 고쳐 쓸 수 없게 막되, 시술과 시술 사이에 새로 끼워
+// 넣은 줄(메모)은 그대로 살려서 단일 textarea 안에서 "시술 줄은 잠금 + 그 사이는 자유
+// 편집"을 동시에 만족시킨다. 매 입력마다 reference와 비교해서, reference 줄이 소비된
+// 구간(=그 줄을 고쳐 쓰려는 시도)은 전부 버리고 원본 reference 줄을 그대로 낸다.
+// reference 줄이 하나도 안 소비된 순수 삽입 구간만 사용자가 입력한 그대로 살린다.
+export function protectGeneratedLines(reference: string, edited: string): string {
+  if (reference === edited) return reference;
+
+  const refLines = reference === "" ? [] : reference.split("\n");
+  const editedLines = edited === "" ? [] : edited.split("\n");
+  const refToEdited = lcsMatch(refLines, editedLines);
+
+  const insertsAfterRef = new Map<number, string[]>();
+  {
+    let prevRef = -1;
+    let prevEdited = -1;
+    const pushGap = (refEnd: number, editedEnd: number) => {
+      const refStart = prevRef + 1;
+      const editedStart = prevEdited + 1;
+      if (refStart === refEnd && editedStart < editedEnd) {
+        const arr = insertsAfterRef.get(prevRef) ?? [];
+        arr.push(...editedLines.slice(editedStart, editedEnd));
+        insertsAfterRef.set(prevRef, arr);
+      }
+      // refStart < refEnd(reference 줄이 소비됨)면 그 줄을 고쳐 쓰려는 시도이므로 버린다.
+    };
+    for (const [ri, ei] of refToEdited) {
+      pushGap(ri, ei);
+      prevRef = ri;
+      prevEdited = ei;
+    }
+    pushGap(refLines.length, editedLines.length);
+  }
+
+  const result: string[] = [];
+  const before = insertsAfterRef.get(-1);
+  if (before) result.push(...before);
+  for (let ri = 0; ri < refLines.length; ri++) {
+    result.push(refLines[ri]);
+    const after = insertsAfterRef.get(ri);
+    if (after) result.push(...after);
+  }
+  return result.join("\n");
+}
+
 if (process.env.NODE_ENV !== "production") {
   const assertEq = (label: string, actual: string, expected: string) => {
     if (actual !== expected) {
@@ -152,5 +197,24 @@ if (process.env.NODE_ENV !== "production") {
     "editing an existing line's own text doesn't resurrect the original when a new item is added",
     mergeGeneratedText("A 100원", "A-수정 100원", "A 100원\nB 200원"),
     "A-수정 100원\nB 200원"
+  );
+
+  // protectGeneratedLines: 시술 줄을 고쳐 쓰려는 시도는 즉시 원본으로 되돌아가야 한다.
+  assertEq(
+    "editing a protected line reverts it",
+    protectGeneratedLines("A 100원", "A-수정 100원"),
+    "A 100원"
+  );
+  // 시술 줄 사이에 새로 끼워 넣은 메모 줄은 그대로 유지돼야 한다.
+  assertEq(
+    "inserting a memo line between protected lines is kept",
+    protectGeneratedLines("A 100원\nB 200원", "A 100원\n메모\nB 200원"),
+    "A 100원\n메모\nB 200원"
+  );
+  // 시술 줄 중간에서 Enter를 쳐서 줄을 쪼개려는 시도도 원본 한 줄로 되돌아가야 한다.
+  assertEq(
+    "splitting a protected line in the middle reverts it to the single original line",
+    protectGeneratedLines("슈링크 300샷 1-1  100,000원", "슈링크\n 300샷 1-1  100,000원"),
+    "슈링크 300샷 1-1  100,000원"
   );
 }

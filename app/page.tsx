@@ -9,7 +9,7 @@ import { TreatmentCategory } from "@/lib/types";
 import { CATEGORY_ORDER } from "@/lib/categoryDetection";
 import { C, MAX_WIDTH } from "@/lib/theme";
 import { BRANCH_STORAGE_KEY } from "@/lib/branches";
-import { mergeGeneratedText } from "@/lib/mergeText";
+import { mergeGeneratedText, protectGeneratedLines } from "@/lib/mergeText";
 import { findCcCombos, formatComboLabel, mergedComboName, deriveBaseName, type CcCombo } from "@/lib/ccCombo";
 import BranchPicker from "@/components/BranchPicker";
 import Dropdown from "@/components/Dropdown";
@@ -1290,7 +1290,7 @@ export default function Home() {
                       whiteSpace: "pre-line",
                     }}
                   >
-                    {"1. 고객 요청사항, 용량, 시술 부위 등을 자유롭게 수정할 수 있습니다.\n2. 회원권 영역에 입력한 금액으로 자동 계산됩니다."}
+                    {"1. 시술 줄 사이에 Enter로 고객 요청사항, 용량, 시술 부위 등을 메모로 자유롭게 추가할 수 있습니다(시술명 줄 자체는 수정 불가).\n2. 회원권 영역에 입력한 금액으로 자동 계산됩니다."}
                   </div>
                 )}
               </div>
@@ -1323,7 +1323,7 @@ export default function Home() {
 
             <AutoGrowInput
               value={editableText}
-              onChange={setEditableText}
+              onChange={(v) => setEditableText(protectGeneratedLines(finalText, v))}
               style={{ ...styles.textarea, minHeight: 220 }}
             />
 
