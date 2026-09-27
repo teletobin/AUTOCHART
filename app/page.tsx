@@ -1589,26 +1589,35 @@ export default function Home() {
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {qtyPopup.mode === "confirm" ? (
-                <button
-                  onClick={() => confirmQtyPopup("visits")}
-                  style={{ ...styles.input, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
-                >
-                  1. {qtyPopup.confirmLabel}
-                </button>
-              ) : (
-                <>
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: C.sub, flexShrink: 0 }}>1.</span>
                   <button
                     onClick={() => confirmQtyPopup("visits")}
-                    style={{ ...styles.input, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
+                    style={{ ...styles.input, flex: 1, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
                   >
-                    1. {qtyPopup.option1Label}
+                    {qtyPopup.confirmLabel}
                   </button>
-                  <button
-                    onClick={() => confirmQtyPopup("scaled")}
-                    style={{ ...styles.input, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
-                  >
-                    2. {qtyPopup.option2Label}
-                  </button>
+                </div>
+              ) : (
+                <>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.sub, flexShrink: 0 }}>1.</span>
+                    <button
+                      onClick={() => confirmQtyPopup("visits")}
+                      style={{ ...styles.input, flex: 1, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
+                    >
+                      {qtyPopup.option1Label}
+                    </button>
+                  </div>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600, color: C.sub, flexShrink: 0 }}>2.</span>
+                    <button
+                      onClick={() => confirmQtyPopup("scaled")}
+                      style={{ ...styles.input, flex: 1, textAlign: "left", cursor: "pointer", background: C.bg, wordBreak: "keep-all" }}
+                    >
+                      {qtyPopup.option2Label}
+                    </button>
+                  </div>
                 </>
               )}
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
