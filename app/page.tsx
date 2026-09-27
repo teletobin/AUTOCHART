@@ -1582,7 +1582,7 @@ export default function Home() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{ width: "min(360px, 92vw)", background: C.surface, borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,0.35)", padding: 22 }}
+            style={{ width: "min(520px, 92vw)", background: C.surface, borderRadius: 16, boxShadow: "0 24px 64px rgba(0,0,0,0.35)", padding: 22 }}
           >
             <p style={{ fontSize: 15, fontWeight: 500, color: C.primary, marginBottom: 14, lineHeight: 1.5 }}>
               {qtyPopup.mode === "confirm"
