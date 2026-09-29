@@ -266,6 +266,7 @@ export default function Home() {
   const [showClearTip, setShowClearTip] = useState(false);
   const [showBoosterTip, setShowBoosterTip] = useState(false);
   const [showManualTip, setShowManualTip] = useState(false);
+  const [showNameHeaderTip, setShowNameHeaderTip] = useState(false);
   const [showTransferTip, setShowTransferTip] = useState(false);
   const [panelDiscountMenuOpen, setPanelDiscountMenuOpen] = useState(false);
 
@@ -1135,7 +1136,29 @@ export default function Home() {
                   <div style={styles.tableHead}>
                     <span style={{ width: 16 }} />
                     <span style={{ width: 13 }} />
-                    <span style={{ flex: 1, textAlign: "center" }}>시술명</span>
+                    <div
+                      style={{ position: "relative", flex: 1, display: "flex", justifyContent: "center" }}
+                      onMouseEnter={() => setShowNameHeaderTip(true)}
+                      onMouseLeave={() => setShowNameHeaderTip(false)}
+                    >
+                      <span style={{ cursor: "default" }}>시술명</span>
+                      {showNameHeaderTip && (
+                        <div
+                          style={{
+                            ...styles.tooltip,
+                            position: "absolute",
+                            top: "100%",
+                            left: 0,
+                            marginTop: 6,
+                            width: "max-content",
+                            whiteSpace: "pre-line",
+                            zIndex: 60,
+                          }}
+                        >
+                          시술명을 클릭하면 직접 수정할 수 있습니다.
+                        </div>
+                      )}
+                    </div>
                     <span style={{ width: 60, textAlign: "center" }}>단가</span>
                     <span style={{ width: 50, textAlign: "center" }}>수량</span>
                     <span style={{ width: 80, textAlign: "center" }}>합계</span>
