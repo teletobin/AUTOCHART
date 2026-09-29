@@ -582,7 +582,15 @@ export default function Home() {
   function updateItemName(id: string, name: string) { setSelectedItems((prev) => prev.map((i) => (i.id === id ? { ...i, name } : i))); }
   function updateItemCount(id: string, count: number, quantityMode?: "visits" | "scaled" | "manual", manualQtyText?: string) {
     setSelectedItems((prev) => prev.map((i) => (i.id === id
-      ? { ...i, count: Math.max(1, count || 1), ...(quantityMode ? { quantityMode } : {}), ...(manualQtyText !== undefined ? { manualQtyText } : {}) }
+      ? {
+          ...i,
+          count: Math.max(1, count || 1),
+          ...(quantityMode ? { quantityMode } : {}),
+          ...(manualQtyText !== undefined ? {
+            manualQtyText,
+            name: manualQtyText.replace(/\s+\d+-\d+\s*$/, "").trim()
+          } : {})
+        }
       : i)));
   }
   // 시술명 속에 곱할 수 있는 수량(샷/부위 등)이 있으면 그걸 늘릴지 회차를 늘릴지 먼저 물어보고,
