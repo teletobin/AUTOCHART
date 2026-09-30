@@ -1144,7 +1144,7 @@ export default function Home() {
                       left: 0,
                       marginBottom: 6,
                       width: "max-content",
-                      maxWidth: 280,
+                      maxWidth: 360,
                       whiteSpace: "pre-line",
                     }}
                   >
