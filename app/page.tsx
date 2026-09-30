@@ -266,6 +266,7 @@ export default function Home() {
   const [showClearTip, setShowClearTip] = useState(false);
   const [showBoosterTip, setShowBoosterTip] = useState(false);
   const [showManualTip, setShowManualTip] = useState(false);
+  const [showCategoryTip, setShowCategoryTip] = useState(false);
   const [showNameHeaderTip, setShowNameHeaderTip] = useState(false);
   const [showTransferTip, setShowTransferTip] = useState(false);
   const [panelDiscountMenuOpen, setPanelDiscountMenuOpen] = useState(false);
@@ -1122,13 +1123,35 @@ export default function Home() {
                 )}
               </div>
               <input type="text" value={manualPrice ? Number(manualPrice).toLocaleString() : ""} onChange={(e) => setManualPrice(e.target.value.replace(/[^0-9]/g, ''))} placeholder="세전 금액" className="manual-input-sm" style={{ ...styles.input, flex: "0 0 76px", minWidth: 0, height: 36, boxSizing: "border-box" }} />
-              <Dropdown
-                value={manualCategory ?? ""}
-                onChange={(v) => setManualCategory(v ? (v as TreatmentCategory) : null)}
-                placeholder="카테고리"
-                options={CATEGORY_ORDER.map((cat) => ({ value: cat, label: cat }))}
-                style={{ flex: "0 0 116px", height: 36 }}
-              />
+              <div
+                style={{ position: "relative", flex: "0 0 116px" }}
+                onMouseEnter={() => setShowCategoryTip(true)}
+                onMouseLeave={() => setShowCategoryTip(false)}
+              >
+                <Dropdown
+                  value={manualCategory ?? ""}
+                  onChange={(v) => setManualCategory(v ? (v as TreatmentCategory) : null)}
+                  placeholder="카테고리"
+                  options={CATEGORY_ORDER.map((cat) => ({ value: cat, label: cat }))}
+                  style={{ width: "100%", height: 36 }}
+                />
+                {showCategoryTip && (
+                  <div
+                    style={{
+                      ...styles.tooltip,
+                      position: "absolute",
+                      bottom: "100%",
+                      left: 0,
+                      marginBottom: 6,
+                      width: "max-content",
+                      maxWidth: 280,
+                      whiteSpace: "pre-line",
+                    }}
+                  >
+                    {"카테고리순으로 차팅되어 대략적인 시술 흐름 파악과 시술 누락을 방지합니다.\n피부관리>레이저>리프팅>제모>부스터>주사 및 기타"}
+                  </div>
+                )}
+              </div>
               <button onClick={addManualItem} disabled={!manualName.trim() || !manualPrice}
                 style={{ ...styles.btnPrimary, height: 36, boxSizing: "border-box", padding: "0 8px", fontSize: 14, opacity: (!manualName.trim() || !manualPrice) ? 0.4 : 1, flexShrink: 0 }}>
                 추가
