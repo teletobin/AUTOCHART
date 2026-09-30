@@ -11,6 +11,7 @@ import { C, MAX_WIDTH } from "@/lib/theme";
 import { BRANCH_STORAGE_KEY } from "@/lib/branches";
 import { mergeGeneratedText, protectGeneratedLines } from "@/lib/mergeText";
 import { findCcCombos, formatComboLabel, mergedComboName, deriveBaseName, type CcCombo } from "@/lib/ccCombo";
+import { findLiftingCombos, formatComboLabel as formatLiftingComboLabel, mergedLiftingName, type LiftingCombo } from "@/lib/liftingCombo";
 import BranchPicker from "@/components/BranchPicker";
 import Dropdown from "@/components/Dropdown";
 
@@ -265,6 +266,7 @@ export default function Home() {
   const [showChartTip, setShowChartTip] = useState(false);
   const [showClearTip, setShowClearTip] = useState(false);
   const [showBoosterTip, setShowBoosterTip] = useState(false);
+  const [showLiftingTip, setShowLiftingTip] = useState(false);
   const [showManualTip, setShowManualTip] = useState(false);
   const [showCategoryTip, setShowCategoryTip] = useState(false);
   const [showNameHeaderTip, setShowNameHeaderTip] = useState(false);
@@ -385,6 +387,77 @@ export default function Home() {
     }
     return [];
   }, [boosterRequest, matcher]);
+
+  // 리프팅: 부스터와 동일한 로직, 샷 또는 줄 단위 처리
+  const [liftingOpen, setLiftingOpen] = useState(false);
+  const [liftingQuery, setLiftingQuery] = useState("");
+  const liftingRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!liftingOpen) return;
+    function onOutsideClick(e: MouseEvent) {
+      if (liftingRef.current && !liftingRef.current.contains(e.target as Node)) setLiftingOpen(false);
+    }
+    document.addEventListener("mousedown", onOutsideClick);
+    return () => document.removeEventListener("mousedown", onOutsideClick);
+  }, [liftingOpen]);
+  const liftingRequest = useMemo(() => {
+    // "울쎄라 600샷" 또는 "온다 7만줄" 형태 파싱
+    const shotMatch = liftingQuery.match(/^(.+?)\s*(\d+(?:,\d{3})*)\s*샷\s*$/i);
+    if (shotMatch) {
+      const baseQuery = shotMatch[1].trim();
+      const target = Number(shotMatch[2].replace(/,/g, ""));
+      if (baseQuery.length < 2 || !(target > 0)) return null;
+      return { baseQuery, target, unit: "shot" as const };
+    }
+    const lineMatch = liftingQuery.match(/^(.+?)\s*(\d+)\s*만\s*줄\s*$/i);
+    if (lineMatch) {
+      const baseQuery = lineMatch[1].trim();
+      const target = Number(lineMatch[2]) * 10000;
+      if (baseQuery.length < 2 || !(target > 0)) return null;
+      return { baseQuery, target, unit: "line" as const };
+    }
+    const lineMatch2 = liftingQuery.match(/^(.+?)\s*(\d+(?:,\d{3})*)\s*줄\s*$/i);
+    if (lineMatch2) {
+      const baseQuery = lineMatch2[1].trim();
+      const target = Number(lineMatch2[2].replace(/,/g, ""));
+      if (baseQuery.length < 2 || !(target > 0)) return null;
+      return { baseQuery, target, unit: "line" as const };
+    }
+    return null;
+  }, [liftingQuery]);
+  const liftingCombos = useMemo(() => {
+    if (!liftingRequest) return [];
+    const matched = matcher(liftingRequest.baseQuery, 200).filter(
+      (t) => t.category === TreatmentCategory.리프팅
+    );
+    if (matched.length === 0) return [];
+    const triedBaseNames = new Set<string>();
+    for (const candidate of matched) {
+      const baseName = candidate.name
+        .replace(/\d+(?:,\d{3})*\s*샷(?:\s|$|[^가-힣])/i, "")
+        .replace(/(\d+\s*만\s*)?줄(?:\s|$|[^가-힣])/i, "")
+        .replace(/\d+(?:,\d{3})*\s*J(?:\s|$|[^가-힣])/i, "")
+        .replace(/한정가|체험가/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (triedBaseNames.has(baseName)) continue;
+      triedBaseNames.add(baseName);
+      const sameFamily = matched.filter(
+        (t) =>
+          t.name
+            .replace(/\d+(?:,\d{3})*\s*샷(?:\s|$|[^가-힣])/i, "")
+            .replace(/(\d+\s*만\s*)?줄(?:\s|$|[^가-힣])/i, "")
+            .replace(/\d+(?:,\d{3})*\s*J(?:\s|$|[^가-힣])/i, "")
+            .replace(/한정가|체험가/g, "")
+            .replace(/\s+/g, " ")
+            .trim() === baseName
+      );
+      const combos = findLiftingCombos(liftingRequest.target, sameFamily, 15);
+      if (combos.length > 0) return combos;
+    }
+    return [];
+  }, [liftingRequest, matcher]);
+
   function selectBoosterCombo(combo: CcCombo) {
     const target = boosterRequest?.target ?? 0;
     const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -402,6 +475,24 @@ export default function Home() {
     ]);
     setBoosterQuery("");
     setBoosterOpen(false);
+  }
+  function selectLiftingCombo(combo: LiftingCombo) {
+    const target = liftingRequest?.target ?? 0;
+    const id = `${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    setSelectedItems((prev) => [
+      ...prev,
+      {
+        id,
+        name: mergedLiftingName(combo, target),
+        basePrice: combo.totalPrice,
+        count: 1,
+        unused: false,
+        displayed: true,
+        category: TreatmentCategory.리프팅,
+      },
+    ]);
+    setLiftingQuery("");
+    setLiftingOpen(false);
   }
   function removeItem(id: string) { setSelectedItems((prev) => prev.filter((i) => i.id !== id)); }
 
@@ -1017,6 +1108,47 @@ export default function Home() {
                   </div>
                 )}
               </div>
+              <div
+                style={{ position: "relative" }}
+                onMouseEnter={() => setShowLiftingTip(true)}
+                onMouseLeave={() => setShowLiftingTip(false)}
+              >
+                <button
+                  onClick={() => setLiftingOpen((v) => !v)}
+                  style={{
+                    background: liftingOpen ? C.primaryLt : C.borderSoft,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 8,
+                    fontSize: 13,
+                    color: C.primary,
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    padding: "0 12px",
+                    height: 36,
+                    flexShrink: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  리프팅
+                </button>
+                {showLiftingTip && (
+                  <div
+                    style={{
+                      ...styles.tooltip,
+                      position: "absolute",
+                      bottom: "100%",
+                      right: 0,
+                      marginBottom: 6,
+                      width: "max-content",
+                      whiteSpace: "pre-line",
+                    }}
+                  >
+                    {"샷 수나 줄(J) 수의 최저-최고가 조합을 고를 수 있어요.\n예: 울쎄라 1000샷 또는 온다 10만줄"}
+                  </div>
+                )}
+              </div>
               {boosterOpen && (
                 <div onClick={() => setBoosterOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 40 }} />
               )}
@@ -1026,8 +1158,8 @@ export default function Home() {
                     position: "fixed",
                     top: "20%",
                     left: "50%",
-                    marginLeft: -250,
-                    width: 500,
+                    marginLeft: -375,
+                    width: 750,
                     maxHeight: "60vh",
                     overflowY: "auto",
                     background: C.surface,
@@ -1049,8 +1181,10 @@ export default function Home() {
                     style={{ ...styles.input, height: 34, boxSizing: "border-box", width: "100%" }}
                   />
                   <p style={{ ...styles.hint, marginTop: 6, marginBottom: 0, whiteSpace: "pre-line", textAlign: "center" }}>
-                    <span style={{ color: C.danger }}>부스터 시술명과 용량을 입력하면 여러 조합 중 선택할 수 있습니다. (예: 리쥬란힐러 6cc)</span>
-                    {"\n* 체험가 또는 한정가는 중복으로 조합하지 않습니다.\n* 체험가 또는 한정가 적용이 가능한지 미리 체크해 주세요."}
+                    <span style={{ fontSize: 13, color: C.danger }}>부스터 시술명과 용량을 입력하면 여러 조합 중 선택할 수 있습니다. (예: 리쥬란힐러 6cc)</span>
+                    <span style={{ color: C.primary }}>
+                      {"\n* 체험가 또는 한정가는 중복으로 조합하지 않습니다.\n* 체험가 또는 한정가 적용이 가능한지 미리 체크해 주세요."}
+                    </span>
                   </p>
                   {boosterRequest && boosterCombos.length === 0 && (
                     <p style={{ ...styles.hint, marginTop: 8, marginBottom: 0, color: C.danger }}>조합을 만들 수 있는 시술을 찾지 못했습니다.</p>
@@ -1079,6 +1213,84 @@ export default function Home() {
                               <span style={{ marginLeft: 12, flexShrink: 0, fontVariantNumeric: "tabular-nums", color: C.sub }}>{formatNumber(combo.totalPrice)}원</span>
                             </button>
                             {idx < boosterCombos.length - 1 && (
+                              <div style={{
+                                height: "1px",
+                                borderTop: "1px dashed #ccc",
+                                margin: "3px 0",
+                                background: "transparent"
+                              }} />
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+              {liftingOpen && (
+                <div onClick={() => setLiftingOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 40 }} />
+              )}
+              {liftingOpen && (
+                <div
+                  style={{
+                    position: "fixed",
+                    top: "20%",
+                    left: "50%",
+                    marginLeft: -375,
+                    width: 750,
+                    maxHeight: "60vh",
+                    overflowY: "auto",
+                    background: C.surface,
+                    border: `1px solid ${C.border}`,
+                    borderRadius: 10,
+                    padding: 12,
+                    fontSize: 13,
+                    color: C.primary,
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
+                    zIndex: 50,
+                  }}
+                >
+                  <input
+                    type="text"
+                    value={liftingQuery}
+                    onChange={(e) => setLiftingQuery(e.target.value)}
+                    placeholder="예: 슈링크 800샷 또는 온다 10만줄"
+                    autoFocus
+                    style={{ ...styles.input, height: 34, boxSizing: "border-box", width: "100%" }}
+                  />
+                  <p style={{ ...styles.hint, marginTop: 6, marginBottom: 0, whiteSpace: "pre-line", textAlign: "center" }}>
+                    <span style={{ fontSize: 13, color: C.danger }}>리프팅 시술명과 샷수 또는 줄(J)수를 입력하면 여러 조합 중 선택할 수 있습니다. (예: 울쎄라 1000샷, 온다 8만줄)</span>
+                    <span style={{ color: C.primary }}>
+                      {"\n* 체험가 또는 한정가는 중복으로 조합하지 않습니다.\n* 체험가 또는 한정가 적용이 가능한지 미리 체크해 주세요."}
+                    </span>
+                  </p>
+                  {liftingRequest && liftingCombos.length === 0 && (
+                    <p style={{ ...styles.hint, marginTop: 8, marginBottom: 0, color: C.danger }}>조합을 만들 수 있는 시술을 찾지 못했습니다.</p>
+                  )}
+                  {liftingCombos.length > 0 && (
+                    <div style={{ marginTop: 8, maxHeight: 350, overflowY: "auto" }}>
+                      {liftingCombos.map((combo, idx) => {
+                        const label = formatLiftingComboLabel(combo);
+                        return (
+                          <div key={label}>
+                            <button
+                              onClick={() => selectLiftingCombo(combo)}
+                              style={{
+                                ...styles.candidateRow,
+                                width: "100%", textAlign: "left",
+                                background: C.surface,
+                                color: "#555",
+                                alignItems: "flex-start",
+                                fontSize: 12,
+                                border: "none",
+                                paddingBottom: 6,
+                                paddingTop: 6,
+                              }}
+                            >
+                              <span style={{ flex: 1, whiteSpace: "normal", wordBreak: "keep-all", lineHeight: 1.4 }}>{label}</span>
+                              <span style={{ marginLeft: 12, flexShrink: 0, fontVariantNumeric: "tabular-nums", color: C.sub }}>{formatNumber(combo.totalPrice)}원</span>
+                            </button>
+                            {idx < liftingCombos.length - 1 && (
                               <div style={{
                                 height: "1px",
                                 borderTop: "1px dashed #ccc",
