@@ -132,7 +132,7 @@ const styles: Record<string, React.CSSProperties> = {
 function tabButtonStyle(active: boolean): React.CSSProperties {
   return {
     padding: "10px 14px",
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: 600,
     color: active ? C.primary : C.sub,
     background: "none",
@@ -886,7 +886,7 @@ export default function RulesPage() {
                 padding: "8px 10px",
                 border: "none",
                 borderRadius: 7,
-                fontSize: 14,
+                fontSize: 15,
                 fontWeight: tab === t.key ? 700 : 500,
                 cursor: "pointer",
                 background: tab === t.key || commonMenuHoverKey === t.key ? C.primaryLt : "transparent",
@@ -1213,7 +1213,7 @@ export default function RulesPage() {
               <br />
               <span style={{ color: C.danger }}>*규칙을 등록한 다음 "{branch || "우리 지점"} 데이터에 적용" 버튼을 꼭 눌러 주세요.</span>
               <br />
-              예1) 국산 고순도 → 코어
+              예1) 국산 고순도 → 코어톡스
               <br />
               예2) 저통증 멀티석션 인젝터 → 하이쿡스
               <br />
@@ -1411,9 +1411,11 @@ export default function RulesPage() {
                   )}
                 </div>
                 <p style={styles.cardHint}>
-                  각 카테고리 순서대로 차트를 출력합니다.
+                  각 카테고리 순서대로 차트가 출력됩니다.
                   <br />
-                  자동 분류되지만 오류가 있을 경우 체크박스를 선택해 원하는 카테고리로 변경해 주세요.
+                  대략적인 시술 흐름을 파악하기 쉽고, 시술 누락을 방지할 수 있습니다.
+                  <br />
+                  자동으로 분류되지만 오류가 있을 경우 시술을 체크해 원하는 카테고리로 변경해 주세요.
                 </p>
               </div>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>

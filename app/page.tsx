@@ -201,7 +201,7 @@ const styles: Record<string, React.CSSProperties> = {
   btnGhost:   { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
   main:    { maxWidth: MAX_WIDTH, margin: "0 auto", width: "100%", padding: "24px 20px", display: "grid", gridTemplateColumns: "1fr", gap: 16 },
   card:    { background: C.surface, borderRadius: 14, padding: "20px 22px" },
-  cardTitle: { fontSize: 15, fontWeight: 700, color: C.sub, marginBottom: 14, letterSpacing: "0.04em" },
+  cardTitle: { fontSize: 16, fontWeight: 500, color: C.primary, marginBottom: 14, letterSpacing: "0.04em" },
   titleRow: { display: "flex", alignItems: "center", justifyContent: "space-between", minHeight: 34, marginBottom: 14 },
   input:   { width: "100%", border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 14, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
   hint:    { fontSize: 12, color: C.sub, marginTop: 6 },
@@ -251,8 +251,10 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [panelCopied, setPanelCopied] = useState(false);
   const [includeHeader, setIncludeHeader] = useState(false);
+  const [membershipHover, setMembershipHover] = useState(false);
   const [membershipType, setMembershipType] = useState<"VIP" | "쁘띠">("VIP");
   const [transferEnabled, setTransferEnabled] = useState(false);
+  const [transferHover, setTransferHover] = useState(false);
   const [transferRecipients, setTransferRecipients] = useState<TransferRecipient[]>([]);
   const [openTransferPanelId, setOpenTransferPanelId] = useState<string | null>(null);
   // 양도자(회원권 보유 고객, A) 이름은 여러 양도차트에서 하나로 통일해서 써야 하므로
@@ -346,6 +348,7 @@ export default function Home() {
   // 것들끼리만 묶어서 목표 cc를 채우는 조합을 가격 오름차순으로 보여준다. 섹션이 다르면
   // (예: 리쥬란힐러 vs 리쥬란스킨부스터 vs 리쥬란HB플러스) 절대 서로 섞이지 않는다.
   const [boosterOpen, setBoosterOpen] = useState(false);
+  const [boosterHover, setBoosterHover] = useState(false);
   const [boosterQuery, setBoosterQuery] = useState("");
   const boosterRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -390,6 +393,7 @@ export default function Home() {
 
   // 리프팅: 부스터와 동일한 로직, 샷 또는 줄 단위 처리
   const [liftingOpen, setLiftingOpen] = useState(false);
+  const [liftingHover, setLiftingHover] = useState(false);
   const [liftingQuery, setLiftingQuery] = useState("");
   const liftingRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -1067,87 +1071,66 @@ export default function Home() {
                 </div>
               )}
               </div>
-              <div
-                style={{ position: "relative" }}
-                onMouseEnter={() => setShowBoosterTip(true)}
-                onMouseLeave={() => setShowBoosterTip(false)}
-              >
-                <button
-                  onClick={() => setBoosterOpen((v) => !v)}
-                  style={{
-                    background: boosterOpen ? C.primaryLt : C.borderSoft,
-                    border: `1px solid ${C.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    color: C.primary,
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    padding: "0 12px",
-                    height: 36,
-                    flexShrink: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  부스터
-                </button>
-                {showBoosterTip && (
-                  <div
-                    style={{
-                      ...styles.tooltip,
-                      position: "absolute",
-                      bottom: "100%",
-                      right: 0,
-                      marginBottom: 6,
-                      width: "max-content",
-                      whiteSpace: "pre-line",
-                    }}
-                  >
-                    {"리쥬란 같이 CC별 수가를 조합해 목표 용량을 만들 때\n최저가~최고가 조합을 확인할 수 있어요."}
-                  </div>
-                )}
-              </div>
-              <div
-                style={{ position: "relative" }}
-                onMouseEnter={() => setShowLiftingTip(true)}
-                onMouseLeave={() => setShowLiftingTip(false)}
-              >
-                <button
-                  onClick={() => setLiftingOpen((v) => !v)}
-                  style={{
-                    background: liftingOpen ? C.primaryLt : C.borderSoft,
-                    border: `1px solid ${C.border}`,
-                    borderRadius: 8,
-                    fontSize: 13,
-                    color: C.primary,
-                    cursor: "pointer",
-                    fontWeight: 600,
-                    padding: "0 12px",
-                    height: 36,
-                    flexShrink: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  리프팅
-                </button>
-                {showLiftingTip && (
-                  <div
-                    style={{
-                      ...styles.tooltip,
-                      position: "absolute",
-                      bottom: "100%",
-                      right: 0,
-                      marginBottom: 6,
-                      width: "max-content",
-                      whiteSpace: "pre-line",
-                    }}
-                  >
-                    {"샷 수나 줄(J) 수의 최저-최고가 조합을 고를 수 있어요.\n예: 울쎄라 1000샷 또는 온다 10만줄"}
-                  </div>
-                )}
+              <div style={{ display: "flex", gap: 4, background: "#fff", borderRadius: 8, padding: 6, height: 36, border: `1px solid ${C.border}`, position: "relative" }}>
+                <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: "1px", height: "20px", background: "rgba(0,0,0,0.08)", pointerEvents: "none" }} />
+                {(["리프팅", "부스터"] as const).map((label, idx) => {
+                  const opened = label === "리프팅" ? liftingOpen : boosterOpen;
+                  const hover = label === "리프팅" ? liftingHover : boosterHover;
+                  const setHover = label === "리프팅" ? setLiftingHover : setBoosterHover;
+                  const toggle = label === "리프팅" ? () => setLiftingOpen((v) => !v) : () => setBoosterOpen((v) => !v);
+                  const showTip = label === "리프팅" ? showLiftingTip : showBoosterTip;
+                  const setShowTip = label === "리프팅" ? setShowLiftingTip : setShowBoosterTip;
+                  const tooltip = label === "리프팅"
+                    ? "샷 수나 줄(J) 수의 최저-최고가 조합을 고를 수 있어요.\n예: 울쎄라 1000샷 또는 온다 10만줄"
+                    : "부스터 시술 중 cc당 수가를 조합해 목표용량을 만들 때\n최저-최고가 조합을 고를 수 있어요.\n예: 리쥬란HB 6cc 또는 쥬베룩볼륨 10cc";
+                  return (
+                    <div
+                      key={label}
+                      style={{ flex: 1, width: "50%", display: "flex", alignItems: "center", position: "relative" }}
+                      onMouseEnter={() => { setShowTip(true); setHover(true); }}
+                      onMouseLeave={() => { setShowTip(false); setHover(false); }}
+                    >
+                      <button
+                        onClick={toggle}
+                        style={{
+                          flex: 1,
+                          padding: "0 4px",
+                          border: "none",
+                          borderRadius: 5,
+                          fontSize: 14,
+                          fontWeight: 500,
+                          cursor: "pointer",
+                          background: opened || hover ? C.primaryLt : "#fff",
+                          color: C.primary,
+                          transition: "all 0.2s ease",
+                          boxShadow: "none",
+                          height: "100%",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {label}
+                      </button>
+                      {showTip && (
+                        <div
+                          style={{
+                            ...styles.tooltip,
+                            position: "absolute",
+                            bottom: "100%",
+                            right: 0,
+                            marginBottom: 6,
+                            width: "max-content",
+                            whiteSpace: "pre-line",
+                          }}
+                        >
+                          {tooltip}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
               {boosterOpen && (
                 <div onClick={() => setBoosterOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.45)", zIndex: 40 }} />
@@ -1365,7 +1348,7 @@ export default function Home() {
                 )}
               </div>
               <button onClick={addManualItem} disabled={!manualName.trim() || !manualPrice}
-                style={{ ...styles.btnPrimary, height: 36, boxSizing: "border-box", padding: "0 8px", fontSize: 14, opacity: (!manualName.trim() || !manualPrice) ? 0.4 : 1, flexShrink: 0 }}>
+                style={{ height: 36, boxSizing: "border-box", padding: "0px 12px", fontSize: 13, flexShrink: 0, background: C.primaryLt, color: C.primary, border: `1px solid ${C.border}`, borderRadius: 8, fontWeight: 500, cursor: !manualName.trim() || !manualPrice ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 추가
               </button>
             </div>
@@ -1627,19 +1610,21 @@ export default function Home() {
             </button>
 
             {/* 회원권 / 양도 토글 */}
-            <div style={{ display: "flex", gap: 6, marginTop: 12, background: C.borderSoft, borderRadius: 10, padding: 6, height: 36 }}>
+            <div style={{ display: "flex", gap: 4, marginTop: 12, background: "#fff", borderRadius: 8, padding: 6, height: 36, border: `1px solid ${C.border}`, position: "relative" }}>
+              <div style={{ position: "absolute", left: "50%", top: "50%", transform: "translate(-50%, -50%)", width: "1px", height: "20px", background: "rgba(0,0,0,0.08)", pointerEvents: "none" }} />
               {(["회원권", "양도"] as const).map((label, idx) => {
                 const checked = label === "회원권" ? includeHeader : transferEnabled;
+                const hover = label === "회원권" ? membershipHover : transferHover;
+                const setHover = label === "회원권" ? setMembershipHover : setTransferHover;
                 const toggle = label === "회원권" ? () => setIncludeHeader((v) => !v) : handleToggleTransfer;
                 return (
                   <div
                     key={label}
                     style={{ flex: 1, display: "flex", alignItems: "center", position: "relative" }}
-                    onMouseEnter={label === "양도" ? () => setShowTransferTip(true) : undefined}
-                    onMouseLeave={label === "양도" ? () => setShowTransferTip(false) : undefined}
+                    onMouseEnter={() => { if (label === "양도") setShowTransferTip(true); setHover(true); }}
+                    onMouseLeave={() => { if (label === "양도") setShowTransferTip(false); setHover(false); }}
                   >
-                    {idx > 0 && <div style={{ width: "1px", height: "20px", background: "rgba(0,0,0,0.08)", opacity: checked ? 0 : 1, transition: "opacity 0.2s ease" }} />}
-                    <button onClick={toggle} style={{ flex: 1, padding: "0 18px", border: "none", borderRadius: checked ? 6 : 0, fontSize: 14, fontWeight: 600, cursor: "pointer", background: checked ? "#fff" : "transparent", color: checked ? C.primary : C.sub, transition: "all 0.2s ease", boxShadow: checked ? "0 2px 4px rgba(0,0,0,0.1)" : "none", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <button onClick={toggle} style={{ flex: 1, padding: "0 18px", border: "none", borderRadius: checked || hover ? 6 : 0, fontSize: 14, fontWeight: 600, cursor: "pointer", background: checked || hover ? C.primaryLt : "transparent", color: C.primary, transition: "all 0.2s ease", boxShadow: "none", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       {label}
                     </button>
                     {label === "양도" && showTransferTip && (
