@@ -1,5 +1,16 @@
 import type { Treatment } from "@/lib/types";
 
+// 시술명의 대용량 숫자를 포매팅 (100,000J → 10만줄, 200000J → 20만줄 등)
+export function formatLiftingTreatmentName(name: string): string {
+  return name.replace(/(\d{1,3}(?:,\d{3})*|\d+)\s*J(?:\s|$|[^가-힣])/gi, (match, numStr) => {
+    const num = Number(numStr.replace(/,/g, ""));
+    if (num >= 10000 && num % 10000 === 0) {
+      return `${Math.floor(num / 10000)}만줄 `;
+    }
+    return match;
+  });
+}
+
 // 시술명에서 단위값(샷 또는 줄)을 추출. "울쎄라 600샷"→600, "온다 7만줄"→70000, "온다 10000J"→10000
 export function parseUnitValue(name: string): number | null {
   // "6000샷", "600 샷", "600샷" 등 샷 단위 (한글 뒤 경계 처리)

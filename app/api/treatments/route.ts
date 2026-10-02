@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
+import { formatLiftingTreatmentName } from "@/lib/liftingCombo";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -38,7 +39,11 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ treatments: data ?? [] });
+  const formatted = (data ?? []).map((t) => ({
+    ...t,
+    name: t.category === "리프팅" ? formatLiftingTreatmentName(t.name) : t.name,
+  }));
+  return NextResponse.json({ treatments: formatted });
 }
 
 export async function PATCH(req: Request) {
