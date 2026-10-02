@@ -115,6 +115,14 @@ function deriveBaseName(name: string): string {
     .trim();
 }
 
+// 숫자를 만 단위로 포매팅 (200000→20만, 100000→10만 등)
+function formatLargeNumber(value: number): string {
+  if (value >= 10000 && value % 10000 === 0) {
+    return `${Math.floor(value / 10000)}만`;
+  }
+  return String(value);
+}
+
 // "울쎄라 600샷" + "울쎄라 300샷" 조합 x target=600 → "울쎄라 600샷" 또는 "울쎄라 300샷 2회"
 // 한정가/체험가 조합은 그 정보를 표시
 export function mergedLiftingName(combo: LiftingCombo, target: number): string {
@@ -135,7 +143,8 @@ export function mergedLiftingName(combo: LiftingCombo, target: number): string {
   }
   const suffix = notes.length > 0 ? ` (${notes.join(", ")})` : "";
 
-  return `${base} ${target}${unitSuffix}${suffix}`;
+  const formattedTarget = formatLargeNumber(target);
+  return `${base} ${formattedTarget}${unitSuffix}${suffix}`;
 }
 
 export function formatComboLabel(combo: LiftingCombo): string {
