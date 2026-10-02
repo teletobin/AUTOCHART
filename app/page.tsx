@@ -221,6 +221,45 @@ const styles: Record<string, React.CSSProperties> = {
   tooltip: { background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: "6px 9px", fontSize: 12, fontWeight: 500, color: C.primary, lineHeight: 1.4, boxShadow: "0 4px 16px rgba(0,0,0,0.12)", zIndex: 50 },
 };
 
+const COMBO_UNIT_RE = /\d[\d,]*(?:\.\d+)?\s*(?:만\s*)?(?:샷|줄|J|cc)/i;
+
+function ComboButton({ items, totalPrice, onClick }: { items: { treatment: { name: string }; count: number }[]; totalPrice: number; onClick: () => void }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      style={{
+        ...styles.candidateRow,
+        width: "100%", textAlign: "left",
+        background: hover ? "#f4efe9" : C.surface,
+        color: "#555",
+        alignItems: "flex-start",
+        fontSize: 12,
+        border: "none",
+        paddingBottom: 6,
+        paddingTop: 6,
+      }}
+    >
+      <span style={{ flex: 1, whiteSpace: "normal", wordBreak: "keep-all", lineHeight: 1.4, fontWeight: 400 }}>
+        {items.map((it, i) => {
+          const name = it.treatment.name;
+          const at = name.search(COMBO_UNIT_RE);
+          const head = at === -1 ? `${name} ` : name.slice(0, at);
+          const bold = `${at === -1 ? "" : name.slice(at)} x ${it.count}회`;
+          return (
+            <span key={i}>
+              {i > 0 && "+"}({head}<span style={{ fontWeight: 600 }}>{bold}</span>)
+            </span>
+          );
+        })}
+      </span>
+      <span style={{ marginLeft: 12, flexShrink: 0, fontVariantNumeric: "tabular-nums", color: C.danger }}>{formatNumber(totalPrice)}원</span>
+    </button>
+  );
+}
+
 export default function Home() {
   const [branch, setBranch] = useState("");
   const [treatments, setTreatments] = useState<Treatment[]>([]);
@@ -1141,8 +1180,8 @@ export default function Home() {
                     position: "fixed",
                     top: "20%",
                     left: "50%",
-                    marginLeft: -375,
-                    width: 750,
+                    marginLeft: -370,
+                    width: 740,
                     maxHeight: "100vh",
                     overflowY: "auto",
                     background: C.surface,
@@ -1178,23 +1217,7 @@ export default function Home() {
                         const label = formatComboLabel(combo);
                         return (
                           <div key={label}>
-                            <button
-                              onClick={() => selectBoosterCombo(combo)}
-                              style={{
-                                ...styles.candidateRow,
-                                width: "100%", textAlign: "left",
-                                background: C.surface,
-                                color: "#555",
-                                alignItems: "flex-start",
-                                fontSize: 12,
-                                border: "none",
-                                paddingBottom: 6,
-                                paddingTop: 6,
-                              }}
-                            >
-                              <span style={{ flex: 1, whiteSpace: "normal", wordBreak: "keep-all", lineHeight: 1.4 }}>{label}</span>
-                              <span style={{ marginLeft: 12, flexShrink: 0, fontVariantNumeric: "tabular-nums", color: C.sub }}>{formatNumber(combo.totalPrice)}원</span>
-                            </button>
+                            <ComboButton items={combo.items} totalPrice={combo.totalPrice} onClick={() => selectBoosterCombo(combo)} />
                             {idx < boosterCombos.length - 1 && (
                               <div style={{
                                 height: "1px",
@@ -1219,8 +1242,8 @@ export default function Home() {
                     position: "fixed",
                     top: "20%",
                     left: "50%",
-                    marginLeft: -375,
-                    width: 750,
+                    marginLeft: -370,
+                    width: 740,
                     maxHeight: "100vh",
                     overflowY: "auto",
                     background: C.surface,
@@ -1256,23 +1279,7 @@ export default function Home() {
                         const label = formatLiftingComboLabel(combo);
                         return (
                           <div key={label}>
-                            <button
-                              onClick={() => selectLiftingCombo(combo)}
-                              style={{
-                                ...styles.candidateRow,
-                                width: "100%", textAlign: "left",
-                                background: C.surface,
-                                color: "#555",
-                                alignItems: "flex-start",
-                                fontSize: 12,
-                                border: "none",
-                                paddingBottom: 6,
-                                paddingTop: 6,
-                              }}
-                            >
-                              <span style={{ flex: 1, whiteSpace: "normal", wordBreak: "keep-all", lineHeight: 1.4 }}>{label}</span>
-                              <span style={{ marginLeft: 12, flexShrink: 0, fontVariantNumeric: "tabular-nums", color: C.sub }}>{formatNumber(combo.totalPrice)}원</span>
-                            </button>
+                            <ComboButton items={combo.items} totalPrice={combo.totalPrice} onClick={() => selectLiftingCombo(combo)} />
                             {idx < liftingCombos.length - 1 && (
                               <div style={{
                                 height: "1px",

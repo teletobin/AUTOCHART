@@ -1448,26 +1448,36 @@ export default function RulesPage() {
                 placeholder="시술명 검색"
                 style={styles.input}
               />
-              <Dropdown
-                value={bulkCategory ?? ""}
-                onChange={(v) => setBulkCategory(v ? (v as TreatmentCategory) : null)}
-                placeholder="이동할 분류 선택"
-                options={CATEGORY_ORDER.map((cat) => ({ value: cat, label: cat }))}
-                style={{ flex: "0 0 170px" }}
-              />
-              <button
-                onClick={bulkMoveCategory}
-                disabled={selectedForBulk.size === 0 || !bulkCategory}
-                style={{ ...styles.btnPrimary, opacity: selectedForBulk.size === 0 || !bulkCategory ? 0.4 : 1 }}
-              >
-                {selectedForBulk.size}개 이동
-              </button>
             </div>
 
-            <div style={{ marginTop: 14, marginBottom: 16 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: C.primary, marginBottom: 10 }}>
+            <div style={{ position: "sticky", top: 112, zIndex: 40, background: C.surface, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "8px 0", marginTop: 14 }}>
+              <p style={{ fontSize: 13, fontWeight: 700, color: C.primary, margin: 0 }}>
                 미분류 시술 ({categoryTreatments.filter(t => !t.category).length})
               </p>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ fontSize: 13, fontWeight: 500, color: selectedForBulk.size === 0 ? C.sub : C.primary }}>
+                  {selectedForBulk.size === 0 ? "이동할 시술을 체크하세요" : `${selectedForBulk.size}개 선택됨`}
+                </span>
+                <div style={{ opacity: selectedForBulk.size === 0 ? 0.5 : 1, pointerEvents: selectedForBulk.size === 0 ? "none" : "auto" }}>
+                  <Dropdown
+                    value={bulkCategory ?? ""}
+                    onChange={(v) => setBulkCategory(v ? (v as TreatmentCategory) : null)}
+                    placeholder="이동할 분류 선택"
+                    options={CATEGORY_ORDER.map((cat) => ({ value: cat, label: cat }))}
+                    style={{ width: 170, height: 36 }}
+                  />
+                </div>
+                <button
+                  onClick={bulkMoveCategory}
+                  disabled={selectedForBulk.size === 0 || !bulkCategory}
+                  style={{ ...styles.btnPrimary, height: 36, padding: "0 14px", fontSize: 13, fontWeight: 500, borderRadius: 8, opacity: selectedForBulk.size === 0 || !bulkCategory ? 0.4 : 1 }}
+                >
+                  {selectedForBulk.size}개 이동
+                </button>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 16 }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 4, maxHeight: "50vh", overflowY: "auto" }}>
                 {categoryTreatments.filter(t => !t.category).length === 0 ? (
                   <p style={{ fontSize: 12, color: C.sub }}>없음</p>
@@ -1531,12 +1541,13 @@ export default function RulesPage() {
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, padding: "10px 12px", borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 700, color: C.primary, whiteSpace: "nowrap" }}>
                       <span>{cat} <span style={{ fontWeight: 400, color: C.sub, fontSize: 12 }}>({items.length})</span></span>
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4, padding: 8, maxHeight: "70vh", overflowY: "auto" }}>
+                    <div className="slim-scroll" style={{ display: "flex", flexDirection: "column", padding: "2px 6px", maxHeight: "70vh", overflowY: "auto" }}>
                       {items.length === 0 && <p style={{ fontSize: 12, color: C.sub, padding: "4px 0" }}>없음</p>}
                       {items.map((t) => (
                         <label
                           key={t.id}
-                          style={{ display: "flex", gap: 6, alignItems: "flex-start", border: `1px solid ${C.borderSoft}`, borderRadius: 6, padding: "6px 8px", fontSize: 12, lineHeight: 1.3, cursor: "pointer", background: "#fafafa" }}
+                          className="cat-row"
+                          style={{ display: "flex", gap: 6, alignItems: "flex-start", borderBottom: `1px solid ${C.borderSoft}`, padding: "8px 4px", fontSize: 12, lineHeight: 1.3, cursor: "pointer" }}
                         >
                           <input
                             type="checkbox"

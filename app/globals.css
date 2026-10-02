@@ -14,3 +14,22 @@ body {
 .manual-input-sm::placeholder {
   font-size: 13px;
 }
+
+.slim-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: #d9d3cf transparent;
+}
+.slim-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.slim-scroll::-webkit-scrollbar-thumb {
+  background: #d9d3cf;
+  border-radius: 4px;
+}
+.slim-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.cat-row:hover {
+  background: #f4efe9;
+}
