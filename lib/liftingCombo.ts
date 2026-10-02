@@ -137,7 +137,7 @@ export function mergedLiftingName(combo: LiftingCombo, target: number): string {
   const notes: string[] = [];
   for (const i of combo.items) {
     const unitVal = parseUnitValue(i.treatment.name);
-    const unitLabel = unitVal !== null ? `${unitVal}${unitSuffix} ` : "";
+    const unitLabel = unitVal !== null ? `${formatLargeNumber(unitVal)}${unitSuffix} ` : "";
     if (i.treatment.name.includes("한정가")) notes.push(`${unitLabel}한정가 포함`);
     else if (i.treatment.name.includes("체험가")) notes.push(`${unitLabel}체험가 포함`);
   }
