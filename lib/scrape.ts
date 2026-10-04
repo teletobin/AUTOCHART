@@ -3,6 +3,7 @@ import * as cheerio from "cheerio";
 import { getSupabaseServerClient } from "@/lib/supabaseServer";
 import { applyCleanupRules, type CleanupRule } from "@/lib/cleanup";
 import { detectTreatmentCategory } from "@/lib/categoryDetection";
+import { inferMissingCategories } from "@/lib/categoryInference";
 import { TreatmentCategory } from "@/lib/types";
 
 // 시술명에 슬래시가 있으면 각각을 분리된 시술명으로 확장한다.
@@ -82,6 +83,7 @@ type ScrapedTreatment = {
   is_manual: boolean;
   section?: string;
   order?: number;
+  rawName?: string;
 };
 
 // axios/네트워크 에러 코드를 사용자에게 보여줄 한국어 메시지로 변환한다.
@@ -166,12 +168,17 @@ async function scrapeOnePage(
           branch,
           name: expandedName,
           price,
-          category: detectTreatmentCategory(expandedName, mainCategory, currentSection),
+          // 정리 규칙이 "레이저", "주사" 같은 분류 단서를 이름에서 지울 수 있어,
+          // 정리된 이름으로 못 정하면 홈페이지 원본 이름으로 한 번 더 판단한다.
+          category:
+            detectTreatmentCategory(expandedName, mainCategory, currentSection) ??
+            detectTreatmentCategory(rawName, mainCategory, currentSection),
           category_manual: false,
           scraped_at: new Date().toISOString(),
           is_manual: false,
           section: currentSection || undefined,
           order,
+          rawName,
         });
       }
     }
@@ -243,6 +250,11 @@ export async function runScrapeAndSync(branch: string, presetRules?: CleanupRule
     }
   }
 
+  // 키워드 규칙으로 못 정한 시술은 같은 지점의 이미 분류된 시술 이름을 근거로 채운다.
+  // 사용자가 직접 옮긴 분류(위 manual)도 근거에 포함되도록 그 뒤에 실행한다.
+  inferMissingCategories(deduped);
+  const rows = deduped.map(({ rawName: _rawName, ...rest }) => rest);
+
   // 홈페이지에 없어서 직접 추가한(is_manual=true) 시술은 스크래핑 동기화 때
   // 지워지지 않도록 남겨두고, 스크래핑으로 채워졌던 항목만 갈아엎는다.
   const { error: deleteError } = await supabase
@@ -257,7 +269,7 @@ export async function runScrapeAndSync(branch: string, presetRules?: CleanupRule
 
   let { error: upsertError } = await supabase
     .from("treatments")
-    .upsert(deduped, { onConflict: "branch,name" });
+    .upsert(rows, { onConflict: "branch,name" });
 
   // DB에 order 컬럼 마이그레이션이 아직 적용되지 않은 환경에서는 order
   // 필드를 빼고 한 번 더 시도해 스크래핑 자체는 실패하지 않도록 한다.
@@ -268,7 +280,7 @@ export async function runScrapeAndSync(branch: string, presetRules?: CleanupRule
     upsertError?.message.toLowerCase().includes("order") &&
     (upsertError.code === "42703" || upsertError.code === "PGRST204")
   ) {
-    const withoutOrder = deduped.map(({ order: _order, ...rest }) => rest);
+    const withoutOrder = rows.map(({ order: _order, ...rest }) => rest);
     const retry = await supabase
       .from("treatments")
       .upsert(withoutOrder, { onConflict: "branch,name" });
