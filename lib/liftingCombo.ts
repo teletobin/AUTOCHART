@@ -2,10 +2,10 @@ import type { Treatment } from "@/lib/types";
 
 // 시술명의 대용량 숫자를 포매팅 (100,000J → 10만줄, 200000J → 20만줄 등)
 export function formatLiftingTreatmentName(name: string): string {
-  return name.replace(/(\d{1,3}(?:,\d{3})*|\d+)\s*J(?:\s|$|[^가-힣])/gi, (match, numStr) => {
+  return name.replace(/(\d{1,3}(?:,\d{3})*|\d+)\s*J(?=$|[^가-힣])/gi, (match, numStr) => {
     const num = Number(numStr.replace(/,/g, ""));
     if (num >= 10000 && num % 10000 === 0) {
-      return `${Math.floor(num / 10000)}만줄 `;
+      return `${Math.floor(num / 10000)}만줄`;
     }
     return match;
   });
