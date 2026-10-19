@@ -326,7 +326,7 @@ export default function Home() {
     return !latest || d > latest ? d : latest;
   }, null);
   const syncedLabel = syncedAt
-    ? `${syncedAt.toDateString() === new Date().toDateString() ? "오늘" : `${syncedAt.getMonth() + 1}월 ${syncedAt.getDate()}일`} ${syncedAt.getHours()}시 ${syncedAt.getMinutes()}분 홈페이지와 연동됨`
+    ? `${syncedAt.toDateString() === new Date().toDateString() ? "오늘" : `${syncedAt.getMonth() + 1}월 ${syncedAt.getDate()}일`} ${syncedAt.getHours() < 12 ? "오전" : "오후"} ${String(syncedAt.getHours() % 12 || 12).padStart(2, "0")}:${String(syncedAt.getMinutes()).padStart(2, "0")} 홈페이지와 연동됨`
     : null;
   const [branchPickerResetKey, setBranchPickerResetKey] = useState(0);
 
