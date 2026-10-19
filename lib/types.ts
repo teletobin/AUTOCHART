@@ -14,6 +14,7 @@ export type Treatment = {
   category?: TreatmentCategory;
   section?: string;
   scraped_at?: string;
+  is_manual?: boolean;
   order?: number;
 };
 

@@ -319,6 +319,15 @@ export default function Home() {
   const [branchSwitch, setBranchSwitch] = useState<{ target: string; phase: "confirm" | "loading" | "done" } | null>(null);
   // 지점 변경을 취소했을 때 BranchPicker 내부에 이미 그려진 입력값을 원래
   // 지점명으로 되돌리기 위해 key를 바꿔 강제로 다시 마운트시키는 용도.
+  // 홈페이지 연동 시각: 스크래핑으로 채워진 시술(직접 추가 제외) 중 가장 최근 저장 시각. DB는 UTC를 오프셋 없이 내려준다.
+  const syncedAt = treatments.reduce<Date | null>((latest, t) => {
+    if (t.is_manual || !t.scraped_at) return latest;
+    const d = new Date(/[zZ]|[+-]dd:?dd$/.test(t.scraped_at) ? t.scraped_at : t.scraped_at + "Z");
+    return !latest || d > latest ? d : latest;
+  }, null);
+  const syncedLabel = syncedAt
+    ? `${syncedAt.toDateString() === new Date().toDateString() ? "오늘" : `${syncedAt.getMonth() + 1}월 ${syncedAt.getDate()}일`} ${syncedAt.getHours()}시 ${syncedAt.getMinutes()}분 홈페이지와 연동됨`
+    : null;
   const [branchPickerResetKey, setBranchPickerResetKey] = useState(0);
 
   function loadTreatments(forBranch: string) {
@@ -956,6 +965,7 @@ export default function Home() {
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <BranchPicker key={`${branch}-${branchPickerResetKey}`} value={branch} onChange={handleBranchChange} />
+            {syncedLabel && <span style={{ fontSize: 12, color: C.sub, whiteSpace: "nowrap" }}>{syncedLabel}</span>}
             <Link
               href="/rules?tab=category"
               aria-label="상세설정"

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
 
   let { data, error } = await supabase
     .from("treatments")
-    .select("id, name, price, category, section, scraped_at, order")
+    .select("id, name, price, category, section, scraped_at, is_manual, order")
     .eq("branch", branch)
     .order("section", { ascending: true })
     .order("order", { ascending: true });
@@ -28,7 +28,7 @@ export async function GET(request: Request) {
   ) {
     const retry = await supabase
       .from("treatments")
-      .select("id, name, price, category, section, scraped_at")
+      .select("id, name, price, category, section, scraped_at, is_manual")
       .eq("branch", branch)
       .order("scraped_at", { ascending: true });
     data = retry.data?.map((row) => ({ ...row, order: null })) ?? null;
