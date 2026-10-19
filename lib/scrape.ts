@@ -210,6 +210,11 @@ export async function runScrapeAndSync(branch: string, presetRules?: CleanupRule
   );
   const treatments: ScrapedTreatment[] = pageResults.flat();
 
+  // 페이지 구조 변경/차단 등으로 0건이 오면 아래 삭제 단계가 지점 데이터를 통째로 지우므로 실패로 처리한다.
+  if (treatments.length === 0) {
+    throw new Error("홈페이지에서 시술을 한 건도 가져오지 못했습니다.");
+  }
+
   // 같은 시술명이 여러 섹션에 중복 노출되는 경우가 있어 branch+name 기준으로
   // 중복 제거하지 않으면 upsert가 실패함. 어느 섹션 값이 대표로 남을지는
   // 홈페이지에 먼저 등장한(=CATEGORY_FIELDS 순서상 앞선 탭, 같은 탭 안에서는
@@ -294,6 +299,19 @@ export async function runScrapeAndSync(branch: string, presetRules?: CleanupRule
   return { scraped: treatments.length, saved: deduped.length };
 }
 
+// 일시적인 네트워크/DB 오류로 한 지점이 실패해도 다음 날까지 묵은 수가가 남지 않도록 재시도한다.
+// 삭제 전에 실패하는 경우가 대부분이라 재시도해도 기존 데이터가 깨지지 않는다.
+async function runWithRetry(branch: string, rules: CleanupRule[], attempts = 3) {
+  for (let i = 1; ; i++) {
+    try {
+      return await runScrapeAndSync(branch, rules);
+    } catch (e) {
+      if (i >= attempts) throw e;
+      await new Promise((r) => setTimeout(r, 2000 * i));
+    }
+  }
+}
+
 // 크론에서 전체 지점을 한 번에 돌릴 때 쓴다. velyb.kr에 부담을 주지 않도록
 // BATCH_SIZE만큼만 동시에 진행하고, 한 지점이 실패해도 나머지 지점은 계속 처리한다.
 export async function runScrapeAndSyncAll(branches: readonly string[]) {
@@ -315,7 +333,7 @@ export async function runScrapeAndSyncAll(branches: readonly string[]) {
   for (let i = 0; i < branches.length; i += BATCH_SIZE) {
     const batch = branches.slice(i, i + BATCH_SIZE);
     const batchResults = await Promise.allSettled(
-      batch.map((branch) => runScrapeAndSync(branch, allRules))
+      batch.map((branch) => runWithRetry(branch, allRules))
     );
 
     batchResults.forEach((r, idx) => {
