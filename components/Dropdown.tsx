@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { C } from "@/lib/theme";
+import { C, S } from "@/lib/theme";
 
 type Option = { value: string; label: string };
 
@@ -48,8 +48,8 @@ export default function Dropdown({
           padding: compact ? "9px 5px" : "9px 12px",
           fontSize: compact ? 11 : 13,
           fontWeight: 500,
-          background: "#fff",
-          color: selected ? C.primary : "#aaa",
+          background: C.surface,
+          color: selected ? C.primary : C.sub,
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
@@ -73,10 +73,10 @@ export default function Dropdown({
             maxHeight: 220,
             overflowY: "auto",
             padding: 5,
-            background: "#fff",
+            background: C.surface,
             border: `1px solid ${C.border}`,
             borderRadius: 10,
-            boxShadow: "0 10px 28px rgba(0,0,0,0.08)",
+            boxShadow: S.menu,
             zIndex: 300,
           }}
         >
@@ -96,9 +96,9 @@ export default function Dropdown({
                 fontSize: 13,
                 whiteSpace: "nowrap",
                 cursor: "pointer",
-                background: idx === activeIndex || o.value === value ? C.primaryLt : "#fff",
-                color: idx === activeIndex || o.value === value ? "#5f5854" : "#555",
-                fontWeight: idx === activeIndex || o.value === value ? 700 : 400,
+                background: idx === activeIndex || o.value === value ? C.primaryLt : C.surface,
+                color: idx === activeIndex || o.value === value ? C.primary : C.primary,
+                fontWeight: idx === activeIndex || o.value === value ? 600 : 400,
               }}
             >
               {o.label}

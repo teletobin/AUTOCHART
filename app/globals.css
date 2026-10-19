@@ -3,6 +3,9 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* lib/theme.ts의 C.primaryLt, C.border와 같은 값으로 유지 */
+  --c-primary-lt: rgba(255,241,246,0.7);
+  --c-border: #e6e7ea;
 }
 
 body {
@@ -17,13 +20,13 @@ body {
 
 .slim-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #d9d3cf transparent;
+  scrollbar-color: var(--c-border) transparent;
 }
 .slim-scroll::-webkit-scrollbar {
   width: 4px;
 }
 .slim-scroll::-webkit-scrollbar-thumb {
-  background: #d9d3cf;
+  background: var(--c-border);
   border-radius: 4px;
 }
 .slim-scroll::-webkit-scrollbar-track {
@@ -31,5 +34,5 @@ body {
 }
 
 .cat-row:hover {
-  background: #f4efe9;
+  background: var(--c-primary-lt);
 }

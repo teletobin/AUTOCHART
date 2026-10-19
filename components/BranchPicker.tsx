@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ALL_BRANCHES } from "@/lib/branches";
-import { C } from "@/lib/theme";
+import { C, S } from "@/lib/theme";
 
 // 한글 초성을 영문으로 변환 (영타 검색용)
 function getKoreanInitial(korean: string): string {
@@ -146,10 +146,10 @@ export default function BranchPicker({
             maxHeight: 220,
             overflowY: "auto",
             padding: 5,
-            background: "#fff",
+            background: C.surface,
             border: `1px solid ${C.border}`,
             borderRadius: 10,
-            boxShadow: "0 10px 28px rgba(0,0,0,0.08)",
+            boxShadow: S.menu,
             zIndex: 300,
           }}
         >
@@ -169,9 +169,9 @@ export default function BranchPicker({
                 fontSize: 13,
                 whiteSpace: "nowrap",
                 cursor: "pointer",
-                background: idx === activeIndex || b === value ? C.primaryLt : "#fff",
-                color: idx === activeIndex || b === value ? "#5f5854" : "#555",
-                fontWeight: idx === activeIndex || b === value ? 700 : 400,
+                background: idx === activeIndex || b === value ? C.primaryLt : C.surface,
+                color: idx === activeIndex || b === value ? C.primary : C.primary,
+                fontWeight: idx === activeIndex || b === value ? 600 : 400,
               }}
             >
               {b}

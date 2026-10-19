@@ -6,7 +6,8 @@ import { formatNumber } from "@/lib/format";
 import type { Alias, Treatment } from "@/lib/types";
 import { TreatmentCategory } from "@/lib/types";
 import { CATEGORY_ORDER } from "@/lib/categoryDetection";
-import { C, MAX_WIDTH } from "@/lib/theme";
+import { C, S, MAX_WIDTH } from "@/lib/theme";
+import { syncedLabel } from "@/lib/syncLabel";
 import { BRANCH_STORAGE_KEY } from "@/lib/branches";
 import BranchPicker from "@/components/BranchPicker";
 import Dropdown from "@/components/Dropdown";
@@ -107,22 +108,22 @@ const SETUP_SQL = `create table cleanup_rules (
 
 /* ── 디자인 토큰 (메인 페이지와 공유) ── */
 const styles: Record<string, React.CSSProperties> = {
-  wrap:      { minHeight: "100vh", background: C.bg, color: C.primary, fontFamily: "Pretendard, -apple-system, sans-serif" },
-  header:    { background: C.surface, padding: "14px 28px", position: "sticky", top: 0, zIndex: 100, boxShadow: "0 2px 8px rgba(111,104,100,0.06)" },
+  wrap:      { minHeight: "100vh", background: C.page, color: C.primary, fontFamily: "Pretendard, -apple-system, sans-serif" },
+  header:    { background: C.surface, padding: "14px 28px", position: "sticky", top: 0, zIndex: 100 },
   headerInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 28, paddingRight: 28, boxSizing: "border-box" },
-  title:     { fontSize: 19, fontWeight: 700, color: C.primary },
-  logo:      { display: "flex", alignItems: "center", gap: 10, fontWeight: 600, fontSize: 19, color: C.primary },
+  title:     { fontSize: 19, fontWeight: 600, color: C.primary },
+  logo:      { display: "flex", alignItems: "center", gap: 10, fontWeight: 600, fontSize: 21, color: C.primary },
   backLink:  { fontSize: 13, color: C.sub, textDecoration: "none" },
-  tabBar:    { borderBottom: `1px solid ${C.border}`, background: C.primaryLt, width: "100%", minHeight: 44, flexShrink: 0, position: "sticky" as const, top: "64px", zIndex: 50, boxSizing: "border-box" as const },
-  tabBarInner: { width: "100%", maxWidth: "none", margin: "0", minHeight: 44, display: "flex", alignItems: "center", flexShrink: 0, gap: 4, padding: "0 28px", overflowX: "auto" as const, boxSizing: "border-box" as const },
+  tabBar:    { background: C.surface, width: "100%", minHeight: 44, flexShrink: 0, position: "sticky" as const, top: "64px", zIndex: 50, boxSizing: "border-box" as const },
+  tabBarInner: { width: "100%", maxWidth: "none", margin: "0", minHeight: 44, display: "flex", alignItems: "center", flexShrink: 0, gap: 16, padding: "0 28px", overflowX: "auto" as const, boxSizing: "border-box" as const },
   main:      { width: "100%", maxWidth: "none", margin: "0", padding: "24px 28px", boxSizing: "border-box" },
-  card:      { background: C.surface, borderRadius: 14, padding: "20px 22px", boxShadow: "0 1px 3px rgba(0,0,0,0.06), 0 2px 8px rgba(0,0,0,0.08)" },
-  cardTitle: { fontSize: 18, fontWeight: 700, color: C.primary, marginBottom: 6, letterSpacing: "0.04em" },
+  card:      { background: C.surface, borderRadius: 14, padding: "20px 22px", boxShadow: S.card },
+  cardTitle: { fontSize: 18, fontWeight: 600, color: C.primary, marginBottom: 6, letterSpacing: "0.04em" },
   cardHint:  { fontSize: 14, color: C.primary, marginBottom: 14, lineHeight: 1.6 },
-  input:     { flex: 1, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 14, outline: "none", background: "#fff", color: C.primary, boxSizing: "border-box" as const },
-  btnPrimary: { background: C.primary, color: "#fff", border: "none", borderRadius: 7, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0 },
+  input:     { flex: 1, border: `1px solid ${C.border}`, borderRadius: 8, padding: "9px 12px", fontSize: 14, outline: "none", background: C.surface, color: C.primary, boxSizing: "border-box" as const },
+  btnPrimary: { background: C.primary, color: C.onPrimary, border: "none", borderRadius: 7, padding: "6px 12px", fontSize: 12, fontWeight: 600, cursor: "pointer", flexShrink: 0 },
   btnGhost: { background: "transparent", color: C.sub, border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", fontSize: 13, fontWeight: 600, cursor: "pointer" },
-  row:       { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, border: `1px solid ${C.borderSoft}`, borderRadius: 8, padding: "7px 10px", fontSize: 13 },
+  row:       { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8, border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 10px", fontSize: 13 },
   rowEdit:   { display: "flex", alignItems: "center", gap: 8, border: `1px solid ${C.border}`, borderRadius: 8, padding: "7px 10px", fontSize: 13 },
   linkBtn:   { background: "none", border: "none", color: C.sub, cursor: "pointer", fontSize: 13, padding: 0 },
   list:      { display: "flex", flexDirection: "column" as const, gap: 6, maxHeight: "60vh", overflowY: "auto" as const },
@@ -133,11 +134,10 @@ function tabButtonStyle(active: boolean): React.CSSProperties {
   return {
     padding: "10px 14px",
     fontSize: 16,
-    fontWeight: 600,
     color: active ? C.primary : C.sub,
-    background: "none",
+    fontWeight: active ? 600 : 400,
+    background: active ? `linear-gradient(${C.primary}, ${C.primary}) no-repeat center bottom 2px / 100% 2.5px` : "none",
     border: "none",
-    borderBottom: active ? `2px solid ${C.primary}` : "2px solid transparent",
     cursor: "pointer",
     whiteSpace: "nowrap",
   };
@@ -152,12 +152,18 @@ export default function RulesPage() {
   const [commonMenuPos, setCommonMenuPos] = useState<{ top: number; left: number; width: number } | null>(null);
   const commonMenuBtnRef = useRef<HTMLButtonElement>(null);
   const commonMenuPanelRef = useRef<HTMLDivElement>(null);
-  function toggleCommonMenu() {
+  const commonMenuCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 버튼과 패널 사이 4px 틈을 지나는 동안 닫히지 않도록 닫기를 잠깐 미룬다.
+  function openCommonMenu() {
+    if (commonMenuCloseTimer.current) clearTimeout(commonMenuCloseTimer.current);
     if (!commonMenuOpen && commonMenuBtnRef.current) {
       const rect = commonMenuBtnRef.current.getBoundingClientRect();
       setCommonMenuPos({ top: rect.bottom + 4, left: rect.left, width: rect.width });
     }
-    setCommonMenuOpen((v) => !v);
+    setCommonMenuOpen(true);
+  }
+  function scheduleCloseCommonMenu() {
+    commonMenuCloseTimer.current = setTimeout(() => setCommonMenuOpen(false), 150);
   }
   useEffect(() => {
     if (!commonMenuOpen) return;
@@ -236,15 +242,15 @@ export default function RulesPage() {
 
   // 시술명 정리/검색어 매칭 탭에서 수정·삭제 버튼을 누르면 바로 실행하지 않고,
   // 그 줄 안에서 "수정할까요?/삭제할까요?"를 인라인으로 먼저 확인받는다.
-  const [pendingRowAction, setPendingRowAction] = useState<{ scope: "exclude" | "alias" | "replaceGlobal"; id: string; type: "edit" | "delete" } | null>(null);
-  function InlineConfirm({ scope, id, onConfirm }: { scope: "exclude" | "alias" | "replaceGlobal"; id: string; onConfirm: () => void }) {
+  const [pendingRowAction, setPendingRowAction] = useState<{ scope: "exclude" | "alias" | "replaceGlobal" | "branchRule" | "manual"; id: string; type: "edit" | "delete" } | null>(null);
+  function InlineConfirm({ scope, id, onConfirm }: { scope: "exclude" | "alias" | "replaceGlobal" | "branchRule" | "manual"; id: string; onConfirm: () => void }) {
     if (pendingRowAction?.scope !== scope || pendingRowAction.id !== id) return null;
     return (
       <span style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 12, color: C.danger, whiteSpace: "nowrap" }}>
         {pendingRowAction.type === "edit" ? "수정할까요?" : "삭제할까요?"}
         <button
           onClick={() => { onConfirm(); setPendingRowAction(null); }}
-          style={{ ...styles.linkBtn, fontSize: 12, color: C.danger, fontWeight: 700 }}
+          style={{ ...styles.linkBtn, fontSize: 12, color: C.danger, fontWeight: 600 }}
         >
           YES
         </button>
@@ -294,6 +300,7 @@ export default function RulesPage() {
   const [editManualCategory, setEditManualCategory] = useState<TreatmentCategory | null>(null);
 
   const [categoryTreatments, setCategoryTreatments] = useState<Treatment[]>([]);
+  const syncedText = syncedLabel(categoryTreatments);
   const [categoryError, setCategoryError] = useState<string | null>(null);
   const [categorySearch, setCategorySearch] = useState("");
   const [selectedForBulk, setSelectedForBulk] = useState<Set<string>>(new Set());
@@ -586,7 +593,7 @@ export default function RulesPage() {
   function handleSync() {
     if (!branch) return;
     setConfirmModal({
-      message: "매일 오전 9시마다 홈페이지 시술 정보가 연동됩니다.\n가격 변동이 확인되어 재연동이 필요할 때만 눌러주세요.",
+      message: "매일 오전 홈페이지와 자동 연동됩니다.\n가격 변동이 확인되어 재연동이 필요한 경우만 눌러주세요.",
       confirmLabel: "확인 후 연동",
       onConfirm: runSync,
     });
@@ -753,15 +760,10 @@ export default function RulesPage() {
               <img src="/logo.png" alt="차팅 서포트" style={{ height: 36, width: "auto" }} />
               <span style={{ fontWeight: 600 }}>차팅 서포트</span>
             </Link>
-            <span style={{ color: "rgba(111,104,100,0.45)", fontWeight: 400, fontSize: 18.5 }}>&gt;</span>
-            <span style={{ fontWeight: 500, color: "rgba(111,104,100,0.7)", fontSize: 18.5 }}>상세설정</span>
-            <span style={{ color: "rgba(111,104,100,0.45)", fontWeight: 400, fontSize: 18.5 }}>&gt;</span>
-            <span style={{ fontWeight: 500, color: "rgba(111,104,100,0.7)", fontSize: 18.5 }}>
-              {[...MAIN_TABS, ...COMMON_TABS].find((t) => t.key === tab)?.label}
-            </span>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <BranchPicker key={`${branch}-${branchPickerResetKey}`} value={branch} onChange={handleBranchChange} />
+            {syncedText && <span style={{ fontSize: 12, color: C.sub, whiteSpace: "nowrap" }}>{syncedText}</span>}
             <Link
               href="/"
               style={{ ...styles.btnGhost, fontSize: 12, padding: "6px 10px", textDecoration: "none", display: "inline-block" }}
@@ -778,7 +780,7 @@ export default function RulesPage() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(0,0,0,0.55)",
+            background: C.scrim,
             zIndex: 700,
             display: "flex",
             justifyContent: "center",
@@ -792,7 +794,7 @@ export default function RulesPage() {
               background: C.surface,
               border: `1px solid ${C.border}`,
               borderRadius: 12,
-              boxShadow: "0 12px 32px rgba(40,36,34,0.18)",
+              boxShadow: S.modal,
               padding: "16px 22px",
               minWidth: 260,
               textAlign: "center",
@@ -827,12 +829,12 @@ export default function RulesPage() {
         <div style={{ maxWidth: MAX_WIDTH, margin: "0 auto", padding: "16px 20px 0" }}>
           <p style={{ fontSize: 14, color: C.danger }}>에러: {loadError}</p>
           {tableMissing && (
-            <div style={{ marginTop: 8, borderRadius: 10, border: `1px solid ${C.danger}`, background: "#fdf1ef", padding: 12 }}>
+            <div style={{ marginTop: 8, borderRadius: 10, border: `1px solid ${C.danger}`, background: C.dangerBg, padding: 12 }}>
               <p style={{ fontSize: 14, color: C.danger }}>
                 cleanup_rules 테이블이 아직 없습니다. Supabase 대시보드 → SQL Editor에서
                 아래 SQL을 한 번 실행한 뒤 이 페이지를 새로고침하세요.
               </p>
-              <pre style={{ marginTop: 8, overflowX: "auto", borderRadius: 8, background: "#fff", padding: 8, fontSize: 12, color: C.primary }}>
+              <pre style={{ marginTop: 8, overflowX: "auto", borderRadius: 8, background: C.surface, padding: 8, fontSize: 12, color: C.primary }}>
                 {SETUP_SQL}
               </pre>
             </div>
@@ -849,7 +851,9 @@ export default function RulesPage() {
           ))}
           <button
             ref={commonMenuBtnRef}
-            onClick={toggleCommonMenu}
+            onClick={openCommonMenu}
+            onMouseEnter={openCommonMenu}
+            onMouseLeave={scheduleCloseCommonMenu}
             style={tabButtonStyle(COMMON_TABS.some((t) => t.key === tab))}
           >
             전지점 공통 설정
@@ -860,6 +864,8 @@ export default function RulesPage() {
       {commonMenuOpen && commonMenuPos && (
         <div
           ref={commonMenuPanelRef}
+          onMouseEnter={openCommonMenu}
+          onMouseLeave={scheduleCloseCommonMenu}
           style={{
             position: "fixed",
             top: commonMenuPos.top,
@@ -868,7 +874,7 @@ export default function RulesPage() {
             background: C.surface,
             border: `1px solid ${C.border}`,
             borderRadius: 10,
-            boxShadow: "0 10px 28px rgba(0,0,0,0.12)",
+            boxShadow: S.menu,
             padding: 5,
             zIndex: 300,
           }}
@@ -887,10 +893,10 @@ export default function RulesPage() {
                 border: "none",
                 borderRadius: 7,
                 fontSize: 15,
-                fontWeight: tab === t.key ? 700 : 500,
+                fontWeight: tab === t.key ? 600 : 500,
                 cursor: "pointer",
                 background: tab === t.key || commonMenuHoverKey === t.key ? C.primaryLt : "transparent",
-                color: tab === t.key || commonMenuHoverKey === t.key ? C.primary : "#555",
+                color: tab === t.key || commonMenuHoverKey === t.key ? C.primary : C.primary,
               }}
             >
               {t.label}
@@ -1292,8 +1298,18 @@ export default function RulesPage() {
                       {r.pattern} → {r.replacement}
                     </span>
                     <div style={{ display: "flex", flexShrink: 0, alignItems: "center", gap: 10 }}>
-                      <button onClick={() => startEditRule(r)} style={styles.linkBtn}>수정</button>
-                      <button onClick={() => deleteRule(r.id)} style={styles.linkBtn}>삭제</button>
+                      {pendingRowAction?.scope === "branchRule" && pendingRowAction.id === r.id ? (
+                        <InlineConfirm
+                          scope="branchRule"
+                          id={r.id}
+                          onConfirm={() => (pendingRowAction.type === "edit" ? startEditRule(r) : deleteRule(r.id))}
+                        />
+                      ) : (
+                        <>
+                          <button onClick={() => setPendingRowAction({ scope: "branchRule", id: r.id, type: "edit" })} style={styles.linkBtn}>수정</button>
+                          <button onClick={() => setPendingRowAction({ scope: "branchRule", id: r.id, type: "delete" })} style={styles.linkBtn}>삭제</button>
+                        </>
+                      )}
                     </div>
                   </div>
                 )
@@ -1388,8 +1404,18 @@ export default function RulesPage() {
                         <span style={{ fontSize: 12, fontWeight: 600, color: C.sub, background: C.primaryLt, borderRadius: 6, padding: "2px 8px", whiteSpace: "nowrap" }}>{t.category}</span>
                       )}
                       <span style={{ fontVariantNumeric: "tabular-nums", color: C.primary }}>{formatNumber(t.price)}원</span>
-                      <button onClick={() => startEditManual(t)} style={styles.linkBtn}>수정</button>
-                      <button onClick={() => deleteManualTreatment(t.id)} style={styles.linkBtn}>삭제</button>
+                      {pendingRowAction?.scope === "manual" && pendingRowAction.id === t.id ? (
+                        <InlineConfirm
+                          scope="manual"
+                          id={t.id}
+                          onConfirm={() => (pendingRowAction.type === "edit" ? startEditManual(t) : deleteManualTreatment(t.id))}
+                        />
+                      ) : (
+                        <>
+                          <button onClick={() => setPendingRowAction({ scope: "manual", id: t.id, type: "edit" })} style={styles.linkBtn}>수정</button>
+                          <button onClick={() => setPendingRowAction({ scope: "manual", id: t.id, type: "delete" })} style={styles.linkBtn}>삭제</button>
+                        </>
+                      )}
                     </div>
                   </div>
                 )
@@ -1419,13 +1445,13 @@ export default function RulesPage() {
                 </p>
               </div>
               <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
-                <button onClick={handleSync} disabled={syncing || !branch} style={{ ...styles.btnPrimary, padding: "10px 18px", fontSize: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.12)", opacity: syncing || !branch ? 0.6 : 1 }}>
+                <button onClick={handleSync} disabled={syncing || !branch} style={{ ...styles.btnPrimary, padding: "10px 18px", fontSize: 14, boxShadow: S.sm, opacity: syncing || !branch ? 0.6 : 1 }}>
                   {syncing ? "연동 중..." : "홈페이지 재연동"}
                 </button>
                 <button
                   onClick={handleReset}
                   disabled={resetting || !branch}
-                  style={{ ...styles.btnPrimary, background: C.danger, padding: "10px 18px", fontSize: 14, boxShadow: "0 2px 6px rgba(0,0,0,0.12)", opacity: resetting || !branch ? 0.6 : 1 }}
+                  style={{ ...styles.btnPrimary, background: C.danger, padding: "10px 18px", fontSize: 14, boxShadow: S.sm, opacity: resetting || !branch ? 0.6 : 1 }}
                 >
                   {resetting ? "삭제 중..." : "데이터 리셋"}
                 </button>
@@ -1451,7 +1477,7 @@ export default function RulesPage() {
             </div>
 
             <div style={{ position: "sticky", top: 112, zIndex: 40, background: C.surface, display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, padding: "8px 0", marginTop: 14 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: C.primary, margin: 0 }}>
+              <p style={{ fontSize: 13, fontWeight: 600, color: C.primary, margin: 0 }}>
                 미분류 시술 ({categoryTreatments.filter(t => !t.category).length})
               </p>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -1493,7 +1519,7 @@ export default function RulesPage() {
                     .map((t) => (
                       <label
                         key={t.id}
-                        style={{ display: "flex", gap: 6, alignItems: "flex-start", border: `1px dashed ${C.sub}`, borderRadius: 6, padding: "6px 8px", fontSize: 12, lineHeight: 1.3, cursor: "pointer", background: "#fdfcfb" }}
+                        style={{ display: "flex", gap: 6, alignItems: "flex-start", border: `1px dashed ${C.sub}`, borderRadius: 6, padding: "6px 8px", fontSize: 12, lineHeight: 1.3, cursor: "pointer", background: C.page }}
                       >
                         <input
                           type="checkbox"
@@ -1538,7 +1564,7 @@ export default function RulesPage() {
                       overflow: "hidden",
                     }}
                   >
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, padding: "10px 12px", borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 700, color: C.primary, whiteSpace: "nowrap" }}>
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 6, padding: "10px 12px", borderBottom: `1px solid ${C.border}`, fontSize: 13, fontWeight: 600, color: C.primary, whiteSpace: "nowrap" }}>
                       <span>{cat} <span style={{ fontWeight: 400, color: C.sub, fontSize: 12 }}>({items.length})</span></span>
                     </div>
                     <div className="slim-scroll" style={{ display: "flex", flexDirection: "column", padding: "2px 6px", maxHeight: "70vh", overflowY: "auto" }}>
@@ -1547,7 +1573,7 @@ export default function RulesPage() {
                         <label
                           key={t.id}
                           className="cat-row"
-                          style={{ display: "flex", gap: 6, alignItems: "flex-start", borderBottom: `1px solid ${C.borderSoft}`, padding: "8px 4px", fontSize: 12, lineHeight: 1.3, cursor: "pointer" }}
+                          style={{ display: "flex", gap: 6, alignItems: "flex-start", borderBottom: `1px solid ${C.border}`, padding: "8px 4px", fontSize: 12, lineHeight: 1.3, cursor: "pointer" }}
                         >
                           <input
                             type="checkbox"
@@ -1582,7 +1608,7 @@ export default function RulesPage() {
           style={{
             position: "fixed",
             inset: 0,
-            background: "rgba(40,36,34,0.35)",
+            background: C.scrim,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
@@ -1599,7 +1625,7 @@ export default function RulesPage() {
               padding: "22px 22px 18px",
               maxWidth: 380,
               width: "100%",
-              boxShadow: "0 12px 32px rgba(40,36,34,0.18)",
+              boxShadow: S.modal,
             }}
             onClick={(e) => e.stopPropagation()}
           >
