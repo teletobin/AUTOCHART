@@ -2159,9 +2159,6 @@ export default function Home() {
         );
       })()}
 
-      <footer style={{ display: "none" }}>
-        2026. Designed & Developed by EUNBIN GA
-      </footer>
     </div>
   );
 }

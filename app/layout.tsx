@@ -20,7 +20,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css"
         />
       </head>
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        {/* 화면에는 보이지 않지만 페이지 소스에 남는 저작권 표기 (메인·상세설정 공통) */}
+        <footer hidden style={{ textAlign: "center" }}>
+          COPYRIGHT © EUNBIN GA. Developed and planned by EUNBIN GA.
+        </footer>
+      </body>
     </html>
   );
 }
