@@ -110,7 +110,7 @@ const SETUP_SQL = `create table cleanup_rules (
 const styles: Record<string, React.CSSProperties> = {
   wrap:      { minHeight: "100vh", background: C.page, color: C.primary, fontFamily: "Pretendard, -apple-system, sans-serif" },
   header:    { background: C.surface, padding: "14px 28px", position: "sticky", top: 0, zIndex: 100 },
-  headerInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", alignItems: "center", justifyContent: "space-between", paddingLeft: 28, paddingRight: 28, boxSizing: "border-box" },
+  headerInner: { width: "100%", maxWidth: "none", margin: "0", display: "flex", alignItems: "center", justifyContent: "space-between", boxSizing: "border-box" },
   title:     { fontSize: 19, fontWeight: 600, color: C.primary },
   logo:      { display: "flex", alignItems: "center", gap: 10, fontWeight: 600, fontSize: 21, color: C.primary },
   backLink:  { fontSize: 13, color: C.sub, textDecoration: "none" },
@@ -858,6 +858,14 @@ export default function RulesPage() {
           >
             전지점 공통 설정
           </button>
+          <a
+            href="https://teletobin.github.io/development.report/"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ marginLeft: "auto", padding: "4px 10px", fontSize: 11, fontWeight: 600, color: C.sub, border: "1px solid #ccc", borderRadius: 999, textDecoration: "none", whiteSpace: "nowrap" }}
+          >
+            기획·개발 리포트
+          </a>
         </div>
       </div>
 
