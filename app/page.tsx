@@ -805,7 +805,7 @@ export default function Home() {
   const discountLabel = discountPercent === 10 ? "3인 동반" : discountPercent === 5 ? "2인 동반" : "";
   const totalCreditWon = paymentAmount + extraCredit + existingBalance;
   const balance = totalCreditWon - discountedTotal - transferAmount;
-  const headerVisible = includeHeader && paymentAmount > 0;
+  const headerVisible = includeHeader && paymentAmount > 0 && extraCredit > 0;
 
   // 동행인 팝업 안에서 보여줄 미니 차트 텍스트 (시술 목록 + TOTAL + 양도받음 문구)
   function buildPanelText(items: SelectedItem[], giverName: string, giverBirthdate: string, discount: 0 | 5 | 10 = 0): string {
