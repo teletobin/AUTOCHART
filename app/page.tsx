@@ -12,7 +12,7 @@ import { BRANCH_STORAGE_KEY } from "@/lib/branches";
 import { syncedLabel } from "@/lib/syncLabel";
 import { mergeGeneratedText, protectGeneratedLines } from "@/lib/mergeText";
 import { findCcCombos, formatComboLabel, mergedComboName, deriveBaseName, type CcCombo } from "@/lib/ccCombo";
-import { findLiftingCombos, formatComboLabel as formatLiftingComboLabel, mergedLiftingName, type LiftingCombo } from "@/lib/liftingCombo";
+import { deriveBaseName as deriveLiftingBaseName, findLiftingCombos, formatComboLabel as formatLiftingComboLabel, mergedLiftingName, type LiftingCombo } from "@/lib/liftingCombo";
 import BranchPicker from "@/components/BranchPicker";
 import Dropdown from "@/components/Dropdown";
 
@@ -478,25 +478,10 @@ export default function Home() {
     if (matched.length === 0) return [];
     const triedBaseNames = new Set<string>();
     for (const candidate of matched) {
-      const baseName = candidate.name
-        .replace(/\d+(?:,\d{3})*\s*샷(?:\s|$|[^가-힣])/i, "")
-        .replace(/(\d+\s*만\s*)?줄(?:\s|$|[^가-힣])/i, "")
-        .replace(/\d+(?:,\d{3})*\s*J(?:\s|$|[^가-힣])/i, "")
-        .replace(/한정가|체험가/g, "")
-        .replace(/\s+/g, " ")
-        .trim();
+      const baseName = deriveLiftingBaseName(candidate.name);
       if (triedBaseNames.has(baseName)) continue;
       triedBaseNames.add(baseName);
-      const sameFamily = matched.filter(
-        (t) =>
-          t.name
-            .replace(/\d+(?:,\d{3})*\s*샷(?:\s|$|[^가-힣])/i, "")
-            .replace(/(\d+\s*만\s*)?줄(?:\s|$|[^가-힣])/i, "")
-            .replace(/\d+(?:,\d{3})*\s*J(?:\s|$|[^가-힣])/i, "")
-            .replace(/한정가|체험가/g, "")
-            .replace(/\s+/g, " ")
-            .trim() === baseName
-      );
+      const sameFamily = matched.filter((t) => deriveLiftingBaseName(t.name) === baseName);
       const combos = findLiftingCombos(liftingRequest.target, sameFamily, 15);
       if (combos.length > 0) return combos;
     }
@@ -820,7 +805,7 @@ export default function Home() {
   const discountLabel = discountPercent === 10 ? "3인 동반" : discountPercent === 5 ? "2인 동반" : "";
   const totalCreditWon = paymentAmount + extraCredit + existingBalance;
   const balance = totalCreditWon - discountedTotal - transferAmount;
-  const headerVisible = includeHeader && paymentAmount > 0 && extraCredit > 0;
+  const headerVisible = includeHeader && paymentAmount > 0;
 
   // 동행인 팝업 안에서 보여줄 미니 차트 텍스트 (시술 목록 + TOTAL + 양도받음 문구)
   function buildPanelText(items: SelectedItem[], giverName: string, giverBirthdate: string, discount: 0 | 5 | 10 = 0): string {

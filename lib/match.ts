@@ -134,7 +134,8 @@ export function buildMatcher(treatments: Treatment[], aliases: Alias[] = []) {
     for (const entry of aliasEntries) {
       if (entry.tokens.length === 0) continue;
       const allTokensPresent = entry.tokens.every((at) =>
-        qTokens.some((q) => tokensMatch(q, at))
+        // 검색어 토큰이 별칭보다 짧으면("주름" vs 별칭 "미간주름필러") 별칭을 부른 게 아니므로 제외한다.
+        qTokens.some((q) => q.length >= at.length && tokensMatch(q, at))
       );
       if (allTokensPresent) {
         const existing = new Set(qTokens);

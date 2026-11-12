@@ -63,7 +63,9 @@ function maxCountFor(name: string): number {
 // target 단위값을 candidates(같은 계열 시술들)로 채우는 조합을 찾는다.
 // 시술 1종 x n회, 또는 서로 다른 시술 2종의 조합까지만 찾는다.
 export function findLiftingCombos(target: number, candidates: Treatment[], maxResults = 8): LiftingCombo[] {
+  // "6만줄 2회"는 세션 묶음(실제 12만줄)이고 구독권도 단위가 달라서 후보에서 뺀다.
   const units = candidates
+    .filter((t) => !/구독권|(?:^|[^\d])(?:[2-9]|\d{2,})\s*회/.test(t.name))
     .map((t) => ({ t, unit: parseUnitValue(t.name) }))
     .filter((x): x is { t: Treatment; unit: number } => x.unit !== null && x.unit > 0 && x.unit <= target + EPS);
 
@@ -115,7 +117,7 @@ export function findLiftingCombos(target: number, candidates: Treatment[], maxRe
 }
 
 // 시술명에서 단위값과 "회" 표기 제거해서 기본명만 남긴다
-function deriveBaseName(name: string): string {
+export function deriveBaseName(name: string): string {
   return name
     .replace(/\d+(?:,\d{3})*\s*샷(?:\s|$|[^가-힣])/i, "")
     .replace(/(\d+\s*만\s*)?줄(?:\s|$|[^가-힣])/i, "")
