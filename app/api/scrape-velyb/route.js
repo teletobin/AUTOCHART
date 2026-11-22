@@ -69,20 +69,26 @@ export async function GET(request) {
 
   try {
     const fields = sField ? [sField] : ["1", "2", "3", "4", "5", "6", "7"];
+    const pageUrl = (f) =>
+      `${BASE}&etc5=${encodeURIComponent(etc5)}${f ? `&sField=${f}` : ""}`;
 
-    // ★ 동시에 전부 가져오기 (순차 → 병렬, 시간 1/7로 단축)
-    const results = await Promise.all(
-      fields.map((f) => {
-        const url = `${BASE}&etc5=${encodeURIComponent(etc5)}&sField=${f}`;
-        return scrapeOnePage(url);
-      })
-    );
+    // ★ 기본 목록(홈페이지 순서)과 카테고리 목록을 동시에 가져오기
+    const [home, ...results] = await Promise.all([
+      scrapeOnePage(pageUrl(null)),
+      ...fields.map((f) => scrapeOnePage(pageUrl(f))),
+    ]);
 
     const all = results.flat();
 
     const map = new Map();
     for (const t of all) map.set(t.name, t);
-    const deduped = Array.from(map.values());
+
+    // 홈페이지 기본 목록 순서로 정렬. 같은 이름이 여러 번 나오면 기본 목록의 마지막 위치 사용
+    // ponytail: 기본 목록에 없는 항목은 맨 뒤(카테고리 순). 홈페이지 구조가 바뀌면 재확인
+    const rank = new Map();
+    home.forEach((t, i) => rank.set(t.name, i));
+    const rankOf = (t) => (rank.has(t.name) ? rank.get(t.name) : 1e9);
+    const deduped = Array.from(map.values()).sort((a, b) => rankOf(a) - rankOf(b));
 
     return Response.json(
       { branch: etc5, count: deduped.length, treatments: deduped },
